@@ -80,11 +80,13 @@ def init_supabase():
 supabase = init_supabase()
 groq_key = st.secrets.get("GROQ_API_KEY", "")
 
-# Manage login state
+# Manage login and active ticker states
 if "user" not in st.session_state:
     st.session_state.user = None
 if "show_splash" not in st.session_state:
     st.session_state.show_splash = False
+if "active_ticker" not in st.session_state:
+    st.session_state.active_ticker = "AAPL"
 
 # Authentication Gate if user is not logged in
 if not st.session_state.user:
@@ -186,9 +188,12 @@ else:
         st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ TB TERMINAL</div>", unsafe_allow_html=True)
     
     with header_col2:
-        active_ticker = st.text_input("Search Ticker", value="AAPL", label_visibility="collapsed").upper().strip()
+        def on_ticker_change():
+            st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
+            
+        st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
 
-    target_symbol = active_ticker
+    target_symbol = st.session_state.active_ticker
 
     # Fetch live real-time prices & % changes via yfinance
     def fetch_live_quote(symbol):
@@ -205,34 +210,38 @@ else:
                 pass
         return price, pct
 
-    spy_price, spy_pct = fetch_live_quote("SPY")
-    qqq_price, qqq_pct = fetch_live_quote("QQQ")
-    active_price, active_pct = fetch_live_quote(active_ticker)
+    # Fragment with automatic polling/refresh to keep market quotes updating in real-time
+    @st.fragment(run_every="5s")
+    def render_live_header(sym):
+        spy_price, spy_pct = fetch_live_quote("SPY")
+        qqq_price, qqq_pct = fetch_live_quote("QQQ")
+        active_price, active_pct = fetch_live_quote(sym)
 
-    def format_badge(sym, price, pct, bg_color, border_color):
-        color = "#0ecb81" if pct >= 0 else "#f6465d"
-        sign = "+" if pct >= 0 else ""
-        return f"""
-        <div style="background: {bg_color}; border: 1px solid {border_color}; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px;">
-            <b>{sym}</b>
-            <span style="color: #eaecef;">${price:,.2f}</span>
-            <span style="color: {color}; font-weight: bold;">{sign}{pct:.2f}%</span>
-        </div>
-        """
+        def format_badge(s, price, pct, bg_color, border_color):
+            color = "#0ecb81" if pct >= 0 else "#f6465d"
+            sign = "+" if pct >= 0 else ""
+            return f"""
+            <div style="background: {bg_color}; border: 1px solid {border_color}; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px;">
+                <b>{s}</b>
+                <span style="color: #eaecef;">${price:,.2f}</span>
+                <span style="color: {color}; font-weight: bold;">{sign}{pct:.2f}%</span>
+            </div>
+            """
 
-    spy_html = format_badge("SPY", spy_price, spy_pct, "#3a1a1a", "#f6465d")
-    qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#3a331a", "#f0b90b")
-    active_html = format_badge(f"{active_ticker} (Live)", active_price, active_pct, "#331a3a", "#9c27b0")
+        spy_html = format_badge("SPY", spy_price, spy_pct, "#3a1a1a", "#f6465d")
+        qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#3a331a", "#f0b90b")
+        active_html = format_badge(f"{sym} (Live)", active_price, active_pct, "#331a3a", "#9c27b0")
 
-    # Render clean exchange bar containing the badges and user email
-    st.markdown(f"""
-        <div class="exchange-header">
-            {spy_html}
-            {qqq_html}
-            {active_html}
-            <span style="margin-left: auto; color: #848e9c; font-size: 12px;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
-        </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class="exchange-header">
+                {spy_html}
+                {qqq_html}
+                {active_html}
+                <span style="margin-left: auto; color: #848e9c; font-size: 12px;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
+            </div>
+        """, unsafe_allow_html=True)
+
+    render_live_header(target_symbol)
 
     # Main Grid: Advanced Chart on Left, Execution Desk on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
@@ -291,7 +300,7 @@ else:
                 """, unsafe_allow_html=True)
                 
                 with st.form("order_exec_form"):
-                    o_sym = st.text_input("Asset", value=active_ticker).upper()
+                    o_sym = st.text_input("Asset", value=target_symbol).upper()
                     o_qty = st.number_input("Quantity", min_value=0.01, value=1.0, step=1.0)
                     o_side = st.selectbox("Action", ["BUY", "SELL"])
                     o_type = st.radio("Order Type", ["Market", "Limit"], horizontal=True)
