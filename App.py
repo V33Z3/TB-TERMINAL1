@@ -170,7 +170,7 @@ else:
             
         target_symbol = f"{exchange_prefix}:{ticker_input}"
         
-        # Official TradingView Advanced Chart Widget with complete indicator and Fib toolsets
+        # TradingView Advanced Chart Widget with "hide_side_toolbar": false enabled
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:670px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -185,6 +185,7 @@ else:
             "style": "1",
             "locale": "en",
             "allow_symbol_change": true,
+            "hide_side_toolbar": false,
             "calendar": false,
             "support_host": "https://www.tradingview.com"
           }}
