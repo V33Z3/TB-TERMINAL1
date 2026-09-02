@@ -197,7 +197,7 @@ else:
     qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#3a331a", "#f0b90b")
     active_html = format_badge(f"{active_ticker} (Live)", active_price, active_pct, "#331a3a", "#9c27b0")
 
-    # Top Professional Exchange Header Bar
+    # Top Professional Exchange Header Bar with User Email properly integrated inside
     st.markdown(f"""
         <div class="exchange-header">
             <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // REAL-TIME FEED</span>
