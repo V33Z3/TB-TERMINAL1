@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import datetime
 import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
@@ -11,7 +12,8 @@ try:
     from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestTradeRequest
+    from alpaca.data.requests import StockLatestTradeRequest, StockBarsRequest
+    from alpaca.data.timeframe import TimeFrame
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -148,35 +150,72 @@ else:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-    # Active Ticker Selection (Controls both header and chart widget)
-    col_ctrl1, col_ctrl2 = st.columns([1, 5])
-    with col_ctrl1:
-        active_ticker = st.text_input("Active Ticker", value="AAPL").upper().strip()
+    # Top Control Bar to sync Active Ticker with Chart and Header
+    c_in1, c_in2 = st.columns([1, 5])
+    with c_in1:
+        active_ticker = st.text_input("Search Ticker", value="AAPL").upper().strip()
 
     target_symbol = f"NASDAQ:{active_ticker}"
 
-    # Fetch live real-time price action for SPY, QQQ, and Active Ticker via Alpaca
-    spy_display, qqq_display, active_display = "510.25", "440.10", "325.86"
+    # Fetch real-time prices and percentage changes for SPY, QQQ, and Active Ticker via Alpaca
+    market_data = {
+        "SPY": {"price": 510.25, "pct": 0.0},
+        "QQQ": {"price": 440.10, "pct": 0.0},
+        active_ticker: {"price": 325.86, "pct": 0.0}
+    }
+
     if ALPACA_AVAILABLE and existing_key and existing_sec:
         try:
             data_client = StockHistoricalDataClient(existing_key, existing_sec)
-            latest_trades = data_client.get_stock_latest_trade(StockLatestTradeRequest(symbol_or_symbols=["SPY", "QQQ", active_ticker]))
-            if "SPY" in latest_trades:
-                spy_display = f"{latest_trades['SPY'].price:,.2f}"
-            if "QQQ" in latest_trades:
-                qqq_display = f"{latest_trades['QQQ'].price:,.2f}"
-            if active_ticker in latest_trades:
-                active_display = f"{latest_trades[active_ticker].price:,.2f}"
+            symbols_to_fetch = list(set(["SPY", "QQQ", active_ticker]))
+            
+            # Get latest trades
+            latest_trades = data_client.get_stock_latest_trade(StockLatestTradeRequest(symbol_or_symbols=symbols_to_fetch))
+            
+            # Get historical bars to compute % gain / loss against previous close
+            bars_req = StockBarsRequest(
+                symbol_or_symbols=symbols_to_fetch,
+                timeframe=TimeFrame.Day,
+                start=datetime.datetime.now() - datetime.timedelta(days=7)
+            )
+            bars = data_client.get_stock_bars(bars_req)
+            
+            for sym in symbols_to_fetch:
+                if sym in latest_trades:
+                    current_price = latest_trades[sym].price
+                    sym_bars = bars[sym] if sym in bars and len(bars[sym]) > 0 else []
+                    
+                    pct_change = 0.0
+                    if len(sym_bars) >= 2:
+                        prev_close = sym_bars[-2].close
+                        pct_change = ((current_price - prev_close) / prev_close) * 100
+                    elif len(sym_bars) == 1:
+                        prev_close = sym_bars[0].open
+                        pct_change = ((current_price - prev_close) / prev_close) * 100
+                        
+                    market_data[sym] = {"price": current_price, "pct": pct_change}
         except Exception:
             pass
 
-    # Top Professional Exchange Header Bar (SPY, QQQ, and Dynamic Active Ticker)
+    def format_ticker_display(sym):
+        d = market_data.get(sym, {"price": 0.0, "pct": 0.0})
+        p = d["price"]
+        pct = d["pct"]
+        color = "#0ecb81" if pct >= 0 else "#f6465d"
+        sign = "+" if pct >= 0 else ""
+        return f"{p:,.2f} <span style='color: {color};'>{sign}{pct:.2f}%</span>"
+
+    spy_str = format_ticker_display("SPY")
+    qqq_str = format_ticker_display("QQQ")
+    active_str = format_ticker_display(active_ticker)
+
+    # Top Professional Exchange Header Bar (SPY = Red box, QQQ = Yellow box, Active Ticker = Pink box)
     st.markdown(f"""
         <div class="exchange-header">
             <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // REAL-TIME FEED</span>
-            <span><b>SPY</b> <span style="color: #0ecb81;">{spy_display}</span></span>
-            <span><b>QQQ</b> <span style="color: #0ecb81;">{qqq_display}</span></span>
-            <span><b>{active_ticker} (Live)</b> <span style="color: #0ecb81;">{active_display}</span></span>
+            <span><b>SPY</b> {spy_str}</span>
+            <span><b>QQQ</b> {qqq_str}</span>
+            <span><b>{active_ticker} (Live)</b> {active_str}</span>
             <span style="margin-left: auto; color: #848e9c;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
         </div>
     """, unsafe_allow_html=True)
@@ -185,7 +224,7 @@ else:
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        # Official TradingView Advanced Chart Widget
+        # Official TradingView Advanced Chart Widget linked to Active Ticker
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:670px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
