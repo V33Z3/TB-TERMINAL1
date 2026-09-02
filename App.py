@@ -24,7 +24,7 @@ except ImportError:
     ALPACA_AVAILABLE = False
 
 # Page configuration - Wide mode
-st.set_page_config(page_title="VestTerminal // Real-Time Institutional Trading", layout="wide", page_icon="📈")
+st.set_page_config(page_title="TB TERMINAL // Real-Time Institutional Trading", layout="wide", page_icon="📈")
 
 # Pro Exchange Dark Theme Styling
 st.markdown("""
@@ -91,7 +91,7 @@ if not st.session_state.user:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.2, 1])
     with col_auth2:
-        st.markdown("<h2 style='text-align: center; color: #eaecef;'>🔐 VestTerminal Login</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #eaecef;'>🔐 TB TERMINAL LOGIN</h2>", unsafe_allow_html=True)
         if not supabase:
             st.error("Supabase credentials missing from Streamlit Secrets.")
         else:
@@ -105,7 +105,7 @@ if not st.session_state.user:
                         try:
                             res = supabase.auth.sign_in_with_password({"email": login_email, "password": login_pass})
                             st.session_state.user = res.user
-                            st.session_state.show_splash = True  # Trigger cool trading boot animation
+                            st.session_state.show_splash = True
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -121,12 +121,12 @@ if not st.session_state.user:
                         except Exception as e:
                             st.error(f"Error: {e}")
 else:
-    # Play cool trading splash screen animation once right after login
+    # Play trading splash screen animation once right after login
     if st.session_state.show_splash:
         components.html("""
             <div style="background: #0b0e11; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif;">
                 <div style="text-align: center;">
-                    <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 8px;">⚡ VESTTERMINAL</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
                     <p style="color: #848e9c; font-size: 12px; font-family: monospace; letter-spacing: 1px;">ESTABLISHING SECURE QUANT FEED & LIQUIDITY NODES...</p>
                     <div style="width: 280px; height: 3px; background: #2b313a; border-radius: 2px; margin: 25px auto; overflow: hidden;">
                         <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, transparent); animation: slide 1.2s infinite linear;"></div>
@@ -183,7 +183,7 @@ else:
     header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
     
     with header_col1:
-        st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ VESTTERMINAL</div>", unsafe_allow_html=True)
+        st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ TB TERMINAL</div>", unsafe_allow_html=True)
     
     with header_col2:
         active_ticker = st.text_input("Search Ticker", value="AAPL", label_visibility="collapsed").upper().strip()
