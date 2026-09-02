@@ -314,7 +314,7 @@ else:
 
     render_live_header(target_symbol, existing_key, existing_sec)
 
-    # Inline Config Panel with session memory fallback
+    # Inline Config Panel
     if not existing_key or not existing_sec:
         with st.expander("🔑 CONFIGURATION REQUIRED: Click here to enter your Alpaca API Keys", expanded=True):
             st.info("Enter your Alpaca API credentials below:")
@@ -423,7 +423,9 @@ else:
             st.warning("Configure your Alpaca keys above to execute orders.")
         else:
             try:
-                client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper)
+                # Automatically point to paper or live URL endpoint to prevent 401 authorization mismatches
+                base_url = "https://paper-api.alpaca.markets" if is_paper else "https://api.alpaca.markets"
+                client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper, url_override=base_url)
                 account = client.get_account()
                 
                 st.markdown(f"""
