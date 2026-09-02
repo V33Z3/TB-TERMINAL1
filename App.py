@@ -28,18 +28,27 @@ try:
 except ImportError:
     ALPACA_AVAILABLE = False
 
-# Page configuration - Wide mode
-st.set_page_config(page_title="TB TERMINAL // Real-Time Institutional Trading", layout="wide", page_icon="📈")
+# Page configuration - Wide mode with expanded sidebar by default
+st.set_page_config(
+    page_title="TB TERMINAL // Real-Time Institutional Trading", 
+    layout="wide", 
+    page_icon="📈",
+    initial_sidebar_state="expanded"
+)
 
-# Pro Exchange Dark Theme Styling (Exact background match to TradingView Chart #131722 across all elements)
+# Pro Exchange Dark Theme Styling
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
     footer {visibility: hidden;}
     
+    /* Keep sidebar toggle button visible while styling top bar */
+    [data-testid="stHeader"] {
+        background-color: transparent !important;
+    }
+    
     .block-container {
-        padding-top: 0.5rem;
+        padding-top: 2rem;
         padding-bottom: 0rem;
         padding-left: 0.8rem;
         padding-right: 0.8rem;
@@ -140,7 +149,6 @@ else:
                     <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 5px;">⚡ TB TERMINAL</div>
                     <p style="color: #848e9c; font-size: 11px; font-family: monospace; letter-spacing: 1px; margin-bottom: 20px;">CONNECTING TO EXCHANGE LIQUIDITY & MARKET FEED...</p>
                     
-                    <!-- Animated Stock Chart Splash Box -->
                     <div style="background: #12161c; border: 1px solid #2b313a; border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
                         <svg width="100%" height="110" viewBox="0 0 300 110" style="overflow: visible;">
                             <line x1="0" y1="25" x2="300" y2="25" stroke="#1e2329" stroke-width="1" />
@@ -218,20 +226,20 @@ else:
             st.rerun()
             
         st.markdown("---")
-        st.markdown("**Alpaca API Credentials (for Trading Desk & Real-Time Data)**")
+        st.markdown("**Alpaca API Credentials (Sidebar Input)**")
             
-        with st.form("keys_form"):
-            new_alpaca_key = st.text_input("API Key ID", value=existing_key, type="password")
-            new_alpaca_sec = st.text_input("Secret Key", value=existing_sec, type="password")
-            save_keys_btn = st.form_submit_button("Save Keys", use_container_width=True)
-            if save_keys_btn:
+        with st.form("keys_form_sidebar"):
+            sidebar_alpaca_key = st.text_input("API Key ID", value=existing_key, type="password", key="sb_k")
+            sidebar_alpaca_sec = st.text_input("Secret Key", value=existing_sec, type="password", key="sb_s")
+            save_keys_sidebar = st.form_submit_button("Save Credentials", use_container_width=True)
+            if save_keys_sidebar:
                 try:
                     supabase.table("user_credentials").upsert({
                         "user_id": st.session_state.user.id,
-                        "alpaca_key": new_alpaca_key,
-                        "alpaca_secret": new_alpaca_sec
+                        "alpaca_key": sidebar_alpaca_key,
+                        "alpaca_secret": sidebar_alpaca_sec
                     }).execute()
-                    st.success("Saved securely!")
+                    st.success("Keys saved securely!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error: {e}")
@@ -261,7 +269,6 @@ else:
     def fetch_live_quote(symbol, a_key, a_sec):
         price, pct = 0.0, 0.0
         
-        # 1. Try Alpaca Data API for real-time live quotes if keys are configured
         if ALPACA_AVAILABLE and a_key and a_sec:
             try:
                 data_client = StockHistoricalDataClient(a_key, a_sec)
@@ -273,7 +280,6 @@ else:
             except Exception:
                 pass
 
-        # 2. If Alpaca didn't return a valid price, fallback or fetch percentage change via yfinance
         if YFINANCE_AVAILABLE:
             try:
                 session = get_yf_session()
@@ -322,6 +328,31 @@ else:
 
     render_live_header(target_symbol, existing_key, existing_sec)
 
+    # DIRECT INLINE CREDENTIALS CONFIGURATION PANEL (If keys are missing)
+    if not existing_key or not existing_sec:
+        with st.expander("🔑 CONFIGURATION REQUIRED: Click here to enter your Alpaca API Keys", expanded=True):
+            st.info("To enable zero-delay streaming data and live trading execution, enter your Alpaca API credentials below:")
+            with st.form("inline_keys_form"):
+                ik_col1, ik_col2 = st.columns(2)
+                with ik_col1:
+                    inline_key = st.text_input("Alpaca API Key ID", value=existing_key, type="password")
+                with ik_col2:
+                    inline_sec = st.text_input("Alpaca API Secret Key", value=existing_sec, type="password")
+                
+                save_inline = st.form_submit_button("Save Credentials & Connect Feed", use_container_width=True)
+                if save_inline:
+                    try:
+                        supabase.table("user_credentials").upsert({
+                            "user_id": st.session_state.user.id,
+                            "alpaca_key": inline_key,
+                            "alpaca_secret": inline_sec
+                        }).execute()
+                        st.success("Credentials saved successfully! Reloading...")
+                        time.sleep(1)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error saving credentials: {e}")
+
     # Main Grid: Real-Time Plotly Chart on Left, Execution Desk & Real-Time Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
@@ -334,7 +365,7 @@ else:
         """, unsafe_allow_html=True)
 
         if not existing_key or not existing_sec:
-            st.warning("⚠️ Enter your Alpaca API credentials in the sidebar to stream live non-delayed exchange data.")
+            st.warning("⚠️ Please enter your API keys in the panel above to initialize the live exchange stream.")
         else:
             @st.fragment(run_every="5s")
             def render_realtime_chart(symbol, api_key, api_sec):
@@ -398,7 +429,7 @@ else:
         if not ALPACA_AVAILABLE:
             st.error("Missing `alpaca-py` library.")
         elif not user_alpaca_key or not user_alpaca_sec:
-            st.warning("Configure your Alpaca keys in the sidebar to execute orders.")
+            st.warning("Configure your Alpaca keys above or in the sidebar to execute orders.")
         else:
             try:
                 client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper)
