@@ -123,15 +123,53 @@ if not st.session_state.user:
                         except Exception as e:
                             st.error(f"Error: {e}")
 else:
-    # Play trading splash screen animation once right after login
+    # Play creative stock chart trading animation splash screen once right after login
     if st.session_state.show_splash:
         components.html("""
-            <div style="background: #0b0e11; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif;">
-                <div style="text-align: center;">
-                    <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 12px; font-family: monospace; letter-spacing: 1px;">ESTABLISHING SECURE QUANT FEED & LIQUIDITY NODES...</p>
-                    <div style="width: 280px; height: 3px; background: #2b313a; border-radius: 2px; margin: 25px auto; overflow: hidden;">
-                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, transparent); animation: slide 1.2s infinite linear;"></div>
+            <div style="background: #0b0e11; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
+                <div style="text-align: center; width: 100%; max-width: 420px;">
+                    <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 5px;">⚡ TB TERMINAL</div>
+                    <p style="color: #848e9c; font-size: 11px; font-family: monospace; letter-spacing: 1px; margin-bottom: 20px;">CONNECTING TO EXCHANGE LIQUIDITY & MARKET FEED...</p>
+                    
+                    <!-- Animated Stock Chart Splash Box -->
+                    <div style="background: #12161c; border: 1px solid #2b313a; border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+                        <svg width="100%" height="110" viewBox="0 0 300 110" style="overflow: visible;">
+                            <!-- Grid lines -->
+                            <line x1="0" y1="25" x2="300" y2="25" stroke="#1e2329" stroke-width="1" />
+                            <line x1="0" y1="55" x2="300" y2="55" stroke="#1e2329" stroke-width="1" />
+                            <line x1="0" y1="85" x2="300" y2="85" stroke="#1e2329" stroke-width="1" />
+                            
+                            <!-- Candlesticks / Bars -->
+                            <rect x="35" y="45" width="7" height="30" fill="#f6465d" rx="2" />
+                            <line x1="38" y1="35" x2="38" y2="90" stroke="#f6465d" stroke-width="2" />
+                            
+                            <rect x="75" y="60" width="7" height="20" fill="#0ecb81" rx="2" />
+                            <line x1="78" y1="50" x2="78" y2="95" stroke="#0ecb81" stroke-width="2" />
+                            
+                            <rect x="115" y="40" width="7" height="35" fill="#0ecb81" rx="2" />
+                            <line x1="118" y1="25" x2="118" y2="90" stroke="#0ecb81" stroke-width="2" />
+                            
+                            <rect x="155" y="50" width="7" height="25" fill="#f6465d" rx="2" />
+                            <line x1="158" y1="40" x2="158" y2="80" stroke="#f6465d" stroke-width="2" />
+                            
+                            <rect x="195" y="30" width="7" height="45" fill="#0ecb81" rx="2" />
+                            <line x1="198" y1="15" x2="198" y2="85" stroke="#0ecb81" stroke-width="2" />
+
+                            <rect x="235" y="15" width="7" height="55" fill="#0ecb81" rx="2" />
+                            <line x1="238" y1="5" x2="238" y2="85" stroke="#0ecb81" stroke-width="2" />
+
+                            <!-- Bullish Surging Trend Path -->
+                            <path d="M 15 75 Q 55 85, 95 60 T 175 45 T 255 15" fill="none" stroke="#0ecb81" stroke-width="3" stroke-linecap="round" class="glow-line" />
+                        </svg>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12px;">
+                            <span style="color: #848e9c; font-family: monospace;">MOMENTUM SURGE</span>
+                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.15); padding: 2px 6px; border-radius: 3px;">+5.42% ▲</span>
+                        </div>
+                    </div>
+
+                    <div style="width: 100%; height: 3px; background: #2b313a; border-radius: 2px; margin: 25px 0 10px 0; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, transparent); animation: slide 1.1s infinite linear;"></div>
                     </div>
                 </div>
             </div>
@@ -139,6 +177,15 @@ else:
             @keyframes slide {
                 0% { transform: translateX(-100%); }
                 100% { transform: translateX(100%); }
+            }
+            .glow-line {
+                filter: drop-shadow(0px 0px 8px rgba(14, 203, 129, 0.7));
+                stroke-dasharray: 400;
+                stroke-dashoffset: 400;
+                animation: drawChart 1.4s ease-in-out forwards;
+            }
+            @keyframes drawChart {
+                to { stroke-dashoffset: 0; }
             }
             </style>
         """, height=700)
