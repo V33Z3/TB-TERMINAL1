@@ -24,6 +24,7 @@ try:
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
+    from alpaca.data.enums import DataFeed
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -258,7 +259,7 @@ else:
         if ALPACA_AVAILABLE and a_key and a_sec:
             try:
                 data_client = StockHistoricalDataClient(a_key, a_sec)
-                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
+                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.IEX)
                 quotes = data_client.stock_latest_quote(req)
                 if symbol in quotes and quotes[symbol]:
                     q = quotes[symbol]
@@ -337,7 +338,7 @@ else:
                         }).execute()
                         st.success("Credentials saved to database and active!")
                     except Exception:
-                        st.warning("Active in session memory! (To save permanently, run the SQL RLS policy fix above).")
+                        st.warning("Active in session memory!")
                     
                     time.sleep(1)
                     st.rerun()
@@ -349,7 +350,7 @@ else:
         st.markdown(f"""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol}</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● ZERO DELAY DIRECT STREAM</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● IEX DIRECT STREAM</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -367,7 +368,8 @@ else:
                         symbol_or_symbols=[symbol],
                         timeframe=TimeFrame.Minute,
                         start=start_dt,
-                        end=end_dt
+                        end=end_dt,
+                        feed=DataFeed.IEX
                     )
                     bars = data_client.get_stock_bars(req)
                     df = bars.df
