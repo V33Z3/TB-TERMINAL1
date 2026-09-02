@@ -259,8 +259,8 @@ else:
         if ALPACA_AVAILABLE and a_key and a_sec:
             try:
                 data_client = StockHistoricalDataClient(a_key, a_sec)
-                # Use SIP feed for extended-hours pricing quotes
-                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.SIP)
+                # Fallback to IEX feed for free tier compatibility
+                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.IEX)
                 quotes = data_client.stock_latest_quote(req)
                 if symbol in quotes and quotes[symbol]:
                     q = quotes[symbol]
@@ -350,8 +350,8 @@ else:
     with col_chart:
         st.markdown(f"""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol} (46,000 Extended-Hours Bars)</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● SIP EXTENDED FEED</span>
+                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol} (46,000 Bars)</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● IEX DIRECT FEED</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -363,13 +363,13 @@ else:
                 try:
                     data_client = StockHistoricalDataClient(api_key, api_sec)
                     end_dt = datetime.datetime.now(datetime.timezone.utc)
-                    # ~3 months captures ~46,000 minute bars when including pre-market and after-hours (SIP feed)
-                    start_dt = end_dt - datetime.timedelta(days=90) 
+                    # ~7+ months captures ~46,000 minute bars using standard IEX regular session data
+                    start_dt = end_dt - datetime.timedelta(days=220) 
                     
                     all_dfs = []
                     page_token = None
                     
-                    # Paginate through Alpaca's SIP API to fetch up to 46,000 bars including extended hours
+                    # Paginate through Alpaca's IEX API to fetch up to 46,000 bars without triggering subscription limitations
                     while True:
                         req = StockBarsRequest(
                             symbol_or_symbols=[symbol],
@@ -378,7 +378,7 @@ else:
                             end=end_dt,
                             limit=10000,
                             page_token=page_token,
-                            feed=DataFeed.SIP
+                            feed=DataFeed.IEX
                         )
                         bars = data_client.get_stock_bars(req)
                         if bars.df.empty:
@@ -483,7 +483,7 @@ else:
                         res = client.submit_order(order_data=req)
                         st.success(f"Order executed! ID: {res.id}")
             except Exception as e:
-                st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}). Details: {e}")
+                st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}) and that your API keys are correct. Details: {e}")
 
         # Watchlist
         st.markdown("""
