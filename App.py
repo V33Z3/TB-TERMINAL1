@@ -14,18 +14,59 @@ try:
 except ImportError:
     ALPACA_AVAILABLE = False
 
-# Page configuration
+# Page configuration - Wide mode
 st.set_page_config(page_title="VestTerminal // Institutional Trading", layout="wide", page_icon="📈")
 
-# Professional Crypto/Stock Terminal Dark Theme Styling (Binance / Altrady Style)
+# Aggressive CSS to wipe out Streamlit's default UI chrome and match Pro Exchange Dark Theme
 st.markdown("""
     <style>
-    .stApp { background-color: #121212; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    section[data-testid="stSidebar"] { background-color: #181a20; border-right: 1px: solid #2b2f36; }
-    .top-ticker-bar { background-color: #181a20; border: 1px solid #2b2f36; padding: 10px 15px; border-radius: 6px; display: flex; gap: 20px; align-items: center; margin-bottom: 15px; font-size: 13px; }
-    .terminal-panel { background-color: #181a20; border: 1px solid #2b2f36; padding: 15px; border-radius: 6px; margin-bottom: 15px; }
-    div[data-testid="stMetric"] { background-color: #1e222d; border: 1px solid #2b2f36; padding: 10px; border-radius: 4px; }
-    .stTextInput input, .stSelectbox select { background-color: #1e222d !important; color: white !important; border-color: #2b2f36 !important; }
+    /* Hide Streamlit default header, footer, and menu */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Remove padding to maximize screen real estate like a native app */
+    .block-container {
+        padding-top: 0.8rem;
+        padding-bottom: 0rem;
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+        max-width: 100% !important;
+    }
+    
+    /* Exchange Theme Colors (#0b0e11 background, #1e2329 panels, #2b313a borders) */
+    .stApp { background-color: #0b0e11; color: #b7bdc6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    /* Top Ticker Bar */
+    .exchange-header {
+        background-color: #1e2329;
+        border-bottom: 1px solid #2b313a;
+        padding: 8px 15px;
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        font-size: 12px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    
+    /* Tighten and style Streamlit inputs to match professional terminal look */
+    .stTextInput input, .stSelectbox select, .stNumberInput input {
+        background-color: #181a20 !important;
+        color: #eaecef !important;
+        border: 1px solid #2b313a !important;
+        border-radius: 3px !important;
+        font-size: 13px !important;
+        min-height: 32px !important;
+    }
+    
+    /* Custom panel container */
+    .terminal-card {
+        background-color: #1e2329;
+        border: 1px solid #2b313a;
+        border-radius: 4px;
+        padding: 12px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,109 +88,106 @@ if "user" not in st.session_state:
 
 # Authentication Gate if user is not logged in
 if not st.session_state.user:
-    st.title("🔐 VestTerminal - Authentication")
-    if not supabase:
-        st.error("Supabase credentials are missing from Streamlit Secrets. Please configure `SUPABASE_URL` and `SUPABASE_KEY`.")
-    else:
-        auth_tab1, auth_tab2 = st.tabs(["Log In", "Sign Up"])
-        
-        with auth_tab1:
-            st.subheader("Log Into Your Terminal")
-            with st.form("login_form"):
-                login_email = st.text_input("Email")
-                login_pass = st.text_input("Password", type="password")
-                login_btn = st.form_submit_button("Log In")
-                
-                if login_btn:
-                    try:
-                        res = supabase.auth.sign_in_with_password({"email": login_email, "password": login_pass})
-                        st.session_state.user = res.user
-                        st.success("Successfully logged in!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Login failed: {e}")
-                        
-        with auth_tab2:
-            st.subheader("Create a New Terminal Account")
-            with st.form("signup_form"):
-                signup_email = st.text_input("Email")
-                signup_pass = st.text_input("Password", type="password")
-                signup_btn = st.form_submit_button("Sign Up")
-                
-                if signup_btn:
-                    try:
-                        res = supabase.auth.sign_up({"email": signup_email, "password": signup_pass})
-                        st.success("Account created successfully! You can now log in.")
-                    except Exception as e:
-                        st.error(f"Sign up failed: {e}")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_auth1, col_auth2, col_auth3 = st.columns([1, 1.2, 1])
+    with col_auth2:
+        st.markdown("<h2 style='text-align: center; color: #eaecef;'>🔐 VestTerminal Login</h2>", unsafe_allow_html=True)
+        if not supabase:
+            st.error("Supabase credentials missing from Streamlit Secrets.")
+        else:
+            auth_tab1, auth_tab2 = st.tabs(["Sign In", "Register"])
+            with auth_tab1:
+                with st.form("login_form"):
+                    login_email = st.text_input("Email")
+                    login_pass = st.text_input("Password", type="password")
+                    login_btn = st.form_submit_button("Access Terminal", use_container_width=True)
+                    if login_btn:
+                        try:
+                            res = supabase.auth.sign_in_with_password({"email": login_email, "password": login_pass})
+                            st.session_state.user = res.user
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+            with auth_tab2:
+                with st.form("signup_form"):
+                    signup_email = st.text_input("Email")
+                    signup_pass = st.text_input("Password", type="password")
+                    signup_btn = st.form_submit_button("Create Account", use_container_width=True)
+                    if signup_btn:
+                        try:
+                            supabase.auth.sign_up({"email": signup_email, "password": signup_pass})
+                            st.success("Account created! You can now sign in.")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
 else:
-    # Sidebar Navigation & Settings
-    st.sidebar.markdown(f"👤 **{st.session_state.user.email}**")
-    if st.sidebar.button("Log Out", use_container_width=True):
-        supabase.auth.sign_out()
-        st.session_state.user = None
-        st.rerun()
-        
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("⚙️ API Configuration")
-    
-    # Fetch existing keys for user
-    existing_key, existing_sec = "", ""
-    try:
-        db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
-        if db_res.data and len(db_res.data) > 0:
-            existing_key = db_res.data[0].get("alpaca_key", "")
-            existing_sec = db_res.data[0].get("alpaca_secret", "")
-    except Exception:
-        pass
-        
-    with st.sidebar.form("keys_form"):
-        new_alpaca_key = st.text_input("Alpaca API Key ID", value=existing_key, type="password")
-        new_alpaca_sec = st.text_input("Alpaca Secret Key", value=existing_sec, type="password")
-        save_keys_btn = st.form_submit_button("Save Credentials", use_container_width=True)
-        
-        if save_keys_btn:
-            try:
-                supabase.table("user_credentials").upsert({
-                    "user_id": st.session_state.user.id,
-                    "alpaca_key": new_alpaca_key,
-                    "alpaca_secret": new_alpaca_sec
-                }).execute()
-                st.sidebar.success("Saved!")
-            except Exception as e:
-                st.sidebar.error(f"Error: {e}")
-
-    # Top Ticker Bar Simulation
+    # Top Professional Exchange Header Bar (Mimicking Altrady/Binance top bar)
     st.markdown("""
-        <div class="top-ticker-bar">
-            <span>🟢 <b>VESTTERMINAL LIVE</b></span>
-            <span><b>BTC/USDT</b> <span style="color:#0ecb81;">33,376.02 (+0.18%)</span></span>
-            <span><b>ETH/USDT</b> <span style="color:#f6465d;">1,856.29 (-0.54%)</span></span>
-            <span><b>AAPL</b> <span style="color:#0ecb81;">325.85 (+0.22%)</span></span>
-            <span style="margin-left: auto; color: #0ecb81;">● SYSTEM ONLINE</span>
+        <div class="exchange-header">
+            <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL PRO</span>
+            <span><b>BTC/USDT</b> <span style="color: #0ecb81;">33,376.02 +0.18%</span></span>
+            <span><b>ETH/USDT</b> <span style="color: #f6465d;">1,856.29 -0.54%</span></span>
+            <span><b>BNB/USDT</b> <span style="color: #0ecb81;">280.29 +1.12%</span></span>
+            <span><b>AAPL</b> <span style="color: #0ecb81;">325.85 +0.22%</span></span>
+            <span style="margin-left: auto; color: #848e9c;">User: <b style="color: #eaecef;">{}</b></span>
         </div>
-    """, unsafe_allow_html=True)
+    """.format(st.session_state.user.email), unsafe_allow_html=True)
 
-    # Main Terminal Layout: Side-by-Side (Chart on left, Execution panel on right)
-    col_chart, col_trade = st.columns([3.2, 1.3])
+    # Sidebar toggle for Settings & Logout (hidden cleanly until clicked)
+    with st.sidebar:
+        st.markdown("### ⚙️ Terminal Settings")
+        if st.button("Log Out", use_container_width=True):
+            supabase.auth.sign_out()
+            st.session_state.user = None
+            st.rerun()
+            
+        st.markdown("---")
+        st.markdown("**Alpaca API Credentials**")
+        
+        existing_key, existing_sec = "", ""
+        try:
+            db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
+            if db_res.data and len(db_res.data) > 0:
+                existing_key = db_res.data[0].get("alpaca_key", "")
+                existing_sec = db_res.data[0].get("alpaca_secret", "")
+        except Exception:
+            pass
+            
+        with st.form("keys_form"):
+            new_alpaca_key = st.text_input("API Key ID", value=existing_key, type="password")
+            new_alpaca_sec = st.text_input("Secret Key", value=existing_sec, type="password")
+            save_keys_btn = st.form_submit_button("Save Keys", use_container_width=True)
+            if save_keys_btn:
+                try:
+                    supabase.table("user_credentials").upsert({
+                        "user_id": st.session_state.user.id,
+                        "alpaca_key": new_alpaca_key,
+                        "alpaca_secret": new_alpaca_sec
+                    }).execute()
+                    st.success("Saved securely!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+    # Main Terminal Grid: Chart on Left (Width ratio ~3.4), Order Desk on Right (Width ratio ~1.2)
+    col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        c_in1, c_in2 = st.columns([1, 3])
-        with c_in1:
-            exchange_prefix = st.selectbox("Exchange", ["NASDAQ", "NYSE", "BINANCE", "FX"])
-        with c_in2:
-            ticker_input = st.text_input("Active Ticker", "AAPL").upper().strip()
-        
+        # Mini controls above chart to swap tickers instantly
+        cc1, cc2 = st.columns([1, 3])
+        with cc1:
+            exchange_prefix = st.selectbox("Market", ["NASDAQ", "NYSE", "BINANCE", "FX"], label_visibility="collapsed")
+        with cc2:
+            ticker_input = st.text_input("Ticker", "AAPL", label_visibility="collapsed").upper().strip()
+            
         target_symbol = f"{exchange_prefix}:{ticker_input}"
         
-        # Embedded TradingView Advanced Chart Widget
+        # Embedded TradingView Advanced Chart Widget styled dark to match
         tv_html = f"""
-        <div class="tradingview-widget-container" style="height:640px;width:100%">
+        <div class="tradingview-widget-container" style="height:670px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {{
             "width": "100%",
-            "height": "640",
+            "height": "670",
             "symbol": "{target_symbol}",
             "interval": "D",
             "timezone": "Etc/UTC",
@@ -163,80 +201,80 @@ else:
           </script>
         </div>
         """
-        components.html(tv_html, height=650)
+        components.html(tv_html, height=680)
 
     with col_trade:
-        st.markdown("### ⚡ Trading Desk")
-        account_type = st.radio("Mode", ["Paper", "Live"], horizontal=True, label_visibility="collapsed")
+        # Trading Panel matching Altrady right-hand side layout
+        st.markdown("""
+            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px;">
+                <div style="font-weight: bold; font-size: 13px; color: #eaecef; margin-bottom: 8px;">Trading Desk</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        account_type = st.radio("Mode", ["Paper Trading", "Live Trading"], horizontal=True, label_visibility="collapsed")
         is_paper = True if "Paper" in account_type else False
 
         user_alpaca_key, user_alpaca_sec = existing_key, existing_sec
 
         if not ALPACA_AVAILABLE:
-            st.error("Missing `alpaca-py` in requirements.txt.")
+            st.error("Missing `alpaca-py` library.")
         elif not user_alpaca_key or not user_alpaca_sec:
-            st.warning("Enter your Alpaca API keys in the sidebar to load your trading account.")
+            st.warning("Configure your Alpaca keys in the sidebar settings.")
         else:
             try:
                 client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper)
                 account = client.get_account()
                 
-                # Portfolio Balances Box
+                # Account Balances Box
                 st.markdown(f"""
-                <div style="background-color: #1e222d; padding: 10px; border-radius: 6px; border: 1px solid #2b2f36; font-size: 12px; margin-bottom: 10px;">
-                    <b>Equity:</b> ${float(account.equity):,.2f}<br>
-                    <b>Buying Power:</b> ${float(account.buying_power):,.2f}<br>
-                    <b>Cash:</b> ${float(account.cash):,.2f}
+                <div style="background-color: #181a20; padding: 8px; border-radius: 3px; border: 1px solid #2b313a; font-size: 11px; margin-top: 8px; margin-bottom: 8px; color: #848e9c;">
+                    <b>Equity:</b> <span style="color:#eaecef;">${float(account.equity):,.2f}</span><br>
+                    <b>Buying Power:</b> <span style="color:#eaecef;">${float(account.buying_power):,.2f}</span><br>
+                    <b>Cash:</b> <span style="color:#eaecef;">${float(account.cash):,.2f}</span>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                with st.form("order_form"):
-                    order_symbol = st.text_input("Symbol", value=ticker_input).upper()
-                    order_qty = st.number_input("Quantity", min_value=0.01, value=1.0, step=1.0)
-                    order_side = st.selectbox("Action", ["BUY", "SELL"])
-                    order_type = st.radio("Type", ["Market", "Limit"], horizontal=True)
+                with st.form("order_exec_form"):
+                    o_sym = st.text_input("Asset", value=ticker_input).upper()
+                    o_qty = st.number_input("Quantity", min_value=0.01, value=1.0, step=1.0)
+                    o_side = st.selectbox("Action", ["BUY", "SELL"])
+                    o_type = st.radio("Order Type", ["Market", "Limit"], horizontal=True)
                     
-                    limit_price = 0.0
-                    if order_type == "Limit":
-                        limit_price = st.number_input("Limit Price ($)", min_value=0.01, value=100.00)
+                    limit_p = 0.0
+                    if o_type == "Limit":
+                        limit_p = st.number_input("Limit Price", min_value=0.01, value=100.00)
+                        
+                    submit_order = st.form_submit_button("Place Order", use_container_width=True)
                     
-                    submit_btn = st.form_submit_button("Place Order", use_container_width=True)
-                    
-                    if submit_btn:
-                        side_enum = OrderSide.BUY if order_side == "BUY" else OrderSide.SELL
-                        if order_type == "Market":
-                            req = MarketOrderRequest(symbol=order_symbol, qty=order_qty, side=side_enum, time_in_force=TimeInForce.GTC)
+                    if submit_order:
+                        side_enum = OrderSide.BUY if o_side == "BUY" else OrderSide.SELL
+                        if o_type == "Market":
+                            req = MarketOrderRequest(symbol=o_sym, qty=o_qty, side=side_enum, time_in_force=TimeInForce.GTC)
                         else:
-                            req = LimitOrderRequest(symbol=order_symbol, qty=order_qty, side=side_enum, time_in_force=TimeInForce.GTC, limit_price=limit_price)
+                            req = LimitOrderRequest(symbol=o_sym, qty=o_qty, side=side_enum, time_in_force=TimeInForce.GTC, limit_price=limit_p)
                         
                         res = client.submit_order(order_data=req)
-                        st.success(f"Order Placed! ID: {res.id}")
+                        st.success(f"Order executed! ID: {res.id}")
             except Exception as e:
-                st.error(f"Alpaca Connection Error: {e}")
+                st.error(f"Connection error: {e}")
 
-    # Bottom AI Assistant Drawer / Expandable Section
-    with st.expander("🤖 Groq Quant AI Intelligence Assistant"):
-        sys_prompt = "You are an elite quantitative trading assistant. Give professional guidance on technical setups, risk management, and market analysis."
-        ai_col1, ai_col2 = st.columns([3, 1])
-        with ai_col1:
-            user_prompt = st.text_input("Ask AI about current market setups:", "Evaluate risk parameters for trading tech equities.")
-        with ai_col2:
-            ask_ai_btn = st.button("Generate Insights", use_container_width=True)
+    # Bottom AI Assistant drawer
+    with st.expander("🤖 Groq Quant Intelligence Assistant"):
+        ai_c1, ai_c2 = st.columns([4, 1])
+        with ai_c1:
+            ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
+        with ai_c2:
+            ai_btn = st.button("Ask AI", use_container_width=True)
             
-        if ask_ai_btn:
-            if not groq_key:
-                st.error("Groq API key not configured in Streamlit Secrets.")
-            elif not user_prompt.strip():
-                st.warning("Please enter a question.")
-            else:
-                with st.spinner("Analyzing via Groq LPU..."):
-                    try:
-                        ai_client = Groq(api_key=groq_key)
-                        completion = ai_client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
-                            messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
-                            temperature=0.7
-                        )
-                        st.markdown(completion.choices[0].message.content)
-                    except Exception as e:
-                        st.error(f"AI Error: {e}")
+        if ai_btn and groq_key and ai_query.strip():
+            with st.spinner("Processing..."):
+                try:
+                    ai_client = Groq(api_key=groq_key)
+                    completion = ai_client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[{"role": "system", "content": "You are an expert institutional trading analyst."}, {"role": "user", "content": ai_query}],
+                        temperature=0.7
+                    )
+                    st.write(completion.choices[0].message.content)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
