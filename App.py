@@ -6,14 +6,18 @@ import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
 
-# Try importing Alpaca SDKs for trading and real-time data
+# Try importing yfinance for instant real-time market quotes
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+
+# Try importing Alpaca SDKs for trading execution
 try:
     from alpaca.trading.client import TradingClient
     from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
     from alpaca.trading.enums import OrderSide, TimeInForce
-    from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestTradeRequest, StockBarsRequest
-    from alpaca.data.timeframe import TimeFrame
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -44,13 +48,14 @@ st.markdown("""
     .exchange-header {
         background-color: #1e2329;
         border-bottom: 1px solid #2b313a;
-        padding: 8px 15px;
+        padding: 10px 15px;
         display: flex;
         align-items: center;
-        gap: 25px;
-        font-size: 12px;
+        gap: 20px;
+        font-size: 13px;
         border-radius: 4px;
         margin-bottom: 10px;
+        flex-wrap: wrap;
     }
     
     /* Terminal input styling */
@@ -124,7 +129,7 @@ else:
             st.rerun()
             
         st.markdown("---")
-        st.markdown("**Alpaca API Credentials**")
+        st.markdown("**Alpaca API Credentials (for Trading Desk)**")
         
         existing_key, existing_sec = "", ""
         try:
@@ -157,65 +162,48 @@ else:
 
     target_symbol = f"NASDAQ:{active_ticker}"
 
-    # Fetch real-time prices and percentage changes for SPY, QQQ, and Active Ticker via Alpaca
-    market_data = {
-        "SPY": {"price": 510.25, "pct": 0.0},
-        "QQQ": {"price": 440.10, "pct": 0.0},
-        active_ticker: {"price": 325.86, "pct": 0.0}
-    }
+    # Fetch live real-time prices & % changes via yfinance
+    def fetch_live_quote(symbol):
+        price, pct = 0.0, 0.0
+        if YFINANCE_AVAILABLE:
+            try:
+                t = yf.Ticker(symbol)
+                hist = t.history(period="2d")
+                if not hist.empty:
+                    price = float(hist['Close'].iloc[-1])
+                    prev = float(hist['Close'].iloc[0]) if len(hist) > 1 else float(hist['Open'].iloc[0])
+                    pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
+            except Exception:
+                pass
+        return price, pct
 
-    if ALPACA_AVAILABLE and existing_key and existing_sec:
-        try:
-            data_client = StockHistoricalDataClient(existing_key, existing_sec)
-            symbols_to_fetch = list(set(["SPY", "QQQ", active_ticker]))
-            
-            # Get latest trades
-            latest_trades = data_client.get_stock_latest_trade(StockLatestTradeRequest(symbol_or_symbols=symbols_to_fetch))
-            
-            # Get historical bars to compute % gain / loss against previous close
-            bars_req = StockBarsRequest(
-                symbol_or_symbols=symbols_to_fetch,
-                timeframe=TimeFrame.Day,
-                start=datetime.datetime.now() - datetime.timedelta(days=7)
-            )
-            bars = data_client.get_stock_bars(bars_req)
-            
-            for sym in symbols_to_fetch:
-                if sym in latest_trades:
-                    current_price = latest_trades[sym].price
-                    sym_bars = bars[sym] if sym in bars and len(bars[sym]) > 0 else []
-                    
-                    pct_change = 0.0
-                    if len(sym_bars) >= 2:
-                        prev_close = sym_bars[-2].close
-                        pct_change = ((current_price - prev_close) / prev_close) * 100
-                    elif len(sym_bars) == 1:
-                        prev_close = sym_bars[0].open
-                        pct_change = ((current_price - prev_close) / prev_close) * 100
-                        
-                    market_data[sym] = {"price": current_price, "pct": pct_change}
-        except Exception:
-            pass
+    spy_price, spy_pct = fetch_live_quote("SPY")
+    qqq_price, qqq_pct = fetch_live_quote("QQQ")
+    active_price, active_pct = fetch_live_quote(active_ticker)
 
-    def format_ticker_display(sym):
-        d = market_data.get(sym, {"price": 0.0, "pct": 0.0})
-        p = d["price"]
-        pct = d["pct"]
+    def format_badge(sym, price, pct, bg_color, border_color):
         color = "#0ecb81" if pct >= 0 else "#f6465d"
         sign = "+" if pct >= 0 else ""
-        return f"{p:,.2f} <span style='color: {color};'>{sign}{pct:.2f}%</span>"
+        return f"""
+        <div style="background: {bg_color}; border: 1px solid {border_color}; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px;">
+            <b>{sym}</b>
+            <span style="color: #eaecef;">${price:,.2f}</span>
+            <span style="color: {color}; font-weight: bold;">{sign}{pct:.2f}%</span>
+        </div>
+        """
 
-    spy_str = format_ticker_display("SPY")
-    qqq_str = format_ticker_display("QQQ")
-    active_str = format_ticker_display(active_ticker)
+    # Corresponding color containers matching your layout (Red = SPY, Yellow = QQQ, Pink = Active Ticker)
+    spy_html = format_badge("SPY", spy_price, spy_pct, "#3a1a1a", "#f6465d")
+    qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#3a331a", "#f0b90b")
+    active_html = format_badge(f"{active_ticker} (Live)", active_price, active_pct, "#331a3a", "#9c27b0")
 
-    # Top Professional Exchange Header Bar (SPY = Red box, QQQ = Yellow box, Active Ticker = Pink box)
+    # Top Professional Exchange Header Bar
     st.markdown(f"""
         <div class="exchange-header">
             <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // REAL-TIME FEED</span>
-            <span><b>SPY</b> {spy_str}</span>
-            <span><b>QQQ</b> {qqq_str}</span>
-            <span><b>{active_ticker} (Live)</b> {active_str}</span>
+            {spy_html}
+            {qqq_html}
+            {active_html}
             <span style="margin-left: auto; color: #848e9c;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
         </div>
     """, unsafe_allow_html=True)
@@ -263,7 +251,7 @@ else:
         if not ALPACA_AVAILABLE:
             st.error("Missing `alpaca-py` library.")
         elif not user_alpaca_key or not user_alpaca_sec:
-            st.warning("Configure your Alpaca keys in the sidebar settings.")
+            st.warning("Configure your Alpaca keys in the sidebar to execute orders.")
         else:
             try:
                 client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper)
