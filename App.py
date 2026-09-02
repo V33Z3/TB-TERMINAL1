@@ -383,11 +383,12 @@ else:
                         plot_bgcolor="#131722",
                         margin=dict(l=10, r=10, t=10, b=10),
                         height=630,
+                        dragmode='pan',
                         xaxis=dict(type='category', showgrid=False, nticks=10),
                         xaxis_rangeslider_visible=False,
                         font=dict(color="#b7bdc6", size=11)
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, config={'scrollZoom': True})
                 else:
                     st.info("Awaiting market data feed...")
             except Exception as e:
