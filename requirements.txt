@@ -3,7 +3,6 @@ yfinance
 plotly
 pandas
 numpy
-requests
-alpaca-py
-pyotp
 groq
+supabase
+alpaca-py
