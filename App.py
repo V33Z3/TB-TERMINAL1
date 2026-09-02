@@ -320,7 +320,7 @@ else:
 
     render_live_header(target_symbol, existing_key, existing_sec)
 
-    # Main Grid: Advanced Chart on Left, Execution Desk & Watchlist on Right
+    # Main Grid: Advanced Chart on Left, Execution Desk & TradingView Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -400,29 +400,44 @@ else:
             except Exception as e:
                 st.error(f"Connection error: {e}")
 
-        # --- WATCHLIST SECTION ---
-        st.markdown("""
-            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 10px;">
-                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Watchlist</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        watchlist_symbols = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "CVS", "SPY", "QQQ"]
+        # --- OFFICIAL TRADINGVIEW MARKET OVERVIEW WATCHLIST WIDGET ---
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         
-        for sym in watchlist_symbols:
-            w_price, w_pct = fetch_live_quote(sym, existing_key, existing_sec)
-            color = "#0ecb81" if w_pct >= 0 else "#f6465d"
-            sign = "+" if w_pct >= 0 else ""
-            
-            col_w1, col_w2, col_w3 = st.columns([1.2, 1.5, 1.2])
-            with col_w1:
-                if st.button(sym, key=f"wl_{sym}", use_container_width=True):
-                    st.session_state.active_ticker = sym
-                    st.rerun()
-            with col_w2:
-                st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: #eaecef; text-align: right;'>${w_price:,.2f}</div>", unsafe_allow_html=True)
-            with col_w3:
-                st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: {color}; font-weight: bold; text-align: right;'>{sign}{w_pct:.2f}%</div>", unsafe_allow_html=True)
+        tv_watchlist_html = """
+        <div class="tradingview-widget-container" style="height:320px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+          {
+            "colorTheme": "dark",
+            "dateRange": "12M",
+            "showChart": false,
+            "locale": "en",
+            "width": "100%",
+            "height": "320",
+            "isTransparent": false,
+            "showSymbolLogo": true,
+            "showFloatingTooltip": false,
+            "tabs": [
+              {
+                "title": "Watchlist",
+                "symbols": [
+                  { "s": "NASDAQ:AAPL", "d": "Apple Inc" },
+                  { "s": "NASDAQ:TSLA", "d": "Tesla Inc" },
+                  { "s": "NASDAQ:NVDA", "d": "NVIDIA Corp" },
+                  { "s": "NASDAQ:AMZN", "d": "Amazon.com Inc" },
+                  { "s": "NASDAQ:MSFT", "d": "Microsoft Corp" },
+                  { "s": "NASDAQ:GOOGL", "d": "Alphabet Inc" },
+                  { "s": "NYSE:CVS", "d": "CVS Health Corp" },
+                  { "s": "AMEX:SPY", "d": "SPDR S&P 500 ETF" },
+                  { "s": "NASDAQ:QQQ", "d": "Invesco QQQ Trust" }
+                ]
+              }
+            ]
+          }
+          </script>
+        </div>
+        """
+        components.html(tv_watchlist_html, height=330)
 
     # Bottom AI Assistant drawer
     with st.expander("🤖 Groq Quant Intelligence Assistant"):
