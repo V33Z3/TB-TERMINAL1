@@ -15,9 +15,9 @@ except ImportError:
     ALPACA_AVAILABLE = False
 
 # Page configuration - Wide mode
-st.set_page_config(page_title="VestTerminal // Institutional GoCharting", layout="wide", page_icon="📈")
+st.set_page_config(page_title="VestTerminal // Institutional Trading", layout="wide", page_icon="📈")
 
-# Pro Exchange Dark Theme Styling (Matching GoCharting & Altrady dark palettes)
+# Pro Exchange Dark Theme Styling (Matching Altrady & Binance palettes)
 st.markdown("""
     <style>
     /* Hide Streamlit default chrome */
@@ -114,7 +114,7 @@ else:
     # Top Professional Exchange Header Bar
     st.markdown("""
         <div class="exchange-header">
-            <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // GOCHARTING PRO</span>
+            <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // PRO TERMINAL</span>
             <span><b>BTC/USDT</b> <span style="color: #0ecb81;">33,376.02 +0.18%</span></span>
             <span><b>ETH/USDT</b> <span style="color: #f6465d;">1,856.29 -0.54%</span></span>
             <span><b>BNB/USDT</b> <span style="color: #0ecb81;">280.29 +1.12%</span></span>
@@ -158,7 +158,7 @@ else:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-    # Main Grid: GoCharting Embed on Left, Execution Desk on Right
+    # Main Grid: Advanced Chart on Left, Execution Desk on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -168,9 +168,30 @@ else:
         with cc2:
             ticker_input = st.text_input("Ticker", "AAPL", label_visibility="collapsed").upper().strip()
             
-        # GoCharting terminal URL integration
-        gocharting_url = f"https://gocharting.com/terminal?ticker={exchange_prefix}:{ticker_input}"
-        components.iframe(gocharting_url, height=680, scrolling=True)
+        target_symbol = f"{exchange_prefix}:{ticker_input}"
+        
+        # Official TradingView Advanced Chart Widget with complete indicator and Fib toolsets
+        tv_html = f"""
+        <div class="tradingview-widget-container" style="height:670px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {{
+            "width": "100%",
+            "height": "670",
+            "symbol": "{target_symbol}",
+            "interval": "D",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "allow_symbol_change": true,
+            "calendar": false,
+            "support_host": "https://www.tradingview.com"
+          }}
+          </script>
+        </div>
+        """
+        components.html(tv_html, height=680)
 
     with col_trade:
         st.markdown("""
