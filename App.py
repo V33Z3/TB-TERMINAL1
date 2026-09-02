@@ -9,21 +9,20 @@ import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
 
-# Try importing yfinance for market quotes fallback
+# Try importing yfinance for market quotes and gap-free extended-hours charts
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
 
-# Try importing Alpaca SDKs for real-time data and trading execution
+# Try importing Alpaca SDKs for trading execution and live quotes
 try:
     from alpaca.trading.client import TradingClient
     from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
-    from alpaca.data.timeframe import TimeFrame
+    from alpaca.data.requests import StockLatestQuoteRequest
     from alpaca.data.enums import DataFeed
     ALPACA_AVAILABLE = True
 except ImportError:
@@ -259,7 +258,6 @@ else:
         if ALPACA_AVAILABLE and a_key and a_sec:
             try:
                 data_client = StockHistoricalDataClient(a_key, a_sec)
-                # Fallback to IEX feed for free tier compatibility
                 req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.IEX)
                 quotes = data_client.stock_latest_quote(req)
                 if symbol in quotes and quotes[symbol]:
@@ -350,86 +348,52 @@ else:
     with col_chart:
         st.markdown(f"""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol} (46,000 Bars)</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● IEX DIRECT FEED</span>
+                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Continuous Extended-Hours Feed // {target_symbol} (Pre-Market & After-Hours Included)</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● GAP-FREE FEED</span>
             </div>
         """, unsafe_allow_html=True)
 
-        if not existing_key or not existing_sec:
-            st.warning("⚠️ Please enter your API keys in the panel above to initialize the live exchange stream.")
-        else:
-            @st.fragment(run_every="5s")
-            def render_realtime_chart(symbol, api_key, api_sec):
-                try:
-                    data_client = StockHistoricalDataClient(api_key, api_sec)
-                    end_dt = datetime.datetime.now(datetime.timezone.utc)
-                    # ~7+ months captures ~46,000 minute bars using standard IEX regular session data
-                    start_dt = end_dt - datetime.timedelta(days=220) 
-                    
-                    all_dfs = []
-                    page_token = None
-                    
-                    # Paginate through Alpaca's IEX API to fetch up to 46,000 bars without triggering subscription limitations
-                    while True:
-                        req = StockBarsRequest(
-                            symbol_or_symbols=[symbol],
-                            timeframe=TimeFrame.Minute,
-                            start=start_dt,
-                            end=end_dt,
-                            limit=10000,
-                            page_token=page_token,
-                            feed=DataFeed.IEX
-                        )
-                        bars = data_client.get_stock_bars(req)
-                        if bars.df.empty:
-                            break
-                        all_dfs.append(bars.df)
-                        page_token = bars.next_page_token
+        @st.fragment(run_every="10s")
+        def render_gapfree_chart(symbol):
+            if not YFINANCE_AVAILABLE:
+                st.error("yfinance library not available for chart data.")
+                return
+            try:
+                session = get_yf_session()
+                t = yf.Ticker(symbol, session=session)
+                # Fetch 60 days of 5-minute data with prepost=True to completely eliminate overnight gaps
+                df = t.history(period="60d", interval="5m", prepost=True)
+                
+                if not df.empty:
+                    df['time_str'] = df.index.strftime('%Y-%m-%d %H:%M')
                         
-                        total_bars = sum(len(d) for d in all_dfs)
-                        if not page_token or total_bars >= 46000:
-                            break
-                            
-                    df = pd.concat(all_dfs) if all_dfs else pd.DataFrame()
+                    fig = go.Figure(data=[go.Candlestick(
+                        x=df['time_str'],
+                        open=df['Open'],
+                        high=df['High'],
+                        low=df['Low'],
+                        close=df['Close'],
+                        increasing_line_color='#0ecb81',
+                        decreasing_line_color='#f6465d'
+                    )])
                     
-                    if not df.empty:
-                        if isinstance(df.index, pd.MultiIndex):
-                            df = df.xs(symbol)
-                            
-                        # Trim precisely to the requested 46,000 bars if needed
-                        if len(df) > 46000:
-                            df = df.tail(46000)
-                            
-                        # Convert index to string timestamps for continuous categorical plotting
-                        df['time_str'] = df.index.strftime('%Y-%m-%d %H:%M')
-                            
-                        fig = go.Figure(data=[go.Candlestick(
-                            x=df['time_str'],
-                            open=df['open'],
-                            high=df['high'],
-                            low=df['low'],
-                            close=df['close'],
-                            increasing_line_color='#0ecb81',
-                            decreasing_line_color='#f6465d'
-                        )])
-                        
-                        fig.update_layout(
-                            template="plotly_dark",
-                            paper_bgcolor="#131722",
-                            plot_bgcolor="#131722",
-                            margin=dict(l=10, r=10, t=10, b=10),
-                            height=630,
-                            xaxis=dict(type='category', showgrid=False, nticks=10),
-                            xaxis_rangeslider_visible=False,
-                            font=dict(color="#b7bdc6", size=11)
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        st.info("Awaiting live exchange bar data...")
-                except Exception as e:
-                    st.error(f"Data stream error: {e}")
+                    fig.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor="#131722",
+                        plot_bgcolor="#131722",
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        height=630,
+                        xaxis=dict(type='category', showgrid=False, nticks=10),
+                        xaxis_rangeslider_visible=False,
+                        font=dict(color="#b7bdc6", size=11)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Awaiting market data feed...")
+            except Exception as e:
+                st.error(f"Chart error: {e}")
 
-            render_realtime_chart(target_symbol, existing_key, existing_sec)
+        render_gapfree_chart(target_symbol)
 
     with col_trade:
         st.markdown("""
