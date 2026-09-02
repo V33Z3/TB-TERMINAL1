@@ -29,7 +29,7 @@ except ImportError:
 # Page configuration - Wide mode
 st.set_page_config(page_title="TB TERMINAL // Real-Time Institutional Trading", layout="wide", page_icon="📈")
 
-# Pro Exchange Dark Theme Styling (Background matched to TradingView Chart #131722)
+# Pro Exchange Dark Theme Styling (Exact background match to TradingView Chart #131722)
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -44,7 +44,11 @@ st.markdown("""
         max-width: 100% !important;
     }
     
-    .stApp { background-color: #131722; color: #b7bdc6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] { 
+        background-color: #131722 !important; 
+        color: #b7bdc6; 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    }
     
     /* Top Exchange Ticker Bar Layout */
     .exchange-header {
@@ -316,7 +320,7 @@ else:
 
     render_live_header(target_symbol, existing_key, existing_sec)
 
-    # Main Grid: Advanced Chart on Left, Execution Desk on Right
+    # Main Grid: Advanced Chart on Left, Execution Desk & Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -395,6 +399,30 @@ else:
                         st.success(f"Order executed! ID: {res.id}")
             except Exception as e:
                 st.error(f"Connection error: {e}")
+
+        # --- WATCHLIST SECTION ---
+        st.markdown("""
+            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 10px;">
+                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Watchlist</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        watchlist_symbols = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "CVS", "SPY", "QQQ"]
+        
+        for sym in watchlist_symbols:
+            w_price, w_pct = fetch_live_quote(sym, existing_key, existing_sec)
+            color = "#0ecb81" if w_pct >= 0 else "#f6465d"
+            sign = "+" if w_pct >= 0 else ""
+            
+            col_w1, col_w2, col_w3 = st.columns([1.2, 1.5, 1.2])
+            with col_w1:
+                if st.button(sym, key=f"wl_{sym}", use_container_width=True):
+                    st.session_state.active_ticker = sym
+                    st.rerun()
+            with col_w2:
+                st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: #eaecef; text-align: right;'>${w_price:,.2f}</div>", unsafe_allow_html=True)
+            with col_w3:
+                st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: {color}; font-weight: bold; text-align: right;'>{sign}{w_pct:.2f}%</div>", unsafe_allow_html=True)
 
     # Bottom AI Assistant drawer
     with st.expander("🤖 Groq Quant Intelligence Assistant"):
