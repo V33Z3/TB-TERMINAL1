@@ -29,7 +29,7 @@ except ImportError:
 # Page configuration - Wide mode
 st.set_page_config(page_title="TB TERMINAL // Real-Time Institutional Trading", layout="wide", page_icon="📈")
 
-# Pro Exchange Dark Theme Styling
+# Pro Exchange Dark Theme Styling (Background matched to TradingView Chart #131722)
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -44,7 +44,7 @@ st.markdown("""
         max-width: 100% !important;
     }
     
-    .stApp { background-color: #0b0e11; color: #b7bdc6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .stApp { background-color: #131722; color: #b7bdc6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
     /* Top Exchange Ticker Bar Layout */
     .exchange-header {
@@ -129,7 +129,7 @@ else:
     # Play creative stock chart trading animation splash screen once right after login
     if st.session_state.show_splash:
         components.html("""
-            <div style="background: #0b0e11; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
+            <div style="background: #131722; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 420px;">
                     <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 5px;">⚡ TB TERMINAL</div>
                     <p style="color: #848e9c; font-size: 11px; font-family: monospace; letter-spacing: 1px; margin-bottom: 20px;">CONNECTING TO EXCHANGE LIQUIDITY & MARKET FEED...</p>
