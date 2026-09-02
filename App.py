@@ -161,7 +161,8 @@ else:
     with header_col2:
         active_ticker = st.text_input("Search Ticker", value="AAPL", label_visibility="collapsed").upper().strip()
 
-    target_symbol = f"NASDAQ:{active_ticker}"
+    # Pass the plain ticker directly to TradingView so it auto-resolves NYSE/NASDAQ/etc. correctly (e.g. CVS)
+    target_symbol = active_ticker
 
     # Fetch live real-time prices & % changes via yfinance
     def fetch_live_quote(symbol):
