@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import datetime
+import time
 import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
@@ -82,6 +83,8 @@ groq_key = st.secrets.get("GROQ_API_KEY", "")
 # Manage login state
 if "user" not in st.session_state:
     st.session_state.user = None
+if "show_splash" not in st.session_state:
+    st.session_state.show_splash = False
 
 # Authentication Gate if user is not logged in
 if not st.session_state.user:
@@ -102,6 +105,7 @@ if not st.session_state.user:
                         try:
                             res = supabase.auth.sign_in_with_password({"email": login_email, "password": login_pass})
                             st.session_state.user = res.user
+                            st.session_state.show_splash = True  # Trigger cool trading boot animation
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -117,6 +121,29 @@ if not st.session_state.user:
                         except Exception as e:
                             st.error(f"Error: {e}")
 else:
+    # Play cool trading splash screen animation once right after login
+    if st.session_state.show_splash:
+        components.html("""
+            <div style="background: #0b0e11; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif;">
+                <div style="text-align: center;">
+                    <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 8px;">⚡ VESTTERMINAL</div>
+                    <p style="color: #848e9c; font-size: 12px; font-family: monospace; letter-spacing: 1px;">ESTABLISHING SECURE QUANT FEED & LIQUIDITY NODES...</p>
+                    <div style="width: 280px; height: 3px; background: #2b313a; border-radius: 2px; margin: 25px auto; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, transparent); animation: slide 1.2s infinite linear;"></div>
+                    </div>
+                </div>
+            </div>
+            <style>
+            @keyframes slide {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+            }
+            </style>
+        """, height=700)
+        time.sleep(1.8)
+        st.session_state.show_splash = False
+        st.rerun()
+
     # Sidebar settings & API credentials retrieval
     with st.sidebar:
         st.markdown("### ⚙️ Terminal Settings")
@@ -161,7 +188,6 @@ else:
     with header_col2:
         active_ticker = st.text_input("Search Ticker", value="AAPL", label_visibility="collapsed").upper().strip()
 
-    # Pass the plain ticker directly to TradingView so it auto-resolves NYSE/NASDAQ/etc. correctly (e.g. CVS)
     target_symbol = active_ticker
 
     # Fetch live real-time prices & % changes via yfinance
@@ -212,7 +238,6 @@ else:
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        # Official TradingView Advanced Chart Widget linked directly to the search bar ticker
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:670px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
