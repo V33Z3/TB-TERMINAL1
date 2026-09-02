@@ -29,7 +29,7 @@ except ImportError:
 # Page configuration - Wide mode
 st.set_page_config(page_title="TB TERMINAL // Real-Time Institutional Trading", layout="wide", page_icon="📈")
 
-# Pro Exchange Dark Theme Styling (Exact background match to TradingView Chart #131722)
+# Pro Exchange Dark Theme Styling (Exact background match to TradingView Chart #131722 across all elements)
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -44,7 +44,7 @@ st.markdown("""
         max-width: 100% !important;
     }
     
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] { 
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"], .main { 
         background-color: #131722 !important; 
         color: #b7bdc6; 
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
