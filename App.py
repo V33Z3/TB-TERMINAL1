@@ -42,7 +42,6 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Keep sidebar toggle button visible while styling top bar */
     [data-testid="stHeader"] {
         background-color: transparent !important;
     }
@@ -61,7 +60,6 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     }
     
-    /* Top Exchange Ticker Bar Layout */
     .exchange-header {
         background-color: #1e2329;
         border-bottom: 1px solid #2b313a;
@@ -98,15 +96,19 @@ def init_supabase():
 supabase = init_supabase()
 groq_key = st.secrets.get("GROQ_API_KEY", "")
 
-# Manage login and active ticker states
+# Session state initializations
 if "user" not in st.session_state:
     st.session_state.user = None
 if "show_splash" not in st.session_state:
     st.session_state.show_splash = False
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
+if "alpaca_key" not in st.session_state:
+    st.session_state.alpaca_key = ""
+if "alpaca_secret" not in st.session_state:
+    st.session_state.alpaca_secret = ""
 
-# Authentication Gate if user is not logged in
+# Authentication Gate
 if not st.session_state.user:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.2, 1])
@@ -141,7 +143,7 @@ if not st.session_state.user:
                         except Exception as e:
                             st.error(f"Error: {e}")
 else:
-    # Play creative stock chart trading animation splash screen once right after login
+    # Splash Animation
     if st.session_state.show_splash:
         components.html("""
             <div style="background: #131722; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
@@ -207,44 +209,30 @@ else:
         st.session_state.show_splash = False
         st.rerun()
 
-    # Retrieve user Alpaca API credentials from Supabase
-    existing_key, existing_sec = "", ""
-    try:
-        db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
-        if db_res.data and len(db_res.data) > 0:
-            existing_key = db_res.data[0].get("alpaca_key", "")
-            existing_sec = db_res.data[0].get("alpaca_secret", "")
-    except Exception:
-        pass
+    # Load credentials from DB into Session State if empty
+    if not st.session_state.alpaca_key or not st.session_state.alpaca_secret:
+        try:
+            db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
+            if db_res.data and len(db_res.data) > 0:
+                st.session_state.alpaca_key = db_res.data[0].get("alpaca_key", "")
+                st.session_state.alpaca_secret = db_res.data[0].get("alpaca_secret", "")
+        except Exception:
+            pass
 
-    # Sidebar settings & API credentials configuration
+    existing_key = st.session_state.alpaca_key
+    existing_sec = st.session_state.alpaca_secret
+
+    # Sidebar settings
     with st.sidebar:
         st.markdown("### ⚙️ Terminal Settings")
         if st.button("Log Out", use_container_width=True):
             supabase.auth.sign_out()
             st.session_state.user = None
+            st.session_state.alpaca_key = ""
+            st.session_state.alpaca_secret = ""
             st.rerun()
-            
-        st.markdown("---")
-        st.markdown("**Alpaca API Credentials (Sidebar Input)**")
-            
-        with st.form("keys_form_sidebar"):
-            sidebar_alpaca_key = st.text_input("API Key ID", value=existing_key, type="password", key="sb_k")
-            sidebar_alpaca_sec = st.text_input("Secret Key", value=existing_sec, type="password", key="sb_s")
-            save_keys_sidebar = st.form_submit_button("Save Credentials", use_container_width=True)
-            if save_keys_sidebar:
-                try:
-                    supabase.table("user_credentials").upsert({
-                        "user_id": st.session_state.user.id,
-                        "alpaca_key": sidebar_alpaca_key,
-                        "alpaca_secret": sidebar_alpaca_sec
-                    }).execute()
-                    st.success("Keys saved securely!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {e}")
 
-    # Build top header layout with integrated Ticker Search box
+    # Header layout
     header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
     
     with header_col1:
@@ -258,14 +246,12 @@ else:
 
     target_symbol = st.session_state.active_ticker
 
-    # Robust session helper for yfinance fallback
     @st.cache_resource
     def get_yf_session():
         session = requests.Session()
         session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         return session
 
-    # Fetch live real-time prices & % changes via Alpaca Data API (or yfinance fallback)
     def fetch_live_quote(symbol, a_key, a_sec):
         price, pct = 0.0, 0.0
         
@@ -296,7 +282,6 @@ else:
                 
         return price, pct
 
-    # Fragment with automatic polling/refresh to keep market quotes updating live every 3 seconds
     @st.fragment(run_every="3s")
     def render_live_header(sym, a_key, a_sec):
         spy_price, spy_pct = fetch_live_quote("SPY", a_key, a_sec)
@@ -328,10 +313,10 @@ else:
 
     render_live_header(target_symbol, existing_key, existing_sec)
 
-    # DIRECT INLINE CREDENTIALS CONFIGURATION PANEL (If keys are missing)
+    # Inline Config Panel with session memory fallback
     if not existing_key or not existing_sec:
         with st.expander("🔑 CONFIGURATION REQUIRED: Click here to enter your Alpaca API Keys", expanded=True):
-            st.info("To enable zero-delay streaming data and live trading execution, enter your Alpaca API credentials below:")
+            st.info("Enter your Alpaca API credentials below:")
             with st.form("inline_keys_form"):
                 ik_col1, ik_col2 = st.columns(2)
                 with ik_col1:
@@ -341,19 +326,23 @@ else:
                 
                 save_inline = st.form_submit_button("Save Credentials & Connect Feed", use_container_width=True)
                 if save_inline:
+                    st.session_state.alpaca_key = inline_key
+                    st.session_state.alpaca_secret = inline_sec
+                    
                     try:
                         supabase.table("user_credentials").upsert({
                             "user_id": st.session_state.user.id,
                             "alpaca_key": inline_key,
                             "alpaca_secret": inline_sec
                         }).execute()
-                        st.success("Credentials saved successfully! Reloading...")
-                        time.sleep(1)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error saving credentials: {e}")
+                        st.success("Credentials saved to database and active!")
+                    except Exception:
+                        st.warning("Active in session memory! (To save permanently, run the SQL RLS policy fix above).")
+                    
+                    time.sleep(1)
+                    st.rerun()
 
-    # Main Grid: Real-Time Plotly Chart on Left, Execution Desk & Real-Time Watchlist on Right
+    # Main Grid: Real-Time Plotly Chart on Left, Execution Desk & Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -429,7 +418,7 @@ else:
         if not ALPACA_AVAILABLE:
             st.error("Missing `alpaca-py` library.")
         elif not user_alpaca_key or not user_alpaca_sec:
-            st.warning("Configure your Alpaca keys above or in the sidebar to execute orders.")
+            st.warning("Configure your Alpaca keys above to execute orders.")
         else:
             try:
                 client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper)
@@ -467,7 +456,7 @@ else:
             except Exception as e:
                 st.error(f"Connection error: {e}")
 
-        # --- REAL-TIME WATCHLIST SECTION ---
+        # Watchlist
         st.markdown("""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 10px;">
                 <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Watchlist (Real-Time)</div>
@@ -495,7 +484,7 @@ else:
 
         render_watchlist(watchlist_symbols, existing_key, existing_sec)
 
-    # Bottom AI Assistant drawer
+    # AI Assistant drawer
     with st.expander("🤖 Groq Quant Intelligence Assistant"):
         ai_c1, ai_c2 = st.columns([4, 1])
         with ai_c1:
