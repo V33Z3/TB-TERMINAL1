@@ -259,7 +259,8 @@ else:
         if ALPACA_AVAILABLE and a_key and a_sec:
             try:
                 data_client = StockHistoricalDataClient(a_key, a_sec)
-                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.IEX)
+                # Use SIP feed for extended-hours pricing quotes
+                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.SIP)
                 quotes = data_client.stock_latest_quote(req)
                 if symbol in quotes and quotes[symbol]:
                     q = quotes[symbol]
@@ -349,8 +350,8 @@ else:
     with col_chart:
         st.markdown(f"""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol}</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● IEX DIRECT STREAM</span>
+                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol} (46,000 Extended-Hours Bars)</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● SIP EXTENDED FEED</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -362,24 +363,48 @@ else:
                 try:
                     data_client = StockHistoricalDataClient(api_key, api_sec)
                     end_dt = datetime.datetime.now(datetime.timezone.utc)
-                    start_dt = end_dt - datetime.timedelta(days=7)
+                    # ~3 months captures ~46,000 minute bars when including pre-market and after-hours (SIP feed)
+                    start_dt = end_dt - datetime.timedelta(days=90) 
                     
-                    req = StockBarsRequest(
-                        symbol_or_symbols=[symbol],
-                        timeframe=TimeFrame.Minute,
-                        start=start_dt,
-                        end=end_dt,
-                        feed=DataFeed.IEX
-                    )
-                    bars = data_client.get_stock_bars(req)
-                    df = bars.df
+                    all_dfs = []
+                    page_token = None
+                    
+                    # Paginate through Alpaca's SIP API to fetch up to 46,000 bars including extended hours
+                    while True:
+                        req = StockBarsRequest(
+                            symbol_or_symbols=[symbol],
+                            timeframe=TimeFrame.Minute,
+                            start=start_dt,
+                            end=end_dt,
+                            limit=10000,
+                            page_token=page_token,
+                            feed=DataFeed.SIP
+                        )
+                        bars = data_client.get_stock_bars(req)
+                        if bars.df.empty:
+                            break
+                        all_dfs.append(bars.df)
+                        page_token = bars.next_page_token
+                        
+                        total_bars = sum(len(d) for d in all_dfs)
+                        if not page_token or total_bars >= 46000:
+                            break
+                            
+                    df = pd.concat(all_dfs) if all_dfs else pd.DataFrame()
                     
                     if not df.empty:
                         if isinstance(df.index, pd.MultiIndex):
                             df = df.xs(symbol)
                             
+                        # Trim precisely to the requested 46,000 bars if needed
+                        if len(df) > 46000:
+                            df = df.tail(46000)
+                            
+                        # Convert index to string timestamps for continuous categorical plotting
+                        df['time_str'] = df.index.strftime('%Y-%m-%d %H:%M')
+                            
                         fig = go.Figure(data=[go.Candlestick(
-                            x=df.index,
+                            x=df['time_str'],
                             open=df['open'],
                             high=df['high'],
                             low=df['low'],
@@ -394,6 +419,7 @@ else:
                             plot_bgcolor="#131722",
                             margin=dict(l=10, r=10, t=10, b=10),
                             height=630,
+                            xaxis=dict(type='category', showgrid=False, nticks=10),
                             xaxis_rangeslider_visible=False,
                             font=dict(color="#b7bdc6", size=11)
                         )
@@ -423,7 +449,6 @@ else:
             st.warning("Configure your Alpaca keys above to execute orders.")
         else:
             try:
-                # Automatically point to paper or live URL endpoint to prevent 401 authorization mismatches
                 base_url = "https://paper-api.alpaca.markets" if is_paper else "https://api.alpaca.markets"
                 client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper, url_override=base_url)
                 account = client.get_account()
@@ -458,7 +483,7 @@ else:
                         res = client.submit_order(order_data=req)
                         st.success(f"Order executed! ID: {res.id}")
             except Exception as e:
-                st.error(f"Connection error: {e}")
+                st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}). Details: {e}")
 
         # Watchlist
         st.markdown("""
