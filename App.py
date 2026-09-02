@@ -30,13 +30,10 @@ st.markdown("""
 
 st.title("📈 TB Institutional Live Trading Terminal")
 
-# Securely load Groq API Key from Streamlit Secrets
-groq_key = None
-try:
-    if "GROQ_API_KEY" in st.secrets:
-        groq_key = st.secrets["GROQ_API_KEY"]
-except Exception:
-    pass
+# Automatically load API keys securely from Streamlit Secrets
+groq_key = st.secrets.get("GROQ_API_KEY", "")
+alpaca_key = st.secrets.get("ALPACA_API_KEY", "")
+alpaca_sec = st.secrets.get("ALPACA_SECRET_KEY", "")
 
 def calculate_fibonacci(high, low):
     diff = high - low
@@ -99,18 +96,11 @@ with tab_charts:
 with tab_trade:
     st.subheader("Alpaca Live Account & Order Execution")
     
-    default_key = st.secrets.get("ALPACA_API_KEY", "") if "ALPACA_API_KEY" in st.secrets else ""
-    default_sec = st.secrets.get("ALPACA_SECRET_KEY", "") if "ALPACA_SECRET_KEY" in st.secrets else ""
-
-    col_k1, col_k2 = st.columns(2)
-    with col_k1:
-        alpaca_key = st.text_input("Alpaca Live API Key ID", type="password", value=default_key)
-    with col_k2:
-        alpaca_sec = st.text_input("Alpaca Live Secret Key", type="password", value=default_sec)
-
     if not ALPACA_AVAILABLE:
         st.error("The `alpaca-py` library is missing from your requirements.txt file.")
-    elif alpaca_key and alpaca_sec:
+    elif not alpaca_key or not alpaca_sec:
+        st.warning("Alpaca API keys are missing from Streamlit Secrets. Please check your configuration.")
+    else:
         try:
             client = TradingClient(alpaca_key, alpaca_sec, paper=False)
             account = client.get_account()
@@ -151,8 +141,6 @@ with tab_trade:
                     st.success(f"Order successfully placed! Order ID: {res.id}")
         except Exception as e:
             st.error(f"Alpaca Connection Error: {e}")
-    else:
-        st.info("Please enter your Alpaca Live API keys above to load account metrics and execute live trades.")
 
 with tab_ai:
     st.subheader("Groq-Powered Institutional AI Assistant")
