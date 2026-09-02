@@ -91,7 +91,7 @@ if not st.session_state.user:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.2, 1])
     with col_auth2:
-        st.markdown("<h2 style='text-align: center; color: #eaecef;'>🔐 TB TERMINAL LOGIN</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #eaecef;'>TB TERMINAL LOGIN</h2>", unsafe_allow_html=True)
         if not supabase:
             st.error("Supabase credentials missing from Streamlit Secrets.")
         else:
