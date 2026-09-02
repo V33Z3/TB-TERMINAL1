@@ -171,26 +171,20 @@ else:
         </div>
     """.format(live_price_display, st.session_state.user.email), unsafe_allow_html=True)
 
-    # Main Grid: Advanced Chart on Left (with native TradingView WebSockets for real-time price action), Execution Desk on Right
+    # Main Grid: Advanced Chart on Left (Full width maximized), Execution Desk on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        cc1, cc2 = st.columns([1, 3])
-        with cc1:
-            exchange_prefix = st.selectbox("Market", ["NASDAQ", "NYSE", "BINANCE", "FX"], label_visibility="collapsed")
-        with cc2:
-            ticker_input = st.text_input("Ticker", "AAPL", label_visibility="collapsed").upper().strip()
-            
-        target_symbol = f"{exchange_prefix}:{ticker_input}"
+        target_symbol = "NASDAQ:AAPL"
         
         # Official TradingView Advanced Chart Widget (Streams real-time websocket price action natively, includes full Fibonacci and indicator toolset)
         tv_html = f"""
-        <div class="tradingview-widget-container" style="height:670px;width:100%">
+        <div class="tradingview-widget-container" style="height:715px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {{
             "width": "100%",
-            "height": "670",
+            "height": "715",
             "symbol": "{target_symbol}",
             "interval": "D",
             "timezone": "Etc/UTC",
@@ -205,7 +199,7 @@ else:
           </script>
         </div>
         """
-        components.html(tv_html, height=680)
+        components.html(tv_html, height=725)
 
     with col_trade:
         st.markdown("""
@@ -237,7 +231,7 @@ else:
                 """, unsafe_allow_html=True)
                 
                 with st.form("order_exec_form"):
-                    o_sym = st.text_input("Asset", value=ticker_input).upper()
+                    o_sym = st.text_input("Asset", value="AAPL").upper()
                     o_qty = st.number_input("Quantity", min_value=0.01, value=1.0, step=1.0)
                     o_side = st.selectbox("Action", ["BUY", "SELL"])
                     o_type = st.radio("Order Type", ["Market", "Limit"], horizontal=True)
