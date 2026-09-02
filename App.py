@@ -148,43 +148,51 @@ else:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-    # Fetch live price action for active asset if Alpaca keys are present
-    live_price_display = "325.86"
+    # Active Ticker Selection (Controls both header and chart widget)
+    col_ctrl1, col_ctrl2 = st.columns([1, 5])
+    with col_ctrl1:
+        active_ticker = st.text_input("Active Ticker", value="AAPL").upper().strip()
+
+    target_symbol = f"NASDAQ:{active_ticker}"
+
+    # Fetch live real-time price action for SPY, QQQ, and Active Ticker via Alpaca
+    spy_display, qqq_display, active_display = "510.25", "440.10", "325.86"
     if ALPACA_AVAILABLE and existing_key and existing_sec:
         try:
             data_client = StockHistoricalDataClient(existing_key, existing_sec)
-            latest_trade_req = StockLatestTradeRequest(symbol_or_symbols=["AAPL"])
-            latest_trade = data_client.get_stock_latest_trade(latest_trade_req)
-            if "AAPL" in latest_trade:
-                live_price_display = f"{latest_trade['AAPL'].price:,.2f}"
+            latest_trades = data_client.get_stock_latest_trade(StockLatestTradeRequest(symbol_or_symbols=["SPY", "QQQ", active_ticker]))
+            if "SPY" in latest_trades:
+                spy_display = f"{latest_trades['SPY'].price:,.2f}"
+            if "QQQ" in latest_trades:
+                qqq_display = f"{latest_trades['QQQ'].price:,.2f}"
+            if active_ticker in latest_trades:
+                active_display = f"{latest_trades[active_ticker].price:,.2f}"
         except Exception:
             pass
 
-    # Top Professional Exchange Header Bar with Real-Time Data Feed indicator
-    st.markdown("""
+    # Top Professional Exchange Header Bar (SPY, QQQ, and Dynamic Active Ticker)
+    st.markdown(f"""
         <div class="exchange-header">
             <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // REAL-TIME FEED</span>
-            <span><b>BTC/USDT</b> <span style="color: #0ecb81;">33,376.02 +0.18%</span></span>
-            <span><b>ETH/USDT</b> <span style="color: #f6465d;">1,856.29 -0.54%</span></span>
-            <span><b>AAPL (Live)</b> <span style="color: #0ecb81;">{}</span></span>
-            <span style="margin-left: auto; color: #848e9c;">User: <b style="color: #eaecef;">{}</b></span>
+            <span><b>SPY</b> <span style="color: #0ecb81;">{spy_display}</span></span>
+            <span><b>QQQ</b> <span style="color: #0ecb81;">{qqq_display}</span></span>
+            <span><b>{active_ticker} (Live)</b> <span style="color: #0ecb81;">{active_display}</span></span>
+            <span style="margin-left: auto; color: #848e9c;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
         </div>
-    """.format(live_price_display, st.session_state.user.email), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # Main Grid: Advanced Chart on Left (Full width maximized), Execution Desk on Right
+    # Main Grid: Advanced Chart on Left, Execution Desk on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        target_symbol = "NASDAQ:AAPL"
-        
-        # Official TradingView Advanced Chart Widget (Streams real-time websocket price action natively, includes full Fibonacci and indicator toolset)
+        # Official TradingView Advanced Chart Widget
         tv_html = f"""
-        <div class="tradingview-widget-container" style="height:715px;width:100%">
+        <div class="tradingview-widget-container" style="height:670px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {{
             "width": "100%",
-            "height": "715",
+            "height": "670",
             "symbol": "{target_symbol}",
             "interval": "D",
             "timezone": "Etc/UTC",
@@ -199,7 +207,7 @@ else:
           </script>
         </div>
         """
-        components.html(tv_html, height=725)
+        components.html(tv_html, height=680)
 
     with col_trade:
         st.markdown("""
@@ -231,7 +239,7 @@ else:
                 """, unsafe_allow_html=True)
                 
                 with st.form("order_exec_form"):
-                    o_sym = st.text_input("Asset", value="AAPL").upper()
+                    o_sym = st.text_input("Asset", value=active_ticker).upper()
                     o_qty = st.number_input("Quantity", min_value=0.01, value=1.0, step=1.0)
                     o_side = st.selectbox("Action", ["BUY", "SELL"])
                     o_type = st.radio("Order Type", ["Market", "Limit"], horizontal=True)
