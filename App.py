@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import time
+import requests
 import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
@@ -134,12 +135,10 @@ else:
                     <!-- Animated Stock Chart Splash Box -->
                     <div style="background: #12161c; border: 1px solid #2b313a; border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
                         <svg width="100%" height="110" viewBox="0 0 300 110" style="overflow: visible;">
-                            <!-- Grid lines -->
                             <line x1="0" y1="25" x2="300" y2="25" stroke="#1e2329" stroke-width="1" />
                             <line x1="0" y1="55" x2="300" y2="55" stroke="#1e2329" stroke-width="1" />
                             <line x1="0" y1="85" x2="300" y2="85" stroke="#1e2329" stroke-width="1" />
                             
-                            <!-- Candlesticks / Bars -->
                             <rect x="35" y="45" width="7" height="30" fill="#f6465d" rx="2" />
                             <line x1="38" y1="35" x2="38" y2="90" stroke="#f6465d" stroke-width="2" />
                             
@@ -158,7 +157,6 @@ else:
                             <rect x="235" y="15" width="7" height="55" fill="#0ecb81" rx="2" />
                             <line x1="238" y1="5" x2="238" y2="85" stroke="#0ecb81" stroke-width="2" />
 
-                            <!-- Bullish Surging Trend Path -->
                             <path d="M 15 75 Q 55 85, 95 60 T 175 45 T 255 15" fill="none" stroke="#0ecb81" stroke-width="3" stroke-linecap="round" class="glow-line" />
                         </svg>
                         
@@ -242,12 +240,20 @@ else:
 
     target_symbol = st.session_state.active_ticker
 
+    # Robust session helper for yfinance to bypass connection/empty response blocks
+    @st.cache_resource
+    def get_yf_session():
+        session = requests.Session()
+        session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        return session
+
     # Fetch live real-time prices & % changes via yfinance
     def fetch_live_quote(symbol):
         price, pct = 0.0, 0.0
         if YFINANCE_AVAILABLE:
             try:
-                t = yf.Ticker(symbol)
+                session = get_yf_session()
+                t = yf.Ticker(symbol, session=session)
                 hist = t.history(period="2d")
                 if not hist.empty:
                     price = float(hist['Close'].iloc[-1])
@@ -284,7 +290,6 @@ else:
                 {spy_html}
                 {qqq_html}
                 {active_html}
-                <span style="margin-left: auto; color: #848e9c; font-size: 12px;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
             </div>
         """, unsafe_allow_html=True)
 
