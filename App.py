@@ -25,17 +25,15 @@ except ImportError:
 # Page configuration - Wide mode
 st.set_page_config(page_title="VestTerminal // Real-Time Institutional Trading", layout="wide", page_icon="📈")
 
-# Pro Exchange Dark Theme Styling (Altrady / Binance Palette)
+# Pro Exchange Dark Theme Styling
 st.markdown("""
     <style>
-    /* Hide Streamlit default chrome */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Remove padding to maximize real estate */
     .block-container {
-        padding-top: 0.8rem;
+        padding-top: 0.5rem;
         padding-bottom: 0rem;
         padding-left: 0.8rem;
         padding-right: 0.8rem;
@@ -44,28 +42,27 @@ st.markdown("""
     
     .stApp { background-color: #0b0e11; color: #b7bdc6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* Top Exchange Ticker Bar */
+    /* Top Exchange Ticker Bar Layout */
     .exchange-header {
         background-color: #1e2329;
         border-bottom: 1px solid #2b313a;
-        padding: 10px 15px;
+        padding: 8px 15px;
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 15px;
         font-size: 13px;
         border-radius: 4px;
         margin-bottom: 10px;
         flex-wrap: wrap;
     }
     
-    /* Terminal input styling */
     .stTextInput input, .stSelectbox select, .stNumberInput input {
         background-color: #181a20 !important;
         color: #eaecef !important;
         border: 1px solid #2b313a !important;
         border-radius: 3px !important;
         font-size: 13px !important;
-        min-height: 32px !important;
+        min-height: 30px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -155,10 +152,14 @@ else:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-    # Top Control Bar to sync Active Ticker with Chart and Header
-    c_in1, c_in2 = st.columns([1, 5])
-    with c_in1:
-        active_ticker = st.text_input("Search Ticker", value="AAPL").upper().strip()
+    # Build top header layout with integrated Ticker Search box
+    header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
+    
+    with header_col1:
+        st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ VESTTERMINAL</div>", unsafe_allow_html=True)
+    
+    with header_col2:
+        active_ticker = st.text_input("Search Ticker", value="AAPL", label_visibility="collapsed").upper().strip()
 
     target_symbol = f"NASDAQ:{active_ticker}"
 
@@ -192,19 +193,17 @@ else:
         </div>
         """
 
-    # Corresponding color containers matching your layout (Red = SPY, Yellow = QQQ, Pink = Active Ticker)
     spy_html = format_badge("SPY", spy_price, spy_pct, "#3a1a1a", "#f6465d")
     qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#3a331a", "#f0b90b")
     active_html = format_badge(f"{active_ticker} (Live)", active_price, active_pct, "#331a3a", "#9c27b0")
 
-    # Top Professional Exchange Header Bar with User Email properly integrated inside
+    # Render clean exchange bar containing the badges and user email
     st.markdown(f"""
         <div class="exchange-header">
-            <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // REAL-TIME FEED</span>
             {spy_html}
             {qqq_html}
             {active_html}
-            <span style="margin-left: auto; color: #848e9c;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
+            <span style="margin-left: auto; color: #848e9c; font-size: 12px;">User: <b style="color: #eaecef;">{st.session_state.user.email}</b></span>
         </div>
     """, unsafe_allow_html=True)
 
@@ -212,7 +211,7 @@ else:
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        # Official TradingView Advanced Chart Widget linked to Active Ticker
+        # Official TradingView Advanced Chart Widget linked directly to the search bar ticker
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:670px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
