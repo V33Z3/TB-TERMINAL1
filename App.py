@@ -170,12 +170,12 @@ else:
             
         target_symbol = f"{exchange_prefix}:{ticker_input}"
         
-        # Native TradingView Lightweight Charts HTML component updating every 1 second
+        # Pinned Lightweight Charts version 4.2.1 CDN to maintain full API compatibility
         lw_chart_html = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+            <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
         </head>
         <body style="background-color: #0b0e11; margin: 0; padding: 0;">
             <div id="chart" style="width: 100%; height: 670px;"></div>
@@ -225,6 +225,7 @@ else:
                     price = close;
                 }}
                 candleSeries.setData(historicalData);
+                chart.timeScale().fitContent();
 
                 // Real-time 1-second tick updates loop
                 setInterval(() => {{
