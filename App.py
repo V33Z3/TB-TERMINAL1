@@ -17,15 +17,17 @@ except ImportError:
 # Page configuration
 st.set_page_config(page_title="TB Institutional Trading Terminal", layout="wide", page_icon="📈")
 
-# Terminal Dark Theme Styling
+# Seamless TradingView Dark Theme Styling (#131722 background & #1e222d panels)
 st.markdown("""
     <style>
-    .stApp { background-color: #0b0e14; color: #d1d5db; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; background-color: #0b0e14; padding: 10px 0px; }
-    .stTabs [data-baseweb="tab"] { background-color: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 8px 20px; color: #c9d1d9; font-weight: 600; font-size: 14px; }
-    .stTabs [aria-selected="true"] { background-color: #238636 !important; color: white !important; border-color: #2ea043 !important; }
-    div[data-testid="stMetric"] { background-color: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 6px; }
-    .terminal-header { background-color: #161b22; border-bottom: 1px solid #30363d; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .stApp { background-color: #131722; color: #d1d5db; }
+    section[data-testid="stSidebar"] { background-color: #131722; border-right: 1px solid #2a2e39; }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; background-color: #131722; padding: 10px 0px; }
+    .stTabs [data-baseweb="tab"] { background-color: #1e222d; border: 1px solid #2a2e39; border-radius: 4px; padding: 8px 20px; color: #9db2ce; font-weight: 600; font-size: 14px; }
+    .stTabs [aria-selected="true"] { background-color: #2962ff !important; color: white !important; border-color: #2962ff !important; }
+    div[data-testid="stMetric"] { background-color: #1e222d; border: 1px solid #2a2e39; padding: 15px; border-radius: 6px; }
+    .terminal-header { background-color: #1e222d; border: 1px solid #2a2e39; padding: 12px 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .stTextInput input, .stSelectbox select { background-color: #1e222d !important; color: white !important; border-color: #2a2e39 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -93,7 +95,7 @@ else:
     st.markdown("""
         <div class="terminal-header">
             <h3>⚡ VESTTERMINAL // INSTITUTIONAL LIVE FEED</h3>
-            <span style="color: #2ea043; font-weight: bold;">● SYSTEM ONLINE</span>
+            <span style="color: #2962ff; font-weight: bold;">● SYSTEM ONLINE</span>
         </div>
     """, unsafe_allow_html=True)
     
@@ -111,7 +113,7 @@ else:
             ticker_input = st.text_input("Ticker Symbol", "AAPL").upper().strip()
             target_symbol = f"{exchange_prefix}:{ticker_input}"
         
-        # Embedded TradingView Advanced Chart Widget
+        # Embedded TradingView Advanced Chart Widget matching #131722 background
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:650px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -240,7 +242,7 @@ else:
                     try:
                         ai_client = Groq(api_key=groq_key)
                         completion = ai_client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",  # Updated to current valid Groq model
+                            model="llama-3.3-70b-versatile",
                             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
                             temperature=0.7
                         )
