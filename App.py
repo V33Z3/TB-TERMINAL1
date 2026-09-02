@@ -15,17 +15,17 @@ except ImportError:
     ALPACA_AVAILABLE = False
 
 # Page configuration - Wide mode
-st.set_page_config(page_title="VestTerminal // Institutional Trading", layout="wide", page_icon="📈")
+st.set_page_config(page_title="VestTerminal // Institutional GoCharting", layout="wide", page_icon="📈")
 
-# Aggressive CSS to wipe out Streamlit's default UI chrome and match Pro Exchange Dark Theme
+# Pro Exchange Dark Theme Styling (Matching GoCharting & Altrady dark palettes)
 st.markdown("""
     <style>
-    /* Hide Streamlit default header, footer, and menu */
+    /* Hide Streamlit default chrome */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Remove padding to maximize screen real estate like a native app */
+    /* Remove padding to maximize real estate */
     .block-container {
         padding-top: 0.8rem;
         padding-bottom: 0rem;
@@ -34,10 +34,9 @@ st.markdown("""
         max-width: 100% !important;
     }
     
-    /* Exchange Theme Colors (#0b0e11 background, #1e2329 panels, #2b313a borders) */
     .stApp { background-color: #0b0e11; color: #b7bdc6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* Top Ticker Bar */
+    /* Top Exchange Ticker Bar */
     .exchange-header {
         background-color: #1e2329;
         border-bottom: 1px solid #2b313a;
@@ -50,7 +49,7 @@ st.markdown("""
         margin-bottom: 10px;
     }
     
-    /* Tighten and style Streamlit inputs to match professional terminal look */
+    /* Terminal input styling */
     .stTextInput input, .stSelectbox select, .stNumberInput input {
         background-color: #181a20 !important;
         color: #eaecef !important;
@@ -58,14 +57,6 @@ st.markdown("""
         border-radius: 3px !important;
         font-size: 13px !important;
         min-height: 32px !important;
-    }
-    
-    /* Custom panel container */
-    .terminal-card {
-        background-color: #1e2329;
-        border: 1px solid #2b313a;
-        border-radius: 4px;
-        padding: 12px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -120,10 +111,10 @@ if not st.session_state.user:
                         except Exception as e:
                             st.error(f"Error: {e}")
 else:
-    # Top Professional Exchange Header Bar (Mimicking Altrady/Binance top bar)
+    # Top Professional Exchange Header Bar
     st.markdown("""
         <div class="exchange-header">
-            <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL PRO</span>
+            <span style="color: #f0b90b; font-weight: bold; font-size: 13px;">⚡ VESTTERMINAL // GOCHARTING PRO</span>
             <span><b>BTC/USDT</b> <span style="color: #0ecb81;">33,376.02 +0.18%</span></span>
             <span><b>ETH/USDT</b> <span style="color: #f6465d;">1,856.29 -0.54%</span></span>
             <span><b>BNB/USDT</b> <span style="color: #0ecb81;">280.29 +1.12%</span></span>
@@ -132,7 +123,7 @@ else:
         </div>
     """.format(st.session_state.user.email), unsafe_allow_html=True)
 
-    # Sidebar toggle for Settings & Logout (hidden cleanly until clicked)
+    # Sidebar settings & logout
     with st.sidebar:
         st.markdown("### ⚙️ Terminal Settings")
         if st.button("Log Out", use_container_width=True):
@@ -167,44 +158,21 @@ else:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-    # Main Terminal Grid: Chart on Left (Width ratio ~3.4), Order Desk on Right (Width ratio ~1.2)
+    # Main Grid: GoCharting Embed on Left, Execution Desk on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        # Mini controls above chart to swap tickers instantly
         cc1, cc2 = st.columns([1, 3])
         with cc1:
             exchange_prefix = st.selectbox("Market", ["NASDAQ", "NYSE", "BINANCE", "FX"], label_visibility="collapsed")
         with cc2:
             ticker_input = st.text_input("Ticker", "AAPL", label_visibility="collapsed").upper().strip()
             
-        target_symbol = f"{exchange_prefix}:{ticker_input}"
-        
-        # Embedded TradingView Advanced Chart Widget styled dark to match
-        tv_html = f"""
-        <div class="tradingview-widget-container" style="height:670px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {{
-            "width": "100%",
-            "height": "670",
-            "symbol": "{target_symbol}",
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "allow_symbol_change": true,
-            "calendar": false,
-            "support_host": "https://www.tradingview.com"
-          }}
-          </script>
-        </div>
-        """
-        components.html(tv_html, height=680)
+        # GoCharting terminal URL integration
+        gocharting_url = f"https://gocharting.com/terminal?ticker={exchange_prefix}:{ticker_input}"
+        components.iframe(gocharting_url, height=680, scrolling=True)
 
     with col_trade:
-        # Trading Panel matching Altrady right-hand side layout
         st.markdown("""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px;">
                 <div style="font-weight: bold; font-size: 13px; color: #eaecef; margin-bottom: 8px;">Trading Desk</div>
@@ -225,7 +193,6 @@ else:
                 client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper)
                 account = client.get_account()
                 
-                # Account Balances Box
                 st.markdown(f"""
                 <div style="background-color: #181a20; padding: 8px; border-radius: 3px; border: 1px solid #2b313a; font-size: 11px; margin-top: 8px; margin-bottom: 8px; color: #848e9c;">
                     <b>Equity:</b> <span style="color:#eaecef;">${float(account.equity):,.2f}</span><br>
