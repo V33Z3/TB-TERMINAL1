@@ -8,18 +8,20 @@ import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
 
-# Try importing yfinance for instant real-time market quotes
+# Try importing yfinance for market quotes fallback
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
 
-# Try importing Alpaca SDKs for trading execution
+# Try importing Alpaca SDKs for real-time data and trading execution
 try:
     from alpaca.trading.client import TradingClient
     from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
     from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.data.historical import StockHistoricalDataClient
+    from alpaca.data.requests import StockLatestQuoteRequest
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -191,7 +193,17 @@ else:
         st.session_state.show_splash = False
         st.rerun()
 
-    # Sidebar settings & API credentials retrieval
+    # Retrieve user Alpaca API credentials from Supabase
+    existing_key, existing_sec = "", ""
+    try:
+        db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
+        if db_res.data and len(db_res.data) > 0:
+            existing_key = db_res.data[0].get("alpaca_key", "")
+            existing_sec = db_res.data[0].get("alpaca_secret", "")
+    except Exception:
+        pass
+
+    # Sidebar settings & API credentials configuration
     with st.sidebar:
         st.markdown("### ⚙️ Terminal Settings")
         if st.button("Log Out", use_container_width=True):
@@ -200,16 +212,7 @@ else:
             st.rerun()
             
         st.markdown("---")
-        st.markdown("**Alpaca API Credentials (for Trading Desk)**")
-        
-        existing_key, existing_sec = "", ""
-        try:
-            db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
-            if db_res.data and len(db_res.data) > 0:
-                existing_key = db_res.data[0].get("alpaca_key", "")
-                existing_sec = db_res.data[0].get("alpaca_secret", "")
-        except Exception:
-            pass
+        st.markdown("**Alpaca API Credentials (for Trading Desk & Real-Time Data)**")
             
         with st.form("keys_form"):
             new_alpaca_key = st.text_input("API Key ID", value=existing_key, type="password")
@@ -223,6 +226,7 @@ else:
                         "alpaca_secret": new_alpaca_sec
                     }).execute()
                     st.success("Saved securely!")
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Error: {e}")
 
@@ -240,35 +244,52 @@ else:
 
     target_symbol = st.session_state.active_ticker
 
-    # Robust session helper for yfinance to bypass connection/empty response blocks
+    # Robust session helper for yfinance fallback
     @st.cache_resource
     def get_yf_session():
         session = requests.Session()
         session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         return session
 
-    # Fetch live real-time prices & % changes via yfinance
-    def fetch_live_quote(symbol):
+    # Fetch live real-time prices & % changes via Alpaca Data API (or yfinance fallback)
+    def fetch_live_quote(symbol, a_key, a_sec):
         price, pct = 0.0, 0.0
+        
+        # 1. Try Alpaca Data API for real-time live quotes if keys are configured
+        if ALPACA_AVAILABLE and a_key and a_sec:
+            try:
+                data_client = StockHistoricalDataClient(a_key, a_sec)
+                req = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
+                quotes = data_client.stock_latest_quote(req)
+                if symbol in quotes and quotes[symbol]:
+                    q = quotes[symbol]
+                    price = float(q.ask_price if q.ask_price and q.ask_price > 0 else q.bid_price)
+            except Exception:
+                pass
+
+        # 2. If Alpaca didn't return a valid price, fallback or fetch percentage change via yfinance
         if YFINANCE_AVAILABLE:
             try:
                 session = get_yf_session()
                 t = yf.Ticker(symbol, session=session)
                 hist = t.history(period="2d")
                 if not hist.empty:
-                    price = float(hist['Close'].iloc[-1])
+                    yf_close = float(hist['Close'].iloc[-1])
                     prev = float(hist['Close'].iloc[0]) if len(hist) > 1 else float(hist['Open'].iloc[0])
+                    if price == 0.0:
+                        price = yf_close
                     pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
             except Exception:
                 pass
+                
         return price, pct
 
-    # Fragment with automatic polling/refresh to keep market quotes updating in real-time
-    @st.fragment(run_every="5s")
-    def render_live_header(sym):
-        spy_price, spy_pct = fetch_live_quote("SPY")
-        qqq_price, qqq_pct = fetch_live_quote("QQQ")
-        active_price, active_pct = fetch_live_quote(sym)
+    # Fragment with automatic polling/refresh to keep market quotes updating live every 3 seconds
+    @st.fragment(run_every="3s")
+    def render_live_header(sym, a_key, a_sec):
+        spy_price, spy_pct = fetch_live_quote("SPY", a_key, a_sec)
+        qqq_price, qqq_pct = fetch_live_quote("QQQ", a_key, a_sec)
+        active_price, active_pct = fetch_live_quote(sym, a_key, a_sec)
 
         def format_badge(s, price, pct, bg_color, border_color):
             color = "#0ecb81" if pct >= 0 else "#f6465d"
@@ -293,7 +314,7 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-    render_live_header(target_symbol)
+    render_live_header(target_symbol, existing_key, existing_sec)
 
     # Main Grid: Advanced Chart on Left, Execution Desk on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
@@ -388,7 +409,7 @@ else:
                 try:
                     ai_client = Groq(api_key=groq_key)
                     completion = ai_client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
+                        model="openai/gpt-oss-120b",
                         messages=[{"role": "system", "content": "You are an expert institutional trading analyst."}, {"role": "user", "content": ai_query}],
                         temperature=0.7
                     )
