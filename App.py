@@ -4,6 +4,7 @@ import numpy as np
 import datetime
 import time
 import requests
+import plotly.graph_objects as go
 import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
@@ -21,7 +22,8 @@ try:
     from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestQuoteRequest
+    from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
+    from alpaca.data.timeframe import TimeFrame
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -320,32 +322,66 @@ else:
 
     render_live_header(target_symbol, existing_key, existing_sec)
 
-    # Main Grid: Advanced Chart on Left, Execution Desk & TradingView Watchlist on Right
+    # Main Grid: Real-Time Plotly Chart on Left, Execution Desk & Real-Time Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
-        tv_html = f"""
-        <div class="tradingview-widget-container" style="height:670px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {{
-            "width": "100%",
-            "height": "670",
-            "symbol": "{target_symbol}",
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "allow_symbol_change": true,
-            "hide_side_toolbar": false,
-            "calendar": false,
-            "support_host": "https://www.tradingview.com"
-          }}
-          </script>
-        </div>
-        """
-        components.html(tv_html, height=680)
+        st.markdown(f"""
+            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Real-Time Institutional Feed // {target_symbol}</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● ZERO DELAY DIRECT STREAM</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+        if not existing_key or not existing_sec:
+            st.warning("⚠️ Enter your Alpaca API credentials in the sidebar to stream live non-delayed exchange data.")
+        else:
+            @st.fragment(run_every="5s")
+            def render_realtime_chart(symbol, api_key, api_sec):
+                try:
+                    data_client = StockHistoricalDataClient(api_key, api_sec)
+                    end_dt = datetime.datetime.now(datetime.timezone.utc)
+                    start_dt = end_dt - datetime.timedelta(days=7)
+                    
+                    req = StockBarsRequest(
+                        symbol_or_symbols=[symbol],
+                        timeframe=TimeFrame.Minute,
+                        start=start_dt,
+                        end=end_dt
+                    )
+                    bars = data_client.get_stock_bars(req)
+                    df = bars.df
+                    
+                    if not df.empty:
+                        if isinstance(df.index, pd.MultiIndex):
+                            df = df.xs(symbol)
+                            
+                        fig = go.Figure(data=[go.Candlestick(
+                            x=df.index,
+                            open=df['open'],
+                            high=df['high'],
+                            low=df['low'],
+                            close=df['close'],
+                            increasing_line_color='#0ecb81',
+                            decreasing_line_color='#f6465d'
+                        )])
+                        
+                        fig.update_layout(
+                            template="plotly_dark",
+                            paper_bgcolor="#131722",
+                            plot_bgcolor="#131722",
+                            margin=dict(l=10, r=10, t=10, b=10),
+                            height=630,
+                            xaxis_rangeslider_visible=False,
+                            font=dict(color="#b7bdc6", size=11)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("Awaiting live exchange bar data...")
+                except Exception as e:
+                    st.error(f"Data stream error: {e}")
+
+            render_realtime_chart(target_symbol, existing_key, existing_sec)
 
     with col_trade:
         st.markdown("""
@@ -400,44 +436,33 @@ else:
             except Exception as e:
                 st.error(f"Connection error: {e}")
 
-        # --- OFFICIAL TRADINGVIEW MARKET OVERVIEW WATCHLIST WIDGET ---
-        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+        # --- REAL-TIME WATCHLIST SECTION ---
+        st.markdown("""
+            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 10px;">
+                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Watchlist (Real-Time)</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        watchlist_symbols = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "CVS", "SPY", "QQQ"]
         
-        tv_watchlist_html = """
-        <div class="tradingview-widget-container" style="height:320px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-          {
-            "colorTheme": "dark",
-            "dateRange": "12M",
-            "showChart": false,
-            "locale": "en",
-            "width": "100%",
-            "height": "320",
-            "isTransparent": false,
-            "showSymbolLogo": true,
-            "showFloatingTooltip": false,
-            "tabs": [
-              {
-                "title": "Watchlist",
-                "symbols": [
-                  { "s": "NASDAQ:AAPL", "d": "Apple Inc" },
-                  { "s": "NASDAQ:TSLA", "d": "Tesla Inc" },
-                  { "s": "NASDAQ:NVDA", "d": "NVIDIA Corp" },
-                  { "s": "NASDAQ:AMZN", "d": "Amazon.com Inc" },
-                  { "s": "NASDAQ:MSFT", "d": "Microsoft Corp" },
-                  { "s": "NASDAQ:GOOGL", "d": "Alphabet Inc" },
-                  { "s": "NYSE:CVS", "d": "CVS Health Corp" },
-                  { "s": "AMEX:SPY", "d": "SPDR S&P 500 ETF" },
-                  { "s": "NASDAQ:QQQ", "d": "Invesco QQQ Trust" }
-                ]
-              }
-            ]
-          }
-          </script>
-        </div>
-        """
-        components.html(tv_watchlist_html, height=330)
+        @st.fragment(run_every="4s")
+        def render_watchlist(symbols, a_key, a_sec):
+            for sym in symbols:
+                w_price, w_pct = fetch_live_quote(sym, a_key, a_sec)
+                color = "#0ecb81" if w_pct >= 0 else "#f6465d"
+                sign = "+" if w_pct >= 0 else ""
+                
+                col_w1, col_w2, col_w3 = st.columns([1.2, 1.5, 1.2])
+                with col_w1:
+                    if st.button(sym, key=f"wl_{sym}", use_container_width=True):
+                        st.session_state.active_ticker = sym
+                        st.rerun()
+                with col_w2:
+                    st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: #eaecef; text-align: right;'>${w_price:,.2f}</div>", unsafe_allow_html=True)
+                with col_w3:
+                    st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: {color}; font-weight: bold; text-align: right;'>{sign}{w_pct:.2f}%</div>", unsafe_allow_html=True)
+
+        render_watchlist(watchlist_symbols, existing_key, existing_sec)
 
     # Bottom AI Assistant drawer
     with st.expander("🤖 Groq Quant Intelligence Assistant"):
