@@ -35,7 +35,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Pro Exchange Dark Theme Styling
+# Pro Exchange True Black Theme Styling
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -54,14 +54,19 @@ st.markdown("""
     }
     
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"], .main { 
-        background-color: #131722 !important; 
+        background-color: #000000 !important; 
         color: #b7bdc6; 
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     }
     
+    [data-testid="stSidebar"] {
+        background-color: #050505 !important;
+        border-right: 1px solid #1a1a1a;
+    }
+    
     .exchange-header {
-        background-color: #1e2329;
-        border-bottom: 1px solid #2b313a;
+        background-color: #080808;
+        border-bottom: 1px solid #1a1a1a;
         padding: 8px 15px;
         display: flex;
         align-items: center;
@@ -73,9 +78,9 @@ st.markdown("""
     }
     
     .stTextInput input, .stSelectbox select, .stNumberInput input {
-        background-color: #181a20 !important;
+        background-color: #0b0e11 !important;
         color: #eaecef !important;
-        border: 1px solid #2b313a !important;
+        border: 1px solid #1f242d !important;
         border-radius: 3px !important;
         font-size: 13px !important;
         min-height: 30px !important;
@@ -173,16 +178,16 @@ else:
     # Splash Animation
     if st.session_state.show_splash:
         components.html("""
-            <div style="background: #131722; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
+            <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 420px;">
                     <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 5px;">⚡ TB TERMINAL</div>
                     <p style="color: #848e9c; font-size: 11px; font-family: monospace; letter-spacing: 1px; margin-bottom: 20px;">CONNECTING TO EXCHANGE LIQUIDITY & MARKET FEED...</p>
                     
-                    <div style="background: #12161c; border: 1px solid #2b313a; border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+                    <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
                         <svg width="100%" height="110" viewBox="0 0 300 110" style="overflow: visible;">
-                            <line x1="0" y1="25" x2="300" y2="25" stroke="#1e2329" stroke-width="1" />
-                            <line x1="0" y1="55" x2="300" y2="55" stroke="#1e2329" stroke-width="1" />
-                            <line x1="0" y1="85" x2="300" y2="85" stroke="#1e2329" stroke-width="1" />
+                            <line x1="0" y1="25" x2="300" y2="25" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="55" x2="300" y2="55" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="85" x2="300" y2="85" stroke="#1a1a1a" stroke-width="1" />
                             
                             <rect x="35" y="45" width="7" height="30" fill="#f6465d" rx="2" />
                             <line x1="38" y1="35" x2="38" y2="90" stroke="#f6465d" stroke-width="2" />
@@ -211,7 +216,7 @@ else:
                         </div>
                     </div>
 
-                    <div style="width: 100%; height: 3px; background: #2b313a; border-radius: 2px; margin: 25px 0 10px 0; overflow: hidden;">
+                    <div style="width: 100%; height: 3px; background: #1a1a1a; border-radius: 2px; margin: 25px 0 10px 0; overflow: hidden;">
                         <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, transparent); animation: slide 1.1s infinite linear;"></div>
                     </div>
                 </div>
@@ -326,9 +331,9 @@ else:
             </div>
             """
 
-        spy_html = format_badge("SPY", spy_price, spy_pct, "#3a1a1a", "#f6465d")
-        qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#3a331a", "#f0b90b")
-        active_html = format_badge(f"{sym} (Live)", active_price, active_pct, "#331a3a", "#9c27b0")
+        spy_html = format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d")
+        qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b")
+        active_html = format_badge(f"{sym} (Live)", active_price, active_pct, "#150c1f", "#9c27b0")
 
         st.markdown(f"""
             <div class="exchange-header">
@@ -374,13 +379,13 @@ else:
 
     with col_chart:
         st.markdown(f"""
-            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
                 <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● LIVE STREAM</span>
             </div>
         """, unsafe_allow_html=True)
 
-        # TradingView Advanced Chart Widget Embedding
+        # TradingView Advanced Chart Widget Embedding (Transparent Background)
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:630px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -398,7 +403,8 @@ else:
             "enable_publishing": false,
             "allow_symbol_change": true,
             "calendar": false,
-            "support_host": "https://www.tradingview.com"
+            "support_host": "https://www.tradingview.com",
+            "isTransparent": true
           }}
           </script>
         </div>
@@ -407,7 +413,7 @@ else:
 
     with col_trade:
         st.markdown("""
-            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px;">
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px;">
                 <div style="font-weight: bold; font-size: 13px; color: #eaecef; margin-bottom: 8px;">Trading Desk</div>
             </div>
         """, unsafe_allow_html=True)
@@ -428,7 +434,7 @@ else:
                 account = client.get_account()
                 
                 st.markdown(f"""
-                <div style="background-color: #181a20; padding: 8px; border-radius: 3px; border: 1px solid #2b313a; font-size: 11px; margin-top: 8px; margin-bottom: 8px; color: #848e9c;">
+                <div style="background-color: #050505; padding: 8px; border-radius: 3px; border: 1px solid #1a1a1a; font-size: 11px; margin-top: 8px; margin-bottom: 8px; color: #848e9c;">
                     <b>Equity:</b> <span style="color:#eaecef;">${float(account.equity):,.2f}</span><br>
                     <b>Buying Power:</b> <span style="color:#eaecef;">${float(account.buying_power):,.2f}</span><br>
                     <b>Cash:</b> <span style="color:#eaecef;">${float(account.cash):,.2f}</span>
@@ -459,9 +465,9 @@ else:
             except Exception as e:
                 st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}) and that your API keys are correct. Details: {e}")
 
-        # TradingView Watchlist / Market Quotes Widget
+        # TradingView Watchlist Widget (Transparent Background)
         st.markdown("""
-            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
                 <div style="font-weight: bold; font-size: 13px; color: #eaecef;">TradingView Watchlist</div>
             </div>
         """, unsafe_allow_html=True)
@@ -490,7 +496,7 @@ else:
             ],
             "showSymbolLogo": true,
             "colorTheme": "dark",
-            "isTransparent": false,
+            "isTransparent": true,
             "locale": "en"
           }
           </script>
