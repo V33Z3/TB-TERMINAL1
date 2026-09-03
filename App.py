@@ -102,6 +102,8 @@ st.markdown(
 
 if "started" not in st.session_state:
     st.session_state.started = False
+if "animating" not in st.session_state:
+    st.session_state.animating = False
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
 if "watchlist" not in st.session_state:
@@ -109,6 +111,7 @@ if "watchlist" not in st.session_state:
 if "active_main_tab" not in st.session_state:
     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
 
+# Landing Page
 if not st.session_state.started:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_l1, col_l2, col_l3 = st.columns([1, 1.5, 1])
@@ -127,13 +130,149 @@ if not st.session_state.started:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Start Back-Testing", use_container_width=True, type="primary"):
             st.session_state.started = True
+            st.session_state.animating = True
             st.rerun()
+
+# 10-Second Fibonacci Trading Back-Test Animation Sequence
+elif st.session_state.started and st.session_state.animating:
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 15px 0;">
+            <h2 style="color: #f0b90b; font-family: monospace; letter-spacing: 2px; margin-bottom: 5px;">⚡ EXECUTING FIBONACCI BACK-TEST ENGINE</h2>
+            <p style="color: #848e9c; font-size: 13px;">Simulating historical tick data across Fibonacci retracement zones (0.236 - 0.786)...</p>
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    anim_html = """
+    <div style="background: #050505; border: 1px solid #1a1a1a; border-radius: 8px; padding: 20px; text-align: center;">
+        <canvas id="fibCanvas" width="950" height="400" style="width: 100%; max-width: 950px; background: #000000; border-radius: 6px; border: 1px solid #222;"></canvas>
+        <div id="timerText" style="color: #0ecb81; font-family: monospace; font-size: 16px; margin-top: 15px; font-weight: bold;">Initializing Back-test: 10.0s remaining</div>
+    </div>
+    <script>
+    const canvas = document.getElementById('fibCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let candles = [];
+    let maxCandles = 38;
+    let spawnCounter = 0;
+    
+    const fibLevels = [
+        {val: 0.20, label: '0.236 (Retrace)', color: '#f6465d'},
+        {val: 0.35, label: '0.382 (Golden)', color: '#f0b90b'},
+        {val: 0.50, label: '0.500 (Mid Pivot)', color: '#0ecb81'},
+        {val: 0.65, label: '0.618 (Golden Ratio)', color: '#29b6f6'},
+        {val: 0.80, label: '0.786 (Deep Value)', color: '#ab47bc'}
+    ];
+
+    function spawnCandle() {
+        if (candles.length < maxCandles) {
+            let x = 45 + candles.length * 23;
+            let baseY = canvas.height * (0.3 + Math.random() * 0.4);
+            let height = 20 + Math.random() * 55;
+            let isGreen = Math.random() > 0.42;
+            candles.push({
+                x: x,
+                baseY: baseY,
+                height: height,
+                isGreen: isGreen,
+                alpha: 0,
+                oscillationOffset: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    let startTime = Date.now();
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Grid & Fib Lines
+        fibLevels.forEach(fib => {
+            let y = canvas.height * fib.val;
+            ctx.strokeStyle = fib.color;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(30, y);
+            ctx.lineTo(canvas.width - 30, y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = fib.color;
+            ctx.font = '11px monospace';
+            ctx.fillText(fib.label, 35, y - 6);
+        });
+
+        spawnCounter++;
+        if (spawnCounter % 16 === 0) {
+            spawnCandle();
+        }
+
+        let timeSec = (Date.now() - startTime) / 1000;
+        let remaining = Math.max(0, (10.0 - timeSec)).toFixed(1);
+        document.getElementById('timerText').innerText = "Fibonacci Back-test in Progress... " + remaining + "s remaining";
+
+        candles.forEach((c) => {
+            if (c.alpha < 1) c.alpha += 0.06;
+            
+            // Move candles smoothly up and down based on market oscillation
+            let wave = Math.sin(Date.now() * 0.0035 + c.oscillationOffset) * 22;
+            let currentY = c.baseY + wave;
+
+            ctx.save();
+            ctx.globalAlpha = c.alpha;
+            ctx.strokeStyle = c.isGreen ? '#0ecb81' : '#f6465d';
+            ctx.fillStyle = c.isGreen ? 'rgba(14, 203, 129, 0.25)' : 'rgba(246, 70, 93, 0.25)';
+            ctx.lineWidth = 1.5;
+
+            // Wick
+            ctx.beginPath();
+            ctx.moveTo(c.x, currentY - c.height/2 - 10);
+            ctx.lineTo(c.x, currentY + c.height/2 + 10);
+            ctx.stroke();
+
+            // Body
+            ctx.fillRect(c.x - 6, currentY - c.height/2, 12, c.height);
+            ctx.strokeRect(c.x - 6, currentY - c.height/2, 12, c.height);
+
+            ctx.restore();
+        });
+
+        if (timeSec < 10.0) {
+            requestAnimationFrame(animate);
+        } else {
+            document.getElementById('timerText').innerHTML = "<span style='color: #0ecb81;'>✔ Back-Test Complete! Launching Terminal...</span>";
+        }
+    }
+
+    animate();
+    </script>
+    """
+    components.html(anim_html, height=450)
+
+    bar = st.progress(0)
+    status_text = st.empty()
+
+    for i in range(100):
+        time.sleep(0.1)
+        bar.progress(i + 1)
+        status_text.text(f"Processing Fibonacci back-test simulation... {i+1}%")
+
+    status_text.success("Back-test simulation complete! Loading TB Terminal...")
+    time.sleep(0.6)
+    st.session_state.animating = False
+    st.rerun()
+
+# Main Terminal Application
 else:
     with st.sidebar:
         st.markdown("### ⚙️ Research Terminal")
         st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Back-Testing & GEX Analytics</b></p>", unsafe_allow_html=True)
         if st.button("Return to Home", use_container_width=True):
             st.session_state.started = False
+            st.session_state.animating = False
             st.rerun()
 
     header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
