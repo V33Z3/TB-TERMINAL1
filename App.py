@@ -25,33 +25,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Map tabs to short query param codes
-tab_to_param = {
-    "📈 Terminal Chart & Watchlist": "chart",
-    "⚛️ Gamma Exposure (GEX) Analysis": "gex",
-    "🎯 Optimal Contract Finder": "finder",
-    "🔄 Sector Rotation Leaderboard": "sectors",
-    "⚡ Unusual Options Activity": "uoa",
-    "📰 Live Trading News": "news"
-}
-param_to_tab = {v: k for k, v in tab_to_param.items()}
-
-# Session state initializations with URL state preservation
+# Session state initializations (relying on st.session_state prevents browser reload flashes)
 if "terminal_opened" not in st.session_state:
-    # Auto-unlock terminal if query params are present in the URL
-    if "ticker" in st.query_params or "tab" in st.query_params:
-        st.session_state.terminal_opened = True
-    else:
-        st.session_state.terminal_opened = False
+    st.session_state.terminal_opened = False
 
 if "show_splash" not in st.session_state:
     st.session_state.show_splash = False
 
 if "active_ticker" not in st.session_state:
-    if "ticker" in st.query_params:
-        st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
-    else:
-        st.session_state.active_ticker = "AAPL"
+    st.session_state.active_ticker = "AAPL"
 
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
@@ -61,14 +43,6 @@ if "active_main_tab" not in st.session_state:
 
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
-
-# Handle Tab Query Parameters without overriding manual clicks
-if "tab" in st.query_params and "active_main_tab" not in st.session_state:
-    tab_param = st.query_params["tab"].lower()
-    if tab_param in param_to_tab:
-        expected_tab = param_to_tab[tab_param]
-        st.session_state.active_main_tab = expected_tab
-        st.session_state.main_nav_radio = expected_tab
 
 # Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
@@ -373,11 +347,9 @@ else:
             st.query_params.clear()
             st.rerun()
 
-    # Ticker Search Input Row (Removed manual st.rerun() since query_params assignment auto-reruns)
+    # Ticker Search Input Row (Using pure session state to prevent browser reload/flash bugs)
     def on_ticker_change():
-        sym = st.session_state.ticker_search_input.upper().strip()
-        st.session_state.active_ticker = sym
-        st.query_params["ticker"] = sym
+        st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
     
     st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
 
@@ -438,12 +410,16 @@ else:
     """, unsafe_allow_html=True)
 
     def on_nav_change():
-        selected = st.session_state.main_nav_radio
-        st.session_state.active_main_tab = selected
-        if selected in tab_to_param:
-            st.query_params["tab"] = tab_to_param[selected]
+        st.session_state.active_main_tab = st.session_state.main_nav_radio
 
-    nav_options = list(tab_to_param.keys())
+    nav_options = [
+        "📈 Terminal Chart & Watchlist",
+        "⚛️ Gamma Exposure (GEX) Analysis",
+        "🎯 Optimal Contract Finder",
+        "🔄 Sector Rotation Leaderboard",
+        "⚡ Unusual Options Activity",
+        "📰 Live Trading News"
+    ]
     
     if st.session_state.active_main_tab not in nav_options:
         st.session_state.active_main_tab = nav_options[0]
@@ -536,10 +512,10 @@ else:
 
                     w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
                     with w_col_info:
-                        # Watchlist button updates query_params directly (Streamlit auto-reruns)
+                        # Watchlist button updates active_ticker directly via session state without triggering browser reloads/flashes
                         if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
                             st.session_state.active_ticker = sym
-                            st.query_params["ticker"] = sym
+                            st.rerun()
                     with w_col_vol:
                         st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
                     with w_col_price:
