@@ -235,119 +235,109 @@ else:
                         <path d="M 30 140 Q 180 130 350 115 T 670 75" fill="none" stroke="#f0b90b" stroke-width="1.8" opacity="0.9"/>
                         <path d="M 30 155 Q 180 145 350 130 T 670 95" fill="none" stroke="#0ecb81" stroke-width="1.8" opacity="0.9"/>
 
-                        <!-- Candlesticks Container (Initially hidden, printed one by one via JS) -->
+                        <!-- Candlesticks Container -->
                         <g id="candlestick-container">
-                            <g class="candle" data-y1="125" data-y2="155" data-ry="132" data-rh="16"><line x1="36" y1="140" x2="36" y2="140" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="140" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="130" data-y2="160" data-ry="138" data-rh="14"><line x1="61" y1="145" x2="61" y2="145" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="145" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="120" data-y2="148" data-ry="125" data-rh="18"><line x1="86" y1="134" x2="86" y2="134" stroke="#0ecb81" stroke-width="1.5"/><rect x="81" y="134" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="115" data-y2="145" data-ry="120" data-rh="20"><line x1="111" y1="130" x2="111" y2="130" stroke="#0ecb81" stroke-width="1.5"/><rect x="106" y="130" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="125" data-y2="152" data-ry="130" data-rh="15"><line x1="136" y1="138" x2="136" y2="138" stroke="#f6465d" stroke-width="1.5"/><rect x="131" y="138" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="110" data-y2="140" data-ry="115" data-rh="22"><line x1="161" y1="125" x2="161" y2="125" stroke="#0ecb81" stroke-width="1.5"/><rect x="156" y="125" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="105" data-y2="135" data-ry="112" data-rh="18"><line x1="186" y1="120" x2="186" y2="120" stroke="#0ecb81" stroke-width="1.5"/><rect x="181" y="120" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="112" data-y2="142" data-ry="118" data-rh="16"><line x1="211" y1="127" x2="211" y2="127" stroke="#f6465d" stroke-width="1.5"/><rect x="206" y="127" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="95" data-y2="128" data-ry="102" data-rh="20"><line x1="236" y1="112" x2="236" y2="112" stroke="#0ecb81" stroke-width="1.5"/><rect x="231" y="112" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="100" data-y2="130" data-ry="106" data-rh="15"><line x1="261" y1="115" x2="261" y2="115" stroke="#f6465d" stroke-width="1.5"/><rect x="256" y="115" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="92" data-y2="122" data-ry="98" data-rh="18"><line x1="286" y1="107" x2="286" y2="107" stroke="#0ecb81" stroke-width="1.5"/><rect x="281" y="107" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="80" data-y2="112" data-ry="86" data-rh="22"><line x1="311" y1="96" x2="311" y2="96" stroke="#0ecb81" stroke-width="1.5"/><rect x="306" y="96" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="88" data-y2="118" data-ry="94" data-rh="16"><line x1="336" y1="103" x2="336" y2="103" stroke="#f6465d" stroke-width="1.5"/><rect x="331" y="103" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="82" data-y2="110" data-ry="88" data-rh="18"><line x1="361" y1="96" x2="361" y2="96" stroke="#0ecb81" stroke-width="1.5"/><rect x="356" y="96" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="90" data-y2="120" data-ry="96" data-rh="16"><line x1="386" y1="105" x2="386" y2="105" stroke="#f6465d" stroke-width="1.5"/><rect x="381" y="105" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="75" data-y2="105" data-ry="80" data-rh="20"><line x1="411" y1="90" x2="411" y2="90" stroke="#0ecb81" stroke-width="1.5"/><rect x="406" y="90" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="65" data-y2="98" data-ry="70" data-rh="22"><line x1="436" y1="82" x2="436" y2="82" stroke="#0ecb81" stroke-width="1.5"/><rect x="431" y="82" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="78" data-y2="108" data-ry="84" data-rh="16"><line x1="461" y1="93" x2="461" y2="93" stroke="#f6465d" stroke-width="1.5"/><rect x="456" y="93" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="62" data-y2="92" data-ry="68" data-rh="20"><line x1="486" y1="77" x2="486" y2="77" stroke="#0ecb81" stroke-width="1.5"/><rect x="481" y="77" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="50" data-y2="82" data-ry="56" data-rh="22"><line x1="511" y1="66" x2="511" y2="66" stroke="#0ecb81" stroke-width="1.5"/><rect x="506" y="66" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="40" data-y2="72" data-ry="46" data-rh="22"><line x1="536" y1="56" x2="536" y2="56" stroke="#0ecb81" stroke-width="1.5"/><rect x="531" y="56" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="58" data-y2="88" data-ry="64" data-rh="16"><line x1="561" y1="73" x2="561" y2="73" stroke="#f6465d" stroke-width="1.5"/><rect x="556" y="73" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="48" data-y2="80" data-ry="54" data-rh="20"><line x1="586" y1="64" x2="586" y2="64" stroke="#0ecb81" stroke-width="1.5"/><rect x="581" y="64" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="35" data-y2="68" data-ry="42" data-rh="22"><line x1="611" y1="52" x2="611" y2="52" stroke="#0ecb81" stroke-width="1.5"/><rect x="606" y="52" width="10" height="0" fill="#0ecb81" rx="1"/></g>
-                            <g class="candle" data-y1="45" data-y2="75" data-ry="50" data-rh="18"><line x1="636" y1="60" x2="636" y2="60" stroke="#f6465d" stroke-width="1.5"/><rect x="631" y="60" width="10" height="0" fill="#f6465d" rx="1"/></g>
-                            <g class="candle" data-y1="28" data-y2="60" data-ry="34" data-rh="22"><line x1="661" y1="44" x2="661" y2="44" stroke="#0ecb81" stroke-width="1.5"/><rect x="656" y="44" width="10" height="0" fill="#0ecb81" rx="1"/></g>
+                            <g class="candle" data-y1="125" data-y2="155" data-ry="132" data-rh="16"><line x1="36" y1="140" x2="36" y2="140" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="140" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="130" data-y2="160" data-ry="138" data-rh="14"><line x1="61" y1="145" x2="61" y2="145" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="145" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="120" data-y2="148" data-ry="125" data-rh="18"><line x1="86" y1="134" x2="86" y2="134" stroke="#0ecb81" stroke-width="1.5"/><rect x="81" y="134" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="115" data-y2="145" data-ry="120" data-rh="20"><line x1="111" y1="130" x2="111" y2="130" stroke="#0ecb81" stroke-width="1.5"/><rect x="106" y="130" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="125" data-y2="152" data-ry="130" data-rh="15"><line x1="136" y1="138" x2="136" y2="138" stroke="#f6465d" stroke-width="1.5"/><rect x="131" y="138" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="110" data-y2="140" data-ry="115" data-rh="22"><line x1="161" y1="125" x2="161" y2="125" stroke="#0ecb81" stroke-width="1.5"/><rect x="156" y="125" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="105" data-y2="135" data-ry="112" data-rh="18"><line x1="186" y1="120" x2="186" y2="120" stroke="#0ecb81" stroke-width="1.5"/><rect x="181" y="120" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="112" data-y2="142" data-ry="118" data-rh="16"><line x1="211" y1="127" x2="211" y2="127" stroke="#f6465d" stroke-width="1.5"/><rect x="206" y="127" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="95" data-y2="128" data-ry="102" data-rh="20"><line x1="236" y1="112" x2="236" y2="112" stroke="#0ecb81" stroke-width="1.5"/><rect x="231" y="112" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="100" data-y2="130" data-ry="106" data-rh="15"><line x1="261" y1="115" x2="261" y2="115" stroke="#f6465d" stroke-width="1.5"/><rect x="256" y="115" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="92" data-y2="122" data-ry="98" data-rh="18"><line x1="286" y1="107" x2="286" y2="107" stroke="#0ecb81" stroke-width="1.5"/><rect x="281" y="107" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="80" data-y2="112" data-ry="86" data-rh="22"><line x1="311" y1="96" x2="311" y2="96" stroke="#0ecb81" stroke-width="1.5"/><rect x="306" y="96" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="88" data-y2="118" data-ry="94" data-rh="16"><line x1="336" y1="103" x2="336" y2="103" stroke="#f6465d" stroke-width="1.5"/><rect x="331" y="103" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="82" data-y2="110" data-ry="88" data-rh="18"><line x1="361" y1="96" x2="361" y2="96" stroke="#0ecb81" stroke-width="1.5"/><rect x="356" y="96" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="90" data-y2="120" data-ry="96" data-rh="16"><line x1="386" y1="105" x2="386" y2="105" stroke="#f6465d" stroke-width="1.5"/><rect x="381" y="105" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="75" data-y2="105" data-ry="80" data-rh="20"><line x1="411" y1="90" x2="411" y2="90" stroke="#0ecb81" stroke-width="1.5"/><rect x="406" y="90" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="65" data-y2="98" data-ry="70" data-rh="22"><line x1="436" y1="82" x2="436" y2="82" stroke="#0ecb81" stroke-width="1.5"/><rect x="431" y="82" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="78" data-y2="108" data-ry="84" data-rh="16"><line x1="461" y1="93" x2="461" y2="93" stroke="#f6465d" stroke-width="1.5"/><rect x="456" y="93" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="62" data-y2="92" data-ry="68" data-rh="20"><line x1="486" y1="77" x2="486" y2="77" stroke="#0ecb81" stroke-width="1.5"/><rect x="481" y="77" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="50" data-y2="82" data-ry="56" data-rh="22"><line x1="511" y1="66" x2="511" y2="66" stroke="#0ecb81" stroke-width="1.5"/><rect x="506" y="66" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="40" data-y2="72" data-ry="46" data-rh="22"><line x1="536" y1="56" x2="536" y2="56" stroke="#0ecb81" stroke-width="1.5"/><rect x="531" y="56" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="58" data-y2="88" data-ry="64" data-rh="16"><line x1="561" y1="73" x2="561" y2="73" stroke="#f6465d" stroke-width="1.5"/><rect x="556" y="73" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="48" data-y2="80" data-ry="54" data-rh="20"><line x1="586" y1="64" x2="586" y2="64" stroke="#0ecb81" stroke-width="1.5"/><rect x="581" y="64" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="35" data-y2="68" data-ry="42" data-rh="22"><line x1="611" y1="52" x2="611" y2="52" stroke="#0ecb81" stroke-width="1.5"/><rect x="606" y="52" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="45" data-y2="75" data-ry="50" data-rh="18"><line x1="636" y1="60" x2="636" y2="60" stroke="#f6465d" stroke-width="1.5"/><rect x="631" y="60" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
+                            <g class="candle" data-y1="28" data-y2="60" data-ry="34" data-rh="22"><line x1="661" y1="44" x2="661" y2="44" stroke="#0ecb81" stroke-width="1.5"/><rect x="656" y="44" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
                         </g>
                     </svg>
                 </div>
             </div>
 
             <script>
-            // Sequential 1-by-1 printing with organic up/down fluctuation and random final resting position
+            // Strict Sequential Animation: One candle spawns, bounces up and down, locks into a random resting spot, then the next candle spawns.
             const candles = document.querySelectorAll('.candle');
-            let index = 0;
-            const settledCandles = [];
+            let currentIndex = 0;
 
-            // 1. Print candles one by one sequentially
-            const printInterval = setInterval(() => {
-                if (index < candles.length) {
-                    const candle = candles[index];
-                    const rect = candle.querySelector('rect');
-                    const line = candle.querySelector('line');
-                    
-                    const targetY1 = parseFloat(candle.getAttribute('data-y1'));
-                    const targetY2 = parseFloat(candle.getAttribute('data-y2'));
-                    const targetRy = parseFloat(candle.getAttribute('data-ry'));
-                    const targetRh = parseFloat(candle.getAttribute('data-rh'));
+            function animateNextCandle() {
+                if (currentIndex >= candles.length) return;
 
-                    // Add a random offset so each candle finds a unique final resting position relative to the trend
-                    const randomOffset = (Math.random() - 0.5) * 8; 
-                    
-                    candle.finalY1 = targetY1 + randomOffset;
-                    candle.finalY2 = targetY2 + randomOffset;
-                    candle.finalRy = targetRy + randomOffset;
-                    candle.finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
+                const candle = candles[currentIndex];
+                const rect = candle.querySelector('rect');
+                const line = candle.querySelector('line');
+                
+                rect.setAttribute('opacity', '1');
 
-                    // Initialize at center height for growth effect
-                    rect.setAttribute('y', candle.finalRy + candle.finalRh / 2);
-                    rect.setAttribute('height', '2');
-                    line.setAttribute('y1', candle.finalY1);
-                    line.setAttribute('y2', candle.finalY2);
+                const targetY1 = parseFloat(candle.getAttribute('data-y1'));
+                const targetY2 = parseFloat(candle.getAttribute('data-y2'));
+                const targetRy = parseFloat(candle.getAttribute('data-ry'));
+                const targetRh = parseFloat(candle.getAttribute('data-rh'));
 
-                    // Store current animated properties for physics/bounce
-                    candle.currentRy = candle.finalRy;
-                    candle.currentRh = candle.finalRh;
-                    candle.currentY1 = candle.finalY1;
-                    candle.currentY2 = candle.finalY2;
-                    
-                    // Give it an initial bounce velocity
-                    candle.velocity = (Math.random() - 0.5) * 6;
+                // Pick a unique random resting spot relative to the template
+                const randomOffset = (Math.random() - 0.5) * 12;
+                const finalY1 = targetY1 + randomOffset;
+                const finalY2 = targetY2 + randomOffset;
+                const finalRy = targetRy + randomOffset;
+                const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
 
-                    settledCandles.push(candle);
-                    index++;
-                } else {
-                    clearInterval(printInterval);
-                }
-            }, 55);
+                let startTime = performance.now();
+                let bounceDuration = 700 + Math.random() * 500; // Duration of active bouncing up and down
 
-            // 2. Continuous live tick loop: make candles move up/down and settle organically
-            setInterval(() => {
-                settledCandles.forEach((candle, idx) => {
-                    const rect = candle.querySelector('rect');
-                    const line = candle.querySelector('line');
-                    if (rect && line) {
-                        // Apply active price fluctuation (random walk with pull toward final random resting spot)
-                        const pullStrength = 0.15;
-                        const jitter = (Math.random() - 0.49) * 3.5;
-                        
-                        candle.velocity += jitter - (candle.currentRy - candle.finalRy) * pullStrength;
-                        candle.velocity *= 0.75; // damping
+                function frame(now) {
+                    let elapsed = now - startTime;
+                    let progress = Math.min(1, elapsed / bounceDuration);
 
-                        candle.currentRy += candle.velocity;
-                        // Keep height stable with minor breathing
-                        let h = Math.max(4, candle.finalRh + candle.velocity * 0.4);
-                        
-                        candle.currentY1 = candle.currentRy - (candle.finalRy - candle.finalY1);
-                        candle.currentY2 = candle.currentRy + (candle.finalY2 - candle.finalRy);
+                    if (progress < 1) {
+                        // Up and down oscillation motion while bouncing into place
+                        let bounceAmplitude = 12 * (1 - progress); 
+                        let currentRy = finalRy + Math.sin(elapsed / 70) * bounceAmplitude;
+                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 50) * 3);
+                        let currentY1 = currentRy - (finalRy - finalY1);
+                        let currentY2 = currentRy + (finalY2 - finalRy);
 
-                        rect.setAttribute('y', candle.currentRy);
-                        rect.setAttribute('height', h);
-                        line.setAttribute('y1', candle.currentY1);
-                        line.setAttribute('y2', candle.currentY2);
+                        rect.setAttribute('y', currentRy);
+                        rect.setAttribute('height', currentRh);
+                        line.setAttribute('y1', currentY1);
+                        line.setAttribute('y2', currentY2);
+
+                        requestAnimationFrame(frame);
+                    } else {
+                        // Lock completely into its final random spot and stop moving
+                        rect.setAttribute('y', finalRy);
+                        rect.setAttribute('height', finalRh);
+                        line.setAttribute('y1', finalY1);
+                        line.setAttribute('y2', finalY2);
+
+                        // Move on to spawn and animate the next candle
+                        currentIndex++;
+                        setTimeout(animateNextCandle, 40);
                     }
-                });
-            }, 60);
+                }
+
+                requestAnimationFrame(frame);
+            }
+
+            // Start sequence
+            animateNextCandle();
             </script>
             """,
             height=320,
         )
-        time.sleep(2.5)
+        time.sleep(5.0)
         st.session_state.show_splash = False
         st.rerun()
 
