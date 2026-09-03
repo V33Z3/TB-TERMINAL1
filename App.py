@@ -24,9 +24,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Handle Ticker Selection via Query Parameters
+# Handle Ticker and Tab Selection via Query Parameters
 if "ticker" in st.query_params:
     st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
+
+if "tab" in st.query_params:
+    tab_param = st.query_params["tab"].lower()
+    if tab_param == "chart":
+        st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+    elif tab_param == "gex":
+        st.session_state.active_main_tab = "⚛️ Gamma Exposure (GEX) Analysis"
+    elif tab_param == "finder":
+        st.session_state.active_main_tab = "🎯 Optimal Contract Finder"
+    elif tab_param == "sectors":
+        st.session_state.active_main_tab = "🔄 Sector Rotation Grid"
 
 # Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
@@ -143,6 +154,8 @@ if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
+if "active_main_tab" not in st.session_state:
+    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
 
 # Authentication Gate
 if not st.session_state.user:
@@ -261,7 +274,7 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    # Header display without heavy un-cached blocking fragments
+    # Header display ticker badges
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -285,15 +298,28 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # TOP-LEVEL TABS
-    main_tab_chart, main_tab_gex, main_tab_finder, main_tab_sectors = st.tabs([
+    # TOP-LEVEL NAVIGATION USING STATE RADIO (Ensures programmatic switching works reliably)
+    nav_options = [
         "📈 Terminal Chart & Watchlist",
         "⚛️ Gamma Exposure (GEX) Analysis",
         "🎯 Optimal Contract Finder",
         "🔄 Sector Rotation Grid"
-    ])
+    ]
+    
+    if st.session_state.active_main_tab not in nav_options:
+        st.session_state.active_main_tab = nav_options[0]
 
-    with main_tab_chart:
+    selected_main_tab = st.radio(
+        "Navigation", 
+        options=nav_options, 
+        index=nav_options.index(st.session_state.active_main_tab), 
+        horizontal=True, 
+        label_visibility="collapsed"
+    )
+    st.session_state.active_main_tab = selected_main_tab
+    st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+
+    if selected_main_tab == "📈 Terminal Chart & Watchlist":
         col_chart, col_research = st.columns([3.4, 1.2])
 
         with col_chart:
@@ -372,7 +398,7 @@ else:
                     with w_col_info:
                         st.markdown(
                             f"""
-                            <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                            <a href="?ticker={sym}&tab=chart" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
                                 <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
                                 <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
                             </a>
@@ -415,7 +441,7 @@ else:
                     except Exception as e:
                         st.error(f"AI Error: {e}")
 
-    with main_tab_gex:
+    elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
         st.markdown(
             f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
@@ -559,7 +585,7 @@ else:
                             except Exception as e:
                                 st.error(f"Error computing Gamma Exposure: {e}")
 
-    with main_tab_finder:
+    elif selected_main_tab == "🎯 Optimal Contract Finder":
         st.markdown(
             f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
@@ -674,11 +700,11 @@ else:
                         except Exception as e:
                             st.error(f"Error scanning options contracts: {e}")
 
-    with main_tab_sectors:
+    elif selected_main_tab == "🔄 Sector Rotation Grid":
         st.markdown(
             """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Grid & Capital Flow</h3>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Grid & Capital Flow (All 11 GICS Sectors)</h3>
                 <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Monitor sector momentum and top constituents. Click any ticker or button below to switch to the Terminal Chart view.</p>
             </div>
             """,
@@ -686,26 +712,82 @@ else:
         )
 
         sectors_data = {
-            "Energy (XLE)": [
-                {"ticker": "MPC", "price": 392.12, "perf": "1.32%"},
-                {"ticker": "PSX", "price": 258.58, "perf": "0.97%"},
-                {"ticker": "CVX", "price": 212.70, "perf": "0.43%"},
-                {"ticker": "XOM", "price": 163.83, "perf": "-0.19%"},
-                {"ticker": "COP", "price": 136.15, "perf": "-0.76%"},
-                {"ticker": "OXY", "price": 61.01, "perf": "0.17%"},
-                {"ticker": "EOG", "price": 147.92, "perf": "-0.70%"},
-                {"ticker": "SLB", "price": 57.93, "perf": "-0.34%"}
-            ],
             "Technology (XLK)": [
-                {"ticker": "AAPL", "price": 225.50, "perf": "1.15%"},
-                {"ticker": "MSFT", "price": 440.20, "perf": "0.82%"},
-                {"ticker": "NVDA", "price": 128.40, "perf": "2.45%"},
-                {"ticker": "GOOGL", "price": 178.10, "perf": "-0.45%"},
+                {"ticker": "AAPL", "price": 225.50},
+                {"ticker": "MSFT", "price": 440.20},
+                {"ticker": "NVDA", "price": 128.40},
+                {"ticker": "AVGO", "price": 165.20},
+                {"ticker": "CRM", "price": 265.40}
             ],
             "Financials (XLF)": [
-                {"ticker": "JPM", "price": 210.30, "perf": "0.55%"},
-                {"ticker": "BAC", "price": 39.40, "perf": "0.20%"},
-                {"ticker": "WFC", "price": 58.20, "perf": "-0.30%"},
+                {"ticker": "JPM", "price": 210.30},
+                {"ticker": "BAC", "price": 39.40},
+                {"ticker": "WFC", "price": 58.20},
+                {"ticker": "GS", "price": 475.10},
+                {"ticker": "MS", "price": 102.50}
+            ],
+            "Energy (XLE)": [
+                {"ticker": "XOM", "price": 116.80},
+                {"ticker": "CVX", "price": 152.70},
+                {"ticker": "COP", "price": 114.15},
+                {"ticker": "SLB", "price": 45.93},
+                {"ticker": "OXY", "price": 61.01}
+            ],
+            "Healthcare (XLV)": [
+                {"ticker": "LLY", "price": 950.20},
+                {"ticker": "UNH", "price": 560.10},
+                {"ticker": "JNJ", "price": 160.40},
+                {"ticker": "MRK", "price": 125.30},
+                {"ticker": "ABBV", "price": 185.60}
+            ],
+            "Consumer Discretionary (XLY)": [
+                {"ticker": "AMZN", "price": 185.20},
+                {"ticker": "TSLA", "price": 220.40},
+                {"ticker": "HD", "price": 385.10},
+                {"ticker": "NKE", "price": 85.30},
+                {"ticker": "MCD", "price": 290.10}
+            ],
+            "Consumer Staples (XLP)": [
+                {"ticker": "WMT", "price": 75.40},
+                {"ticker": "PG", "price": 170.20},
+                {"ticker": "COST", "price": 880.50},
+                {"ticker": "KO", "price": 68.40},
+                {"ticker": "PEP", "price": 175.20}
+            ],
+            "Industrials (XLI)": [
+                {"ticker": "GE", "price": 175.40},
+                {"ticker": "CAT", "price": 360.20},
+                {"ticker": "RTX", "price": 110.50},
+                {"ticker": "UNP", "price": 245.30},
+                {"ticker": "HON", "price": 210.10}
+            ],
+            "Utilities (XLU)": [
+                {"ticker": "NEE", "price": 80.40},
+                {"ticker": "SO", "price": 85.20},
+                {"ticker": "DUK", "price": 105.10},
+                {"ticker": "SRE", "price": 82.30},
+                {"ticker": "AEP", "price": 98.40}
+            ],
+            "Materials (XLB)": [
+                {"ticker": "LIN", "price": 460.20},
+                {"ticker": "SHW", "price": 350.40},
+                {"ticker": "FCX", "price": 48.20},
+                {"ticker": "APD", "price": 305.10},
+                {"ticker": "NEM", "price": 52.40}
+            ],
+            "Real Estate (XLRE)": [
+                {"ticker": "PLD", "price": 125.40},
+                {"ticker": "AMT", "price": 220.50},
+                {"ticker": "EQIX", "price": 890.10},
+                {"ticker": "CCI", "price": 115.20},
+                {"ticker": "PSA", "price": 330.40}
+            ],
+            "Communication Services (XLC)": [
+                {"ticker": "GOOGL", "price": 178.10},
+                {"ticker": "META", "price": 510.40},
+                {"ticker": "NFLX", "price": 680.20},
+                {"ticker": "DIS", "price": 95.40},
+                {"ticker": "CMCSA", "price": 41.20}
             ]
         }
 
@@ -727,7 +809,7 @@ else:
             with col_sec1:
                 st.markdown(
                     f"""
-                    <a href="?ticker={sym}" target="_self" style="text-decoration: none; font-weight: bold; color: #f0b90b; font-size: 14px;">
+                    <a href="?ticker={sym}&tab=chart" target="_self" style="text-decoration: none; font-weight: bold; color: #f0b90b; font-size: 14px;">
                         ⚡ {sym}
                     </a>
                     """, 
@@ -740,6 +822,8 @@ else:
             with col_sec4:
                 if st.button("Open Terminal Chart", key=f"btn_sector_term_{sym}", use_container_width=True):
                     st.session_state.active_ticker = sym
+                    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
                     st.query_params["ticker"] = sym
+                    st.query_params["tab"] = "chart"
                     st.rerun()
             st.divider()
