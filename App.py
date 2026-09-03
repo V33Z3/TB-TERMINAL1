@@ -411,15 +411,15 @@ else:
       try:
         session = get_yf_session()
         t = yf.Ticker(symbol, session=session)
-        hist = t.history(period="2d")
+        hist = t.history(period="5d")
         if not hist.empty:
           yf_close = float(hist["Close"].iloc[-1])
           prev = (
-              float(hist["Close"].iloc[0])
+              float(hist["Close"].iloc[-2])
               if len(hist) > 1
-              else float(hist["Open"].iloc[0])
+              else float(hist["Open"].iloc[-1])
           )
-          vol = int(hist["Volume"].iloc[-1])
+          vol = int(hist["Volume"].iloc[-1]) if "Volume" in hist.columns else 0
           if price == 0.0:
             price = yf_close
           pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
@@ -646,7 +646,7 @@ else:
       except Exception as e:
         st.error(f"Connection error: {e}")
 
-    # Persistent Custom Interactive Watchlist with CDN Logos, Text-Only Tickers, Volume, and Red Delete Buttons
+    # Persistent Custom Interactive Watchlist with CDN Logos, Text-Only Tickers, Volume (matching ticker size/color), and Red Delete Buttons
     st.markdown(
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
@@ -674,7 +674,7 @@ else:
           save_watchlist_to_db()
           st.rerun()
 
-    # Render Watchlist items with Logo images, text-only clickable tickers, volume, price, and red delete buttons
+    # Render Watchlist items with Logo images, text-only clickable tickers, volume matching ticker style, and red delete buttons
     st.markdown(
         "<div style='background: #050505; border: 1px solid #1a1a1a;"
         " border-radius: 4px; padding: 8px; max-height: 320px;"
@@ -714,9 +714,8 @@ else:
           )
         with w_col_vol:
           st.markdown(
-              f"<div style='font-size: 11px; text-align: center;"
-              f" padding-top: 6px; color: #848e9c;'><span"
-              f" style='font-size:9px;'>VOL</span><br><b>{vol_str}</b></div>",
+              f"<div style='font-size: 13px; color: #eaecef; padding-top:"
+              f" 4px;'>{vol_str}</div>",
               unsafe_allow_html=True,
           )
         with w_col_price:
