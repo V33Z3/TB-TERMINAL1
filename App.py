@@ -1,6 +1,7 @@
 import datetime
 import math
 import time
+import xml.etree.ElementTree as ET
 from groq import Groq
 import numpy as np
 import pandas as pd
@@ -24,13 +25,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Map tabs to short query param codes
+# Map tabs to short query param codes (including Live Trading News)
 tab_to_param = {
     "📈 Terminal Chart & Watchlist": "chart",
     "⚛️ Gamma Exposure (GEX) Analysis": "gex",
     "🎯 Optimal Contract Finder": "finder",
     "🔄 Sector Rotation Leaderboard": "sectors",
-    "⚡ Unusual Options Activity": "uoa"
+    "⚡ Unusual Options Activity": "uoa",
+    "📰 Live Trading News": "news"
 }
 param_to_tab = {v: k for k, v in tab_to_param.items()}
 
@@ -279,7 +281,7 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    # Header display ticker badges & TB TERMINAL TITLE moved to top green bar line
+    # Header display ticker badges & TB TERMINAL TITLE on the top green bar line
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -950,3 +952,95 @@ else:
                     df_uoa = df_uoa.head(max_results)
                     st.success(f"Scan complete! Showing top {len(df_uoa)} most unusual options contracts.")
                     st.dataframe(df_uoa, use_container_width=True, hide_index=True)
+
+    elif selected_main_tab == "📰 Live Trading News":
+        st.markdown(
+            f"""
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">📰 Live Financial & Trading News // {target_symbol} & Markets</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Real-time headlines, press releases, and market intelligence.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        news_col1, news_col2 = st.columns([2, 1])
+        with news_col1:
+            news_source_type = st.radio("News Scope", options=[f"Ticker Specific ({target_symbol})", "General Market & Macro"], horizontal=True)
+        with news_col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🔄 Refresh News Feed", use_container_width=True):
+                st.cache_data.clear()
+                st.rerun()
+
+        @st.cache_data(ttl=300)
+        def fetch_news_feed(sym, mode):
+            articles = []
+            if mode.startswith("Ticker"):
+                if YFINANCE_AVAILABLE:
+                    try:
+                        tk = yf.Ticker(sym, session=get_yf_session())
+                        raw_news = tk.news
+                        for item in raw_news:
+                            content = item.get("content", item)
+                            title = content.get("title", item.get("title", ""))
+                            publisher = content.get("provider", {}).get("displayName", item.get("publisher", "Yahoo Finance"))
+                            link = content.get("clickThroughUrl", {}).get("url", item.get("link", "#"))
+                            pub_time = content.get("pubDate", item.get("providerPublishTime", 0))
+                            
+                            if isinstance(pub_time, int) or isinstance(pub_time, float):
+                                dt_str = datetime.datetime.fromtimestamp(pub_time).strftime("%Y-%m-%d %H:%M")
+                            else:
+                                dt_str = str(pub_time)[:16]
+                                
+                            if title:
+                                articles.append({
+                                    "title": title,
+                                    "publisher": publisher,
+                                    "link": link,
+                                    "time": dt_str
+                                })
+                    except Exception:
+                        pass
+            
+            if not articles:
+                try:
+                    rss_url = "https://finance.yahoo.com/news/rss"
+                    resp = requests.get(rss_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+                    if resp.status_code == 200:
+                        root = ET.fromstring(resp.content)
+                        for item in root.findall(".//item"):
+                            title = item.find("title").text if item.find("title") is not None else ""
+                            pub = item.find("source").text if item.find("source") is not None else "Yahoo Finance"
+                            link = item.find("link").text if item.find("link") is not None else "#"
+                            pub_date = item.find("pubDate").text if item.find("pubDate") is not None else ""
+                            articles.append({
+                                "title": title,
+                                "publisher": pub,
+                                "link": link,
+                                "time": pub_date[:16]
+                            })
+                except Exception:
+                    pass
+            return articles
+
+        articles = fetch_news_feed(target_symbol, news_source_type)
+
+        if not articles:
+            st.info("No recent news articles found at the moment.")
+        else:
+            for art in articles:
+                st.markdown(
+                    f"""
+                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 15px; border-radius: 4px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 11px; color: #f0b90b; font-weight: bold; background: rgba(240,185,11,0.1); padding: 2px 6px; border-radius: 3px;">{art['publisher']}</span>
+                            <span style="font-size: 11px; color: #848e9c;">{art['time']}</span>
+                        </div>
+                        <a href="{art['link']}" target="_blank" style="text-decoration: none; color: #eaecef; font-size: 14px; font-weight: 500; display: block; margin-bottom: 4px;">
+                            {art['title']} ↗
+                        </a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
