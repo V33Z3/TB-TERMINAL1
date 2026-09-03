@@ -25,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Session state initializations (relying on st.session_state prevents browser reload flashes)
+# Session state initializations
 if "terminal_opened" not in st.session_state:
     st.session_state.terminal_opened = False
 
@@ -34,6 +34,9 @@ if "show_splash" not in st.session_state:
 
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
+
+if "ticker_search_input" not in st.session_state:
+    st.session_state.ticker_search_input = st.session_state.active_ticker
 
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
@@ -344,14 +347,13 @@ else:
         if st.button("Lock Terminal", use_container_width=True):
             st.session_state.terminal_opened = False
             st.session_state.show_splash = False
-            st.query_params.clear()
             st.rerun()
 
-    # Ticker Search Input Row (Using pure session state to prevent browser reload/flash bugs)
+    # Ticker Search Input Row (Synchronized session state keys to prevent state conflicts)
     def on_ticker_change():
         st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
     
-    st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
+    st.text_input("Search Ticker", key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
 
     target_symbol = st.session_state.active_ticker
 
@@ -512,9 +514,10 @@ else:
 
                     w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
                     with w_col_info:
-                        # Watchlist button updates active_ticker directly via session state without triggering browser reloads/flashes
+                        # Fully sync active_ticker and text_input session state to prevent widget conflict crashes
                         if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
                             st.session_state.active_ticker = sym
+                            st.session_state.ticker_search_input = sym
                             st.rerun()
                     with w_col_vol:
                         st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
