@@ -32,12 +32,16 @@ if "tab" in st.query_params:
     tab_param = st.query_params["tab"].lower()
     if tab_param == "chart":
         st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+        st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
     elif tab_param == "gex":
         st.session_state.active_main_tab = "⚛️ Gamma Exposure (GEX) Analysis"
+        st.session_state.main_nav_radio = "⚛️ Gamma Exposure (GEX) Analysis"
     elif tab_param == "finder":
         st.session_state.active_main_tab = "🎯 Optimal Contract Finder"
+        st.session_state.main_nav_radio = "🎯 Optimal Contract Finder"
     elif tab_param == "sectors":
-        st.session_state.active_main_tab = "🔄 Sector Rotation Grid"
+        st.session_state.active_main_tab = "🔄 Sector Rotation Leaderboard"
+        st.session_state.main_nav_radio = "🔄 Sector Rotation Leaderboard"
 
 # Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
@@ -156,6 +160,8 @@ if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
 if "active_main_tab" not in st.session_state:
     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+if "main_nav_radio" not in st.session_state:
+    st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
 
 # Authentication Gate
 if not st.session_state.user:
@@ -298,7 +304,7 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # TOP-LEVEL NAVIGATION USING STATE RADIO
+    # TOP-LEVEL NAVIGATION USING STATE RADIO WITH EXPLICIT KEY SYNC
     nav_options = [
         "📈 Terminal Chart & Watchlist",
         "⚛️ Gamma Exposure (GEX) Analysis",
@@ -308,11 +314,12 @@ else:
     
     if st.session_state.active_main_tab not in nav_options:
         st.session_state.active_main_tab = nav_options[0]
+        st.session_state.main_nav_radio = nav_options[0]
 
     selected_main_tab = st.radio(
         "Navigation", 
         options=nav_options, 
-        index=nav_options.index(st.session_state.active_main_tab), 
+        key="main_nav_radio",
         horizontal=True, 
         label_visibility="collapsed"
     )
@@ -758,7 +765,6 @@ else:
             }
         }
 
-        # Calculate live performance for all 11 sectors
         sector_performance_list = []
         for sec_name, data in sectors_master.items():
             etf_sym = data["etf"]
@@ -771,12 +777,10 @@ else:
                 "constituents": data["constituents"]
             })
 
-        # Sort descending by performance so the best sector is at the top
         sector_performance_list = sorted(sector_performance_list, key=lambda x: x["Change"], reverse=True)
 
         st.markdown("#### 🏆 Sector Performance Ranking (Best to Worst)")
         
-        # Display Leaderboard Header
         l_col1, l_col2, l_col3, l_col4 = st.columns([3, 1.5, 2, 2])
         with l_col1:
             st.markdown("<b>Sector Name</b>", unsafe_allow_html=True)
@@ -788,7 +792,6 @@ else:
             st.markdown("<b>Performance</b>", unsafe_allow_html=True)
         st.divider()
 
-        # Render each sector in the leaderboard ranking
         selected_sector_to_inspect = st.selectbox(
             "Select Sector to View Top Constituents & Stocks", 
             options=[s["Sector"] for s in sector_performance_list],
@@ -815,7 +818,6 @@ else:
 
         st.markdown("<br><hr>", unsafe_allow_html=True)
 
-        # Show constituents for the user's selected sector
         active_sec_data = next((s for s in sector_performance_list if s["Sector"] == selected_sector_to_inspect), sector_performance_list[0])
         st.markdown(f"#### Top Constituents: {active_sec_data['Sector']}")
 
@@ -846,6 +848,8 @@ else:
                 if st.button("Open Terminal Chart", key=f"btn_sector_term_{sym}", use_container_width=True):
                     st.session_state.active_ticker = sym
                     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+                    st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
+                    st.query_params.clear()
                     st.query_params["ticker"] = sym
                     st.query_params["tab"] = "chart"
                     st.rerun()
