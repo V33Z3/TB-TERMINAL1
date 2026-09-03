@@ -226,9 +226,9 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        // Spawn rate adjusted slightly faster to reach the end precisely by the animation end
+        // Spawn rate slowed down by 1 second (increased threshold by 60 frames)
         spawnTimer++;
-        if (spawnTimer > 6.4 && candles.length < maxCandles) {
+        if (spawnTimer > 66.0 && candles.length < maxCandles) {
             spawnNewCandle();
             spawnTimer = 0;
         } else {
@@ -681,7 +681,7 @@ else:
             """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Leaderboard & Drill-Down</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Click a sector row below or select from the dropdown to view its top 25 constituent stocks.</p>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Click a sector row below or select from the dropdown to view its top 25 constituent stocks with company logos.</p>
             </div>
         """,
             unsafe_allow_html=True,
@@ -730,7 +730,9 @@ else:
         stock_rows = []
         for sym in stock_list:
             sp, spct, svol = fetch_live_quote(sym)
+            logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
             stock_rows.append({
+                "Logo": logo_url,
                 "Ticker": sym,
                 "Price ($)": sp,
                 "Change (%)": spct,
@@ -738,4 +740,13 @@ else:
             })
 
         df_stocks = pd.DataFrame(stock_rows).sort_values(by="Change (%)", ascending=False).reset_index(drop=True)
-        st.dataframe(df_stocks, use_container_width=True, hide_index=True)
+        st.dataframe(
+            df_stocks, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config={
+                "Logo": st.column_config.ImageColumn("Logo", width="small"),
+                "Change (%)": st.column_config.NumberColumn(format="%.2f%%"),
+                "Price ($)": st.column_config.NumberColumn(format="$%.2f")
+            }
+        )
