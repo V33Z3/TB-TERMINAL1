@@ -36,32 +36,18 @@ tab_to_param = {
 }
 param_to_tab = {v: k for k, v in tab_to_param.items()}
 
-# Session state initializations (Must be at the top)
-if "terminal_opened" not in st.session_state:
-    st.session_state.terminal_opened = False
-if "show_splash" not in st.session_state:
-    st.session_state.show_splash = False
-if "active_ticker" not in st.session_state:
-    # Initialize from query params ONLY ONCE on first load to prevent override loops
-    if "ticker" in st.query_params:
-        st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
-    else:
-        st.session_state.active_ticker = "AAPL"
-
-if "watchlist" not in st.session_state:
-    st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
-if "active_main_tab" not in st.session_state:
-    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-if "main_nav_radio" not in st.session_state:
-    st.session_state.main_nav_radio = st.session_state.active_main_tab
+# Handle Ticker from Query Parameters
+if "ticker" in st.query_params:
+    st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
 
 # Handle Tab Query Parameters without overriding manual clicks
-if "tab" in st.query_params and "active_main_tab" not in st.session_state:
+if "tab" in st.query_params:
     tab_param = st.query_params["tab"].lower()
     if tab_param in param_to_tab:
         expected_tab = param_to_tab[tab_param]
-        st.session_state.active_main_tab = expected_tab
-        st.session_state.main_nav_radio = expected_tab
+        if st.session_state.get("active_main_tab") != expected_tab:
+            st.session_state.active_main_tab = expected_tab
+            st.session_state.main_nav_radio = expected_tab
 
 # Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
@@ -169,6 +155,20 @@ def get_groq_key():
 
 groq_key = get_groq_key()
 
+# Session state initializations
+if "terminal_opened" not in st.session_state:
+    st.session_state.terminal_opened = False
+if "show_splash" not in st.session_state:
+    st.session_state.show_splash = False
+if "active_ticker" not in st.session_state:
+    st.session_state.active_ticker = "AAPL"
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
+if "active_main_tab" not in st.session_state:
+    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+if "main_nav_radio" not in st.session_state:
+    st.session_state.main_nav_radio = st.session_state.active_main_tab
+
 # Landing Gate with Start Trading Button & Sequential Candlestick Printing Splash Screen Animation
 if not st.session_state.terminal_opened:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -272,11 +272,13 @@ else:
             </div>
 
             <script>
+            // Ultra-fast accelerated Sequential Animation with Transparent Green Win Flash right as it finishes.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
             function animateNextCandle() {
                 if (currentIndex >= candles.length) {
+                    // Final flash state
                     const flash = document.getElementById('winFlash');
                     if (flash) {
                         flash.style.opacity = '0.95';
@@ -284,6 +286,7 @@ else:
                     return;
                 }
 
+                // Trigger transparent green flash right when the final candle starts/completes
                 if (currentIndex >= candles.length - 2) {
                     const flash = document.getElementById('winFlash');
                     if (flash) {
@@ -309,7 +312,7 @@ else:
                 const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 3);
 
                 let startTime = performance.now();
-                let bounceDuration = 10 + Math.random() * 10;
+                let bounceDuration = 10 + Math.random() * 10; // Much faster speed
 
                 function frame(now) {
                     let elapsed = now - startTime;
@@ -335,7 +338,7 @@ else:
                         line.setAttribute('y2', finalY2);
 
                         currentIndex++;
-                        setTimeout(animateNextCandle, 1);
+                        setTimeout(animateNextCandle, 1); // Extremely fast interval between candles
                     }
                 }
 
@@ -347,7 +350,7 @@ else:
             """,
             height=320,
         )
-        time.sleep(0.25)
+        time.sleep(0.25) # Shortened transition wait time to match increased speed
         st.session_state.show_splash = False
         st.rerun()
 
@@ -374,15 +377,11 @@ else:
         st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & GEX Analytics</b></p>", unsafe_allow_html=True)
         if st.button("Lock Terminal", use_container_width=True):
             st.session_state.terminal_opened = False
-            st.session_state.show_splash = False
             st.rerun()
 
     # Ticker Search Input Row
     def on_ticker_change():
-        sym = st.session_state.ticker_search_input.upper().strip()
-        st.session_state.active_ticker = sym
-        st.query_params["ticker"] = sym
-    
+        st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
     st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
 
     target_symbol = st.session_state.active_ticker
@@ -538,18 +537,24 @@ else:
                     p_val, p_pct, p_vol = fetch_live_quote(sym)
                     color = "#0ecb81" if p_pct >= 0 else "#f6465d"
                     sign = "+" if p_pct >= 0 else ""
+                    logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
                     vol_str = format_vol(p_vol) if p_vol > 0 else "-"
 
                     w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
                     with w_col_info:
-                        if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
-                            st.session_state.active_ticker = sym
-                            st.query_params["ticker"] = sym
-                            st.rerun()
+                        st.markdown(
+                            f"""
+                            <a href="?ticker={sym}&tab=chart" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                                <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
+                                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
+                            </a>
+                            """,
+                            unsafe_allow_html=True,
+                        )
                     with w_col_vol:
-                        st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
                     with w_col_price:
-                        st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 6px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
                     with w_col_del:
                         st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
                         if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
