@@ -10,14 +10,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 from supabase import Client, create_client
 
-# Try importing yfinance for market quotes and options data
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
 
-# Page configuration - Wide mode with expanded sidebar by default
 st.set_page_config(
     page_title="TB TERMINAL // Institutional Market Research & GEX",
     layout="wide",
@@ -25,7 +23,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Map tabs to short query param codes
 tab_to_param = {
     "📈 Terminal Chart & Watchlist": "chart",
     "⚛️ Gamma Exposure (GEX) Analysis": "gex",
@@ -36,11 +33,9 @@ tab_to_param = {
 }
 param_to_tab = {v: k for k, v in tab_to_param.items()}
 
-# Handle Ticker from Query Parameters
 if "ticker" in st.query_params:
     st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
 
-# Handle Tab Query Parameters without overriding manual clicks
 if "tab" in st.query_params:
     tab_param = st.query_params["tab"].lower()
     if tab_param in param_to_tab:
@@ -49,7 +44,6 @@ if "tab" in st.query_params:
             st.session_state.active_main_tab = expected_tab
             st.session_state.main_nav_radio = expected_tab
 
-# Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
     """
     <style>
@@ -101,6 +95,13 @@ st.markdown(
         min-height: 30px !important;
     }
 
+    /* Fix Streamlit alerts/warnings visibility on pure black background */
+    .stAlert {
+        background-color: #1f1a0c !important;
+        color: #f0b90b !important;
+        border: 1px solid #f0b90b !important;
+    }
+
     .delete-btn button {
         background-color: rgba(246, 70, 93, 0.1) !important;
         color: #f6465d !important;
@@ -115,7 +116,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Robust Secret Loader for Supabase & Groq
 @st.cache_resource
 def init_supabase():
     url = ""
@@ -155,7 +155,6 @@ def get_groq_key():
 
 groq_key = get_groq_key()
 
-# Session state initializations
 if "terminal_opened" not in st.session_state:
     st.session_state.terminal_opened = False
 if "show_splash" not in st.session_state:
@@ -169,7 +168,6 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
-# Landing Gate with Start Trading Button & Sequential Candlestick Printing Splash Screen Animation
 if not st.session_state.terminal_opened:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.3, 1])
@@ -600,8 +598,28 @@ else:
             with st.spinner(f"Fetching option expirations for {target_symbol}..."):
                 exp_dates = get_ticker_options(target_symbol)
 
+            # Robust fallback simulation when Yahoo Finance returns empty or gets rate-limited
             if not exp_dates:
-                st.warning(f"Unable to load option expirations for {target_symbol} (Yahoo Finance rate limit or invalid symbol). Try a major ticker like AAPL, SPY, or TSLA.")
+                st.warning(f"Yahoo Finance rate-limited or returned no expirations for {target_symbol}. Using fallback simulation chain to ensure UI functionality.")
+                exp_dates = ["2026-09-18", "2026-10-16"]
+                c1, c2 = st.columns(2)
+                with c1:
+                    sel_exp = st.selectbox("Contract Expiration (Fallback):", options=exp_dates, key="opt_exp")
+                with c2:
+                    opt_type = st.selectbox("Option Type:", options=["Calls", "Puts"], key="opt_type")
+                
+                sim_price = active_price if active_price > 0 else 150.0
+                strikes = [sim_price - 10, sim_price - 5, sim_price, sim_price + 5, sim_price + 10]
+                df_opts = pd.DataFrame({
+                    "contractSymbol": [f"{target_symbol}260918C{int(s*1000):08d}" for s in strikes],
+                    "strike": strikes,
+                    "lastPrice": [round(max(0.5, sim_price - s + 5), 2) for s in strikes],
+                    "bid": [round(max(0.4, sim_price - s + 4.8), 2) for s in strikes],
+                    "ask": [round(max(0.6, sim_price - s + 5.2), 2) for s in strikes],
+                    "volume": [12450, 8320, 45200, 15300, 6100],
+                    "openInterest": [45200, 21300, 89000, 34000, 15000],
+                    "impliedVolatility": [0.35, 0.38, 0.32, 0.36, 0.40]
+                })
             else:
                 c1, c2 = st.columns(2)
                 with c1:
@@ -622,12 +640,12 @@ else:
                     calls_df, puts_df = get_option_chain_cached(target_symbol, sel_exp)
                     df_opts = calls_df if opt_type == "Calls" else puts_df
 
-                if not df_opts.empty:
-                    display_cols = ["contractSymbol", "strike", "lastPrice", "bid", "ask", "volume", "openInterest", "impliedVolatility"]
-                    avail_cols = [c for c in display_cols if c in df_opts.columns]
-                    st.dataframe(df_opts[avail_cols].sort_values(by="volume", ascending=False).head(25), use_container_width=True)
-                else:
-                    st.info("No contract data found for this expiration date.")
+            if not df_opts.empty:
+                display_cols = ["contractSymbol", "strike", "lastPrice", "bid", "ask", "volume", "openInterest", "impliedVolatility"]
+                avail_cols = [c for c in display_cols if c in df_opts.columns]
+                st.dataframe(df_opts[avail_cols].sort_values(by="volume", ascending=False).head(25), use_container_width=True)
+            else:
+                st.info("No contract data found for this expiration date.")
 
     elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
         st.markdown("### 🔄 Sector Rotation Leaderboard", unsafe_allow_html=True)
