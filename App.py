@@ -84,17 +84,45 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Initialize Supabase client
+# Robust Secret Loader for Supabase & Groq
 @st.cache_resource
 def init_supabase():
-    url = st.secrets.get("SUPABASE_URL", "")
-    key = st.secrets.get("SUPABASE_KEY", "")
+    url = ""
+    key = ""
+    try:
+        if "SUPABASE_URL" in st.secrets:
+            url = st.secrets["SUPABASE_URL"]
+        elif "supabase" in st.secrets and "SUPABASE_URL" in st.secrets["supabase"]:
+            url = st.secrets["supabase"]["SUPABASE_URL"]
+        
+        if "SUPABASE_KEY" in st.secrets:
+            key = st.secrets["SUPABASE_KEY"]
+        elif "SUPABASE_SECRET_KEY" in st.secrets:
+            key = st.secrets["SUPABASE_SECRET_KEY"]
+        elif "supabase" in st.secrets and "SUPABASE_KEY" in st.secrets["supabase"]:
+            key = st.secrets["supabase"]["SUPABASE_KEY"]
+        elif "supabase" in st.secrets and "SUPABASE_SECRET_KEY" in st.secrets["supabase"]:
+            key = st.secrets["supabase"]["SUPABASE_SECRET_KEY"]
+    except Exception:
+        pass
+        
     if url and key:
         return create_client(url, key)
     return None
 
 supabase = init_supabase()
-groq_key = st.secrets.get("GROQ_API_KEY", "")
+
+def get_groq_key():
+    try:
+        if "GROQ_API_KEY" in st.secrets:
+            return st.secrets["GROQ_API_KEY"]
+        elif "groq" in st.secrets and "GROQ_API_KEY" in st.secrets["groq"]:
+            return st.secrets["groq"]["GROQ_API_KEY"]
+    except Exception:
+        pass
+    return ""
+
+groq_key = get_groq_key()
 
 # Session state initializations
 if "user" not in st.session_state:
@@ -115,7 +143,7 @@ if not st.session_state.user:
     with col_auth2:
         st.markdown("<h2 style='text-align: center; color: #eaecef;'>TB TERMINAL LOGIN</h2>", unsafe_allow_html=True)
         if not supabase:
-            st.error("Supabase credentials missing from Streamlit Secrets.")
+            st.error("Supabase credentials missing from Streamlit Secrets. Please verify your TOML configuration in App Settings.")
         else:
             auth_tab1, auth_tab2 = st.tabs(["Sign In", "Register"])
             with auth_tab1:
@@ -361,7 +389,6 @@ else:
             try:
                 session = get_yf_session()
                 t = yf.Ticker(symbol, session=session)
-                # Fetch 60 days of 5-minute data with prepost=True to completely eliminate overnight gaps
                 df = t.history(period="60d", interval="5m", prepost=True)
                 
                 if not df.empty:
