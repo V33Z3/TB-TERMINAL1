@@ -179,48 +179,49 @@ st.session_state.active_main_tab = selected_main_tab
 st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
 if selected_main_tab == "📈 Terminal Chart":
-    col_chart, col_wl = st.columns([3, 1])
+    @st.fragment
+    def render_terminal_workspace():
+        current_target = st.session_state.active_ticker
+        col_chart, col_wl = st.columns([3, 1])
 
-    with col_chart:
-        st.markdown(
-            f"""
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+        with col_chart:
+            st.markdown(
+                f"""
+                <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {current_target}</span>
+                    <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+            tv_html = f"""
+            <div class="tradingview-widget-container" style="height:680px;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {{
+                "autosize": false,
+                "width": "100%",
+                "height": "680",
+                "symbol": "{current_target}",
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "calendar": false,
+                "support_host": "https://www.tradingview.com",
+                "isTransparent": true,
+                "hide_side_toolbar": false
+              }}
+              </script>
             </div>
-        """,
-            unsafe_allow_html=True,
-        )
+            """
+            components.html(tv_html, height=690)
 
-        tv_html = f"""
-        <div class="tradingview-widget-container" style="height:680px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {{
-            "autosize": false,
-            "width": "100%",
-            "height": "680",
-            "symbol": "{target_symbol}",
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "enable_publishing": false,
-            "allow_symbol_change": true,
-            "calendar": false,
-            "support_host": "https://www.tradingview.com",
-            "isTransparent": true,
-            "hide_side_toolbar": false
-          }}
-          </script>
-        </div>
-        """
-        components.html(tv_html, height=690)
-
-    with col_wl:
-        @st.fragment
-        def render_persistent_watchlist():
+        with col_wl:
             st.markdown("### Persistent Custom Watchlist")
             
             new_ticker = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", key="add_watchlist_input", label_visibility="collapsed")
@@ -243,6 +244,7 @@ if selected_main_tab == "📈 Terminal Chart":
                 with w_col1:
                     if st.button(symbol, key=f"wl_btn_{symbol}", use_container_width=True):
                         st.session_state.active_ticker = symbol
+                        st.rerun()
                 with w_col2:
                     st.markdown(f"<div style='font-size: 11px; text-align: right; color: #eaecef;'>${p:,.2f}<br><span style='color: {color};'>{sign}{pct:.2f}%</span></div>", unsafe_allow_html=True)
                 with w_col3:
@@ -250,7 +252,7 @@ if selected_main_tab == "📈 Terminal Chart":
                         st.session_state.watchlist = [s for s in st.session_state.watchlist if s != symbol]
                         st.rerun()
 
-        render_persistent_watchlist()
+    render_terminal_workspace()
 
 elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
     st.markdown("### ⚛️ Gamma Exposure (GEX) Analysis", unsafe_allow_html=True)
