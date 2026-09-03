@@ -546,7 +546,7 @@ else:
                     iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
                     if oi > 0:
                       gamma = calc_gamma(spot_price, strike, T, r, iv)
-                      gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9
+                      gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6
                       all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
 
                   for _, row in puts.iterrows():
@@ -555,7 +555,7 @@ else:
                     iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
                     if oi > 0:
                       gamma = calc_gamma(spot_price, strike, T, r, iv)
-                      gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9)
+                      gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6)
                       all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
                 except Exception:
                   continue
@@ -584,7 +584,7 @@ else:
                   st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
                 with m2:
                   gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
-                  st.metric("Total Net GEX", f"${total_net_gex:,.2f}B", delta=gex_color_label)
+                  st.metric("Total Net GEX", f"${total_net_gex:,.2f}M", delta=gex_color_label)
                 with m3:
                   st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
                 with m4:
@@ -596,10 +596,10 @@ else:
 
                 df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
-                # Horizontal Bar Chart matching Unusual Whales layout (Strikes on Y-axis, GEX extending left/right on X-axis)
+                # Horizontal Bar Chart matching Unusual Whales layout (Strikes on Y-axis, GEX extending left/right on X-axis in Millions)
                 chart = alt.Chart(df_filtered).mark_bar().encode(
                     y=alt.Y("strike:O", title="Strike Price ($)", sort="descending"),
-                    x=alt.X("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
+                    x=alt.X("gex:Q", title="Gamma Exposure ($ Millions per 1% Move)"),
                     color=alt.Color("color:N", scale=None),
                     tooltip=["strike", "gex"]
                 ).properties(
