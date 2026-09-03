@@ -228,14 +228,14 @@ if not st.session_state.user:
             except Exception as e:
               st.error(f"Error: {e}")
 else:
-  # Splash Animation with Larger Screen Footprint & SMA Breakout Theme
+  # Splash Animation with Candlestick Breakout Above SMAs & Large Screen Footprint
   if st.session_state.show_splash:
     components.html(
         """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
                     <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">INITIALIZING SMA ALGO STRATEGIES & BULLISH BREAKOUT FEED...</p>
+                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">EXECUTING CANDLESTICK BREAKOUT ABOVE SMA RESISTANCE...</p>
                     
                     <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.95);">
                         <svg width="100%" height="260" viewBox="0 0 600 260" style="overflow: visible;">
@@ -244,36 +244,38 @@ else:
                             <line x1="0" y1="170" x2="600" y2="170" stroke="#1a1a1a" stroke-width="1" />
                             <line x1="0" y1="230" x2="600" y2="230" stroke="#1a1a1a" stroke-width="1" />
                             
-                            <!-- Candlesticks scaled up -->
-                            <rect x="60" y="100" width="16" height="60" fill="#f6465d" rx="3" />
-                            <line x1="68" y1="75" x2="68" y2="190" stroke="#f6465d" stroke-width="2.5" />
+                            <!-- Initial Stable Candlesticks -->
+                            <rect x="60" y="120" width="16" height="50" fill="#f6465d" rx="3" />
+                            <line x1="68" y1="95" x2="68" y2="195" stroke="#f6465d" stroke-width="2.5" />
                             
-                            <rect x="135" y="130" width="16" height="50" fill="#0ecb81" rx="3" />
-                            <line x1="143" y1="105" x2="143" y2="205" stroke="#0ecb81" stroke-width="2.5" />
+                            <rect x="135" y="140" width="16" height="40" fill="#0ecb81" rx="3" />
+                            <line x1="143" y1="115" x2="143" y2="205" stroke="#0ecb81" stroke-width="2.5" />
                             
-                            <rect x="210" y="80" width="16" height="80" fill="#0ecb81" rx="3" />
-                            <line x1="218" y1="55" x2="218" y2="195" stroke="#0ecb81" stroke-width="2.5" />
+                            <rect x="210" y="110" width="16" height="55" fill="#0ecb81" rx="3" />
+                            <line x1="218" y1="85" x2="218" y2="190" stroke="#0ecb81" stroke-width="2.5" />
                             
-                            <rect x="285" y="105" width="16" height="60" fill="#f6465d" rx="3" />
-                            <line x1="293" y1="80" x2="293" y2="185" stroke="#f6465d" stroke-width="2.5" />
+                            <rect x="285" y="125" width="16" height="45" fill="#f6465d" rx="3" />
+                            <line x1="293" y1="100" x2="293" y2="200" stroke="#f6465d" stroke-width="2.5" />
                             
-                            <rect x="360" y="65" width="16" height="95" fill="#0ecb81" rx="3" />
-                            <line x1="368" y1="35" x2="368" y2="180" stroke="#0ecb81" stroke-width="2.5" />
+                            <rect x="360" y="95" width="16" height="60" fill="#0ecb81" rx="3" />
+                            <line x1="368" y1="75" x2="368" y2="185" stroke="#0ecb81" stroke-width="2.5" />
 
-                            <rect x="435" y="45" width="16" height="110" fill="#0ecb81" rx="3" />
-                            <line x1="443" y1="20" x2="443" y2="170" stroke="#0ecb81" stroke-width="2.5" />
+                            <!-- SMA 50 (Slow Moving Average - Blue Line) -->
+                            <path d="M 30 160 Q 180 140, 330 115 T 570 100" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" opacity="0.85" />
 
-                            <rect x="510" y="20" width="16" height="120" fill="#0ecb81" rx="3" />
-                            <line x1="518" y1="5" x2="518" y2="150" stroke="#0ecb81" stroke-width="2.5" />
+                            <!-- SMA 20 (Fast Moving Average - Yellow Line) -->
+                            <path d="M 30 145 Q 180 125, 330 100 T 570 85" fill="none" stroke="#f0b90b" stroke-width="3" stroke-linecap="round" opacity="0.9" />
 
-                            <!-- SMA 50 (Slow Moving Average - Blue) -->
-                            <path d="M 30 190 Q 180 170, 330 130 T 570 90" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+                            <!-- Animated Candlesticks Surging and Breaking Above the SMAs -->
+                            <g class="surge-group">
+                                <!-- Breakout Candle 1 -->
+                                <rect x="435" y="45" width="16" height="70" fill="#0ecb81" rx="3" class="surge-candle-1" />
+                                <line x1="443" y1="20" x2="443" y2="150" stroke="#0ecb81" stroke-width="2.5" class="surge-candle-1" />
 
-                            <!-- SMA 20 (Fast Moving Average - Yellow) -->
-                            <path d="M 30 175 Q 180 150, 330 100 T 570 65" fill="none" stroke="#f0b90b" stroke-width="3" stroke-linecap="round" opacity="0.9" />
-
-                            <!-- Main Glowing Price Line breaking decisively above SMAs -->
-                            <path d="M 30 160 Q 100 180, 180 120 T 300 90 T 420 70 T 500 35 T 570 15" fill="none" stroke="#0ecb81" stroke-width="5" stroke-linecap="round" class="glow-line" />
+                                <!-- Massive Breakout Candle 2 (Exploding high above SMA resistance) -->
+                                <rect x="510" y="15" width="16" height="85" fill="#0ecb81" rx="3" class="surge-candle-2" />
+                                <line x1="518" y1="0" x2="518" y2="125" stroke="#0ecb81" stroke-width="2.5" class="surge-candle-2" />
+                            </g>
                         </svg>
                         
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 15px;">
@@ -281,7 +283,7 @@ else:
                                 <span style="display:inline-block; width:12px; height:12px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
                                 <span style="display:inline-block; width:12px; height:12px; background:#3b82f6; border-radius:50%; margin-left:12px;"></span> SMA 50 (Slow)
                             </span>
-                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 BULLISH BREAKOUT ABOVE SMA ▲</span>
+                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 CANDLESTICK BREAKOUT ABOVE SMAs ▲</span>
                         </div>
                     </div>
 
@@ -295,14 +297,24 @@ else:
                 0% { transform: translateX(-100%); }
                 100% { transform: translateX(100%); }
             }
-            .glow-line {
-                filter: drop-shadow(0px 0px 14px rgba(14, 203, 129, 0.9));
-                stroke-dasharray: 800;
-                stroke-dashoffset: 800;
-                animation: drawChart 1.5s ease-in-out forwards;
+            @keyframes surgeUp {
+                0% {
+                    transform: translateY(50px) scaleY(0.5);
+                    opacity: 0.2;
+                }
+                100% {
+                    transform: translateY(0px) scaleY(1);
+                    opacity: 1;
+                }
             }
-            @keyframes drawChart {
-                to { stroke-dashoffset: 0; }
+            .surge-candle-1 {
+                transform-origin: bottom center;
+                animation: surgeUp 1.0s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+            }
+            .surge-candle-2 {
+                transform-origin: bottom center;
+                animation: surgeUp 1.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+                filter: drop-shadow(0px 0px 12px rgba(14, 203, 129, 0.9));
             }
             </style>
         """,
