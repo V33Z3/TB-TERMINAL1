@@ -15,21 +15,18 @@ try:
 except ImportError:
   YFINANCE_AVAILABLE = False
 
-# Try importing Alpaca SDKs for trading execution and live quotes
+# Try importing Alpaca SDK for historical market data quotes
 try:
   from alpaca.data.enums import DataFeed
   from alpaca.data.historical import StockHistoricalDataClient
   from alpaca.data.requests import StockLatestQuoteRequest
-  from alpaca.trading.client import TradingClient
-  from alpaca.trading.enums import OrderSide, TimeInForce
-  from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
-  ALPACA_AVAILABLE = True
+  ALPACA_DATA_AVAILABLE = True
 except ImportError:
-  ALPACA_AVAILABLE = False
+  ALPACA_DATA_AVAILABLE = False
 
 # Page configuration - Wide mode with expanded sidebar by default
 st.set_page_config(
-    page_title="TB TERMINAL // Real-Time Institutional Trading",
+    page_title="TB TERMINAL // Institutional Market Research",
     layout="wide",
     page_icon="📈",
     initial_sidebar_state="expanded",
@@ -200,7 +197,7 @@ else:
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
                     <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">EXECUTING CANDLESTICK BREAKOUT ABOVE SMA RESISTANCE...</p>
+                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">LOADING QUANT RESEARCH SUITE...</p>
                     
                     <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.95);">
                         <svg width="100%" height="260" viewBox="0 0 600 260" style="overflow: visible;">
@@ -236,7 +233,7 @@ else:
                                 <span style="display:inline-block; width:12px; height:12px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
                                 <span style="display:inline-block; width:12px; height:12px; background:#3b82f6; border-radius:50%; margin-left:12px;"></span> SMA 50 (Slow)
                             </span>
-                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 CANDLESTICK BREAKOUT ABOVE SMAs ▲</span>
+                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 RESEARCH MODE ACTIVE ▲</span>
                         </div>
                     </div>
 
@@ -264,16 +261,7 @@ else:
     st.session_state.show_splash = False
     st.rerun()
 
-  # Load credentials & watchlist from DB into Session State if empty
-  if not st.session_state.alpaca_key or not st.session_state.alpaca_secret:
-    try:
-      db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
-      if db_res.data and len(db_res.data) > 0:
-        st.session_state.alpaca_key = db_res.data[0].get("alpaca_key", "")
-        st.session_state.alpaca_secret = db_res.data[0].get("alpaca_secret", "")
-    except Exception:
-      pass
-
+  # Load watchlist from DB into Session State if empty
   try:
     wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", st.session_state.user.id).execute()
     if wl_res.data and len(wl_res.data) > 0 and wl_res.data[0].get("symbols"):
@@ -289,22 +277,18 @@ else:
     except Exception:
       pass
 
-  existing_key = st.session_state.alpaca_key
-  existing_sec = st.session_state.alpaca_secret
-
   with st.sidebar:
-    st.markdown("### ⚙️ Terminal Settings")
+    st.markdown("### ⚙️ Research Terminal")
+    st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & Analytics Only</b> (Execution Disabled)</p>", unsafe_allow_html=True)
     if st.button("Log Out", use_container_width=True):
       supabase.auth.sign_out()
       st.session_state.user = None
-      st.session_state.alpaca_key = ""
-      st.session_state.alpaca_secret = ""
       st.rerun()
 
   header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
 
   with header_col1:
-    st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ TB TERMINAL</div>", unsafe_allow_html=True)
+    st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
 
   with header_col2:
     def on_ticker_change():
@@ -319,19 +303,8 @@ else:
     session.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     return session
 
-  def fetch_live_quote(symbol, a_key, a_sec):
+  def fetch_live_quote(symbol):
     price, pct, vol = 0.0, 0.0, 0
-    if ALPACA_AVAILABLE and a_key and a_sec:
-      try:
-        data_client = StockHistoricalDataClient(a_key, a_sec)
-        req = StockLatestQuoteRequest(symbol_or_symbols=[symbol], feed=DataFeed.IEX)
-        quotes = data_client.stock_latest_quote(req)
-        if symbol in quotes and quotes[symbol]:
-          q = quotes[symbol]
-          price = float(q.ask_price if q.ask_price and q.ask_price > 0 else q.bid_price)
-      except Exception:
-        pass
-
     if YFINANCE_AVAILABLE:
       try:
         session = get_yf_session()
@@ -341,8 +314,7 @@ else:
           yf_close = float(hist["Close"].iloc[-1])
           prev = float(hist["Close"].iloc[-2]) if len(hist) > 1 else float(hist["Open"].iloc[-1])
           vol = int(hist["Volume"].iloc[-1]) if "Volume" in hist.columns else 0
-          if price == 0.0:
-            price = yf_close
+          price = yf_close
           pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
       except Exception:
         pass
@@ -355,10 +327,10 @@ else:
     return str(v)
 
   @st.fragment(run_every="3s")
-  def render_live_header(sym, a_key, a_sec):
-    spy_price, spy_pct, _ = fetch_live_quote("SPY", a_key, a_sec)
-    qqq_price, qqq_pct, _ = fetch_live_quote("QQQ", a_key, a_sec)
-    active_price, active_pct, _ = fetch_live_quote(sym, a_key, a_sec)
+  def render_live_header(sym):
+    spy_price, spy_pct, _ = fetch_live_quote("SPY")
+    qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
+    active_price, active_pct, _ = fetch_live_quote(sym)
 
     def format_badge(s, price, pct, bg_color, border_color):
       color = "#0ecb81" if pct >= 0 else "#f6465d"
@@ -382,30 +354,30 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-  render_live_header(target_symbol, existing_key, existing_sec)
+  render_live_header(target_symbol)
 
-  # Main Grid: TradingView Chart on Left, Trading Desk & Watchlist on Right
-  col_chart, col_trade = st.columns([3.4, 1.2])
+  # Main Grid: TradingView Advanced Chart on Left, Watchlist & Research Tools on Right
+  col_chart, col_research = st.columns([3.4, 1.2])
 
   with col_chart:
     st.markdown(
         f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● LIVE STREAM</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
             </div>
         """,
         unsafe_allow_html=True,
     )
 
     tv_html = f"""
-        <div class="tradingview-widget-container" style="height:630px;width:100%">
+        <div class="tradingview-widget-container" style="height:650px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {{
             "autosize": false,
             "width": "100%",
-            "height": "630",
+            "height": "650",
             "symbol": "{target_symbol}",
             "interval": "D",
             "timezone": "Etc/UTC",
@@ -421,96 +393,12 @@ else:
           </script>
         </div>
         """
-    components.html(tv_html, height=640)
+    components.html(tv_html, height=660)
 
-  with col_trade:
+  with col_research:
     st.markdown(
         """
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px;">
-                <div style="font-weight: bold; font-size: 13px; color: #eaecef; margin-bottom: 8px;">Trading Desk</div>
-            </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    account_type = st.radio(
-        "Mode", ["Paper Trading", "Live Trading"], horizontal=True, label_visibility="collapsed"
-    )
-    is_paper = True if "Paper" in account_type else False
-
-    user_alpaca_key, user_alpaca_sec = existing_key, existing_sec
-
-    # ALWAYS VISIBLE API KEY INPUT FORM IN THE TRADING DESK IF KEYS ARE MISSING
-    if not ALPACA_AVAILABLE:
-      st.error("Missing `alpaca-py` library.")
-    elif not user_alpaca_key or not user_alpaca_sec:
-      st.warning("⚠️ Enter your Alpaca API Keys below to connect:")
-      with st.form("direct_keys_form"):
-        input_key = st.text_input("Alpaca API Key ID (e.g. PK...)", type="password")
-        input_sec = st.text_input("Alpaca API Secret Key", type="password")
-        save_keys_btn = st.form_submit_button("Save Credentials & Connect", use_container_width=True)
-        
-        if save_keys_btn:
-          st.session_state.alpaca_key = input_key.strip()
-          st.session_state.alpaca_secret = input_sec.strip()
-          try:
-            supabase.table("user_credentials").upsert({
-                "user_id": st.session_state.user.id,
-                "alpaca_key": input_key.strip(),
-                "alpaca_secret": input_sec.strip(),
-            }).execute()
-          except Exception:
-            pass
-          st.rerun()
-    else:
-      try:
-        base_url = "https://paper-api.alpaca.markets" if is_paper else "https://api.alpaca.markets"
-        client = TradingClient(user_alpaca_key, user_alpaca_sec, paper=is_paper, url_override=base_url)
-        account = client.get_account()
-
-        st.markdown(
-            f"""
-                <div style="background-color: #050505; padding: 8px; border-radius: 3px; border: 1px solid #1a1a1a; font-size: 11px; margin-top: 8px; margin-bottom: 8px; color: #848e9c;">
-                    <b>Equity:</b> <span style="color:#eaecef;">${float(account.equity):,.2f}</span><br>
-                    <b>Buying Power:</b> <span style="color:#eaecef;">${float(account.buying_power):,.2f}</span><br>
-                    <b>Cash:</b> <span style="color:#eaecef;">${float(account.cash):,.2f}</span>
-                </div>
-                """,
-            unsafe_allow_html=True,
-        )
-
-        with st.form("order_exec_form"):
-          o_sym = st.text_input("Asset", value=target_symbol).upper()
-          o_qty = st.number_input("Quantity", min_value=0.01, value=1.0, step=1.0)
-          o_side = st.selectbox("Action", ["BUY", "SELL"])
-          o_type = st.radio("Order Type", ["Market", "Limit"], horizontal=True)
-
-          limit_p = 0.0
-          if o_type == "Limit":
-            limit_p = st.number_input("Limit Price", min_value=0.01, value=100.00)
-
-          submit_order = st.form_submit_button("Place Order", use_container_width=True)
-
-          if submit_order:
-            side_enum = OrderSide.BUY if o_side == "BUY" else OrderSide.SELL
-            if o_type == "Market":
-              req = MarketOrderRequest(symbol=o_sym, qty=o_qty, side=side_enum, time_in_force=TimeInForce.GTC)
-            else:
-              req = LimitOrderRequest(symbol=o_sym, qty=o_qty, side=side_enum, time_in_force=TimeInForce.GTC, limit_price=limit_p)
-
-            res = client.submit_order(order_data=req)
-            st.success(f"Order executed! ID: {res.id}")
-      except Exception as e:
-        st.error(f"Connection error: {e}")
-        if st.button("Reset Keys", use_container_width=True):
-          st.session_state.alpaca_key = ""
-          st.session_state.alpaca_secret = ""
-          st.rerun()
-
-    # Persistent Custom Interactive Watchlist Header & Form
-    st.markdown(
-        """
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
                 <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
             </div>
         """,
@@ -532,13 +420,13 @@ else:
           st.rerun()
 
     @st.fragment(run_every="3s")
-    def render_watchlist_fragment(a_key, a_sec):
-      st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 320px; overflow-y: auto;'>", unsafe_allow_html=True)
+    def render_watchlist_fragment():
+      st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 530px; overflow-y: auto;'>", unsafe_allow_html=True)
       if not st.session_state.watchlist:
         st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
       else:
         for sym in list(st.session_state.watchlist):
-          p_val, p_pct, p_vol = fetch_live_quote(sym, a_key, a_sec)
+          p_val, p_pct, p_vol = fetch_live_quote(sym)
           color = "#0ecb81" if p_pct >= 0 else "#f6465d"
           sign = "+" if p_pct >= 0 else ""
           logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
@@ -568,7 +456,7 @@ else:
             st.markdown("</div>", unsafe_allow_html=True)
       st.markdown("</div>", unsafe_allow_html=True)
 
-    render_watchlist_fragment(existing_key, existing_sec)
+    render_watchlist_fragment()
 
   with st.expander("🤖 Groq Quant Intelligence Assistant"):
     ai_c1, ai_c2 = st.columns([4, 1])
@@ -584,7 +472,7 @@ else:
           completion = ai_client.chat.completions.create(
               model="openai/gpt-oss-120b",
               messages=[
-                  {"role": "system", "content": "You are an expert institutional trading analyst."},
+                  {"role": "system", "content": "You are an expert institutional market research analyst."},
                   {"role": "user", "content": ai_query},
               ],
               temperature=0.7,
