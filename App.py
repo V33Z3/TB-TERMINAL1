@@ -38,7 +38,6 @@ def load_data(symbol, start, end):
 
 @st.cache_data
 def load_universe_data(symbols, start, end):
-    # Download close prices for a cross-sectional universe pool
     universe_df = yf.download(symbols, start=start, end=end, multi_level_index=False)['Close']
     return universe_df
 
@@ -62,14 +61,12 @@ else:
         data['Vol_Mean'] = data['Volatility'].rolling(window=30).mean()
         data = data.dropna()
     else:
-        # Relative Strength Shape Strategy Setup
         universe_tickers = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'AMD', 'NFLX', 'SPY', 'QQQ', 'JPM', 'BAC']
         if ticker not in universe_tickers:
             universe_tickers.append(ticker)
         
         univ_data = load_universe_data(universe_tickers, start_date, end_date)
         
-        # Calculate cross-sectional percentage rank (1-99) for 20D and 252D returns
         returns_20d = univ_data.pct_change(20)
         returns_252d = univ_data.pct_change(252)
         
@@ -107,7 +104,6 @@ else:
             is_signal = (vol > vol_mean * 1.2) and (current_price > prev_price)
 
         else:
-            # RS Shape Logic: Enter when stock qualifies as 'Active Bench' (both strong) or 'Heating Up' (short-term gap acceleration)
             rs20 = float(data['RS_20'].iloc[i])
             rs252 = float(data['RS_252'].iloc[i])
             rs_gap = float(data['RS_Gap'].iloc[i])
@@ -125,7 +121,7 @@ else:
         elif shares > 0:
             entry_price = trades[-1]["Price"]
             pnl_pct = (current_price - entry_price) / entry_price
-            if pnl_pct >= 0.08 or pnl_pct <= -0.04:  # Slightly wider targets for momentum setups
+            if pnl_pct >= 0.08 or pnl_pct <= -0.04:  
                 cash = shares * current_price
                 shares = 0
                 trades.append({"Date": date, "Type": "SELL", "Price": current_price})
@@ -146,11 +142,31 @@ else:
     # Layout Metrics Display
     col1, col2, col3 = st.columns(3)
     col1.metric("Ending Portfolio Value", f"${final_value:,.2f}", f"{total_return:.2f}%")
-    col2.metric("Max Drawdown", f"{max_drawdown:.2f}%")
+    col2.metric("Max Drawdown", f"${max_drawdown:.2f}%")
     col3.metric("Total Trades Executed", len(trades) // 2)
 
-    # Plot Equity Curve using Plotly
-    fig = go.Figure()
+    # Extract Trade Coordinates for Chart Plotting
+    buy_dates = [t["Date"] for t in trades if t["Type"] == "BUY"]
+    buy_prices = [t["Price"] for t in trades if t["Type"] == "BUY"]
+    sell_dates = [t["Date"] for t in trades if t["Type"] == "SELL"]
+    sell_prices = [t["Price"] for t in trades if t["Type"] == "SELL"]
+
+    # Chart 1: Price Action with Buy/Sell Markers Overlay
+    st.subheader(f"Price Chart & Trade Executions: {ticker}")
+    fig_price = go.Figure()
+    fig_price.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close Price', line=dict(color='gray', width=1.5)))
+    
+    if buy_dates:
+        fig_price.add_trace(go.Scatter(x=buy_dates, y=buy_prices, mode='markers', name='BUY', marker=dict(symbol='triangle-up', size=12, color='limegreen')))
+    if sell_dates:
+        fig_price.add_trace(go.Scatter(x=sell_dates, y=sell_prices, mode='markers', name='SELL', marker=dict(symbol='triangle-down', size=12, color='crimson')))
+        
+    fig_price.update_layout(xaxis_title="Date", yaxis_title="Price ($)", height=450)
+    st.plotly_chart(fig_price, use_container_width=True)
+
+    # Chart 2: Equity Curve Chart
+    st.subheader("Strategy Equity Curve")
+    fig_equity = go.Figure()
     colors = {
         "SMA Strategy": "orange",
         "Fibonacci Strategy": "cyan",
@@ -158,9 +174,9 @@ else:
         "Relative Strength (RS) Shape Strategy": "lime"
     }
     line_color = colors.get(strategy_choice, 'white')
-    fig.add_trace(go.Scatter(x=data.index, y=data['Portfolio'], mode='lines', name=f'{strategy_choice} Equity ($)', line=dict(color=line_color)))
-    fig.update_layout(title=f"Stress Test Results ({strategy_choice}): {ticker}", xaxis_title="Date", height=500)
-    st.plotly_chart(fig, use_container_width=True)
+    fig_equity.add_trace(go.Scatter(x=data.index, y=data['Portfolio'], mode='lines', name=f'{strategy_choice} Equity ($)', line=dict(color=line_color, width=2)))
+    fig_equity.update_layout(xaxis_title="Date", yaxis_title="Portfolio Value ($)", height=400)
+    st.plotly_chart(fig_equity, use_container_width=True)
 
     # Show Trade Log Table
     if trades:
