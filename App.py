@@ -10,12 +10,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 from supabase import Client, create_client
 
+# Try importing yfinance for market quotes and options data
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
 
+# Page configuration - Wide mode with expanded sidebar by default
 st.set_page_config(
     page_title="TB TERMINAL // Institutional Market Research & GEX",
     layout="wide",
@@ -23,6 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Map tabs to short query param codes
 tab_to_param = {
     "📈 Terminal Chart & Watchlist": "chart",
     "⚛️ Gamma Exposure (GEX) Analysis": "gex",
@@ -33,9 +36,11 @@ tab_to_param = {
 }
 param_to_tab = {v: k for k, v in tab_to_param.items()}
 
+# Handle Ticker from Query Parameters
 if "ticker" in st.query_params:
     st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
 
+# Handle Tab Query Parameters without overriding manual clicks
 if "tab" in st.query_params:
     tab_param = st.query_params["tab"].lower()
     if tab_param in param_to_tab:
@@ -44,6 +49,7 @@ if "tab" in st.query_params:
             st.session_state.active_main_tab = expected_tab
             st.session_state.main_nav_radio = expected_tab
 
+# Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
     """
     <style>
@@ -95,22 +101,6 @@ st.markdown(
         min-height: 30px !important;
     }
 
-    .stAlert {
-        background-color: #1f1a0c !important;
-        color: #f0b90b !important;
-        border: 1px solid #f0b90b !important;
-    }
-
-    [data-testid="stInfo"] {
-        background-color: #080808 !important;
-        color: #eaecef !important;
-        border: 1px solid #1a1a1a !important;
-    }
-    
-    [data-testid="stInfo"] svg {
-        fill: #eaecef !important;
-    }
-
     .delete-btn button {
         background-color: rgba(246, 70, 93, 0.1) !important;
         color: #f6465d !important;
@@ -125,6 +115,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Robust Secret Loader for Supabase & Groq
 @st.cache_resource
 def init_supabase():
     url = ""
@@ -164,6 +155,7 @@ def get_groq_key():
 
 groq_key = get_groq_key()
 
+# Session state initializations
 if "terminal_opened" not in st.session_state:
     st.session_state.terminal_opened = False
 if "show_splash" not in st.session_state:
@@ -177,6 +169,7 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
+# Landing Gate with Start Trading Button & Sequential Candlestick Printing Splash Screen Animation
 if not st.session_state.terminal_opened:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.3, 1])
@@ -193,13 +186,15 @@ else:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden; position: relative;">
-                <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.05s ease-in-out; z-index: 9999;"></div>
+                <!-- Win Flash Overlay -->
+                <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.45); opacity: 0; pointer-events: none; transition: opacity 0.08s ease-in-out; z-index: 9999;"></div>
 
                 <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
                     <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 6px;">⚡ TB TERMINAL</div>
                     <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
                     
                     <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
+                        <!-- Grid Lines -->
                         <line x1="0" y1="40" x2="700" y2="40" stroke="#151515" stroke-width="1" />
                         <line x1="0" y1="85" x2="700" y2="85" stroke="#151515" stroke-width="1" />
                         <line x1="0" y1="130" x2="700" y2="130" stroke="#151515" stroke-width="1" />
@@ -209,6 +204,7 @@ else:
                         <line x1="350" y1="0" x2="350" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
                         <line x1="560" y1="0" x2="560" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
 
+                        <!-- Volume Histogram Bars at Bottom -->
                         <g opacity="0.65">
                             <rect x="30" y="195" width="12" height="25" fill="#f6465d" rx="1"/>
                             <rect x="55" y="190" width="12" height="30" fill="#0ecb81" rx="1"/>
@@ -238,9 +234,11 @@ else:
                             <rect x="655" y="140" width="12" height="80" fill="#0ecb81" rx="1"/>
                         </g>
 
+                        <!-- Moving Average Curves -->
                         <path d="M 30 140 Q 180 130 350 115 T 670 75" fill="none" stroke="#f0b90b" stroke-width="1.8" opacity="0.9"/>
                         <path d="M 30 155 Q 180 145 350 130 T 670 95" fill="none" stroke="#0ecb81" stroke-width="1.8" opacity="0.9"/>
 
+                        <!-- Candlesticks Container -->
                         <g id="candlestick-container">
                             <g class="candle" data-y1="125" data-y2="155" data-ry="132" data-rh="16"><line x1="36" y1="140" x2="36" y2="140" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="140" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
                             <g class="candle" data-y1="130" data-y2="160" data-ry="138" data-rh="14"><line x1="61" y1="145" x2="61" y2="145" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="145" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
@@ -274,22 +272,25 @@ else:
             </div>
 
             <script>
+            // Ultra-accelerated Sequential Animation with Green Win Flash right before finish.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
             function animateNextCandle() {
                 if (currentIndex >= candles.length) {
+                    // Flash green screen right before finishing
                     const flash = document.getElementById('winFlash');
                     if (flash) {
-                        flash.style.opacity = '0.95';
+                        flash.style.opacity = '1';
                     }
                     return;
                 }
 
-                if (currentIndex >= candles.length - 2) {
+                // Flash green screen right when the very last candle starts animating
+                if (currentIndex === candles.length - 1) {
                     const flash = document.getElementById('winFlash');
                     if (flash) {
-                        flash.style.opacity = '0.75';
+                        flash.style.opacity = '0.9';
                     }
                 }
 
@@ -304,23 +305,23 @@ else:
                 const targetRy = parseFloat(candle.getAttribute('data-ry'));
                 const targetRh = parseFloat(candle.getAttribute('data-rh'));
 
-                const randomOffset = (Math.random() - 0.5) * 8;
+                const randomOffset = (Math.random() - 0.5) * 12;
                 const finalY1 = targetY1 + randomOffset;
                 const finalY2 = targetY2 + randomOffset;
                 const finalRy = targetRy + randomOffset;
-                const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 3);
+                const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
 
                 let startTime = performance.now();
-                let bounceDuration = 10 + Math.random() * 10;
+                let bounceDuration = 30 + Math.random() * 20; // Even faster active bouncing
 
                 function frame(now) {
                     let elapsed = now - startTime;
                     let progress = Math.min(1, elapsed / bounceDuration);
 
                     if (progress < 1) {
-                        let bounceAmplitude = 8 * (1 - progress); 
-                        let currentRy = finalRy + Math.sin(elapsed / 20) * bounceAmplitude;
-                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 15) * 2);
+                        let bounceAmplitude = 12 * (1 - progress); 
+                        let currentRy = finalRy + Math.sin(elapsed / 30) * bounceAmplitude;
+                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 20) * 3);
                         let currentY1 = currentRy - (finalRy - finalY1);
                         let currentY2 = currentRy + (finalY2 - finalRy);
 
@@ -332,12 +333,12 @@ else:
                         requestAnimationFrame(frame);
                     } else {
                         rect.setAttribute('y', finalRy);
-                        rect.setAttribute('height', currentRh);
+                        rect.setAttribute('height', finalRh);
                         line.setAttribute('y1', finalY1);
                         line.setAttribute('y2', finalY2);
 
                         currentIndex++;
-                        setTimeout(animateNextCandle, 1);
+                        setTimeout(animateNextCandle, 2); // Instantaneous interval between candles
                     }
                 }
 
@@ -349,10 +350,11 @@ else:
             """,
             height=320,
         )
-        time.sleep(0.25)
+        time.sleep(0.4) # Slightly faster total transition time
         st.session_state.show_splash = False
         st.rerun()
 
+    # Load watchlist from DB into Session State if available
     try:
         if supabase:
             wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", "guest_terminal_user").execute()
@@ -377,6 +379,7 @@ else:
             st.session_state.terminal_opened = False
             st.rerun()
 
+    # Ticker Search Input Row
     def on_ticker_change():
         st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
     st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
@@ -413,6 +416,7 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
+    # Header display ticker badges & TB TERMINAL TITLE on the top green bar line
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -437,6 +441,7 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
+    # NAVIGATION CALLBACK TO SYNC STATE AND URL QUERY PARAMS
     def on_nav_change():
         selected = st.session_state.main_nav_radio
         st.session_state.active_main_tab = selected
@@ -550,111 +555,176 @@ else:
                         st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
                     with w_col_price:
                         st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                    with w_col_del:
+                        st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+                        if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
+                            st.session_state.watchlist.remove(sym)
+                            save_watchlist_to_db()
+                            st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with st.expander("🤖 Groq Quant Intelligence Assistant"):
+            ai_c1, ai_c2 = st.columns([4, 1])
+            with ai_c1:
+                ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
+            with ai_c2:
+                ai_btn = st.button("Ask AI", use_container_width=True)
+
+            if ai_btn and groq_key and ai_query.strip():
+                with st.spinner("Processing..."):
+                    try:
+                        ai_client = Groq(api_key=groq_key)
+                        completion = ai_client.chat.completions.create(
+                            model="openai/gpt-oss-120b",
+                            messages=[
+                                {"role": "system", "content": "You are an expert institutional market research analyst."},
+                                {"role": "user", "content": ai_query},
+                            ],
+                            temperature=0.7,
+                        )
+                        st.write(completion.choices[0].message.content)
+                    except Exception as e:
+                        st.error(f"AI Error: {e}")
 
     elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
-        st.markdown(f"### ⚛️ Gamma Exposure (GEX) Profile // {target_symbol}", unsafe_allow_html=True)
-        st.info("Analyze dealer gamma exposure, key flip points, and strike concentrations.")
-        
-        sim_spot = active_price if active_price > 0 else 150.0
-        exp_dates = ["2026-09-18", "2026-10-16", "2026-11-20"]
-        if YFINANCE_AVAILABLE:
-            try:
-                session = get_yf_session()
-                tk = yf.Ticker(target_symbol, session=session)
-                live_opts = getattr(tk, "options", None)
-                if live_opts and len(live_opts) > 0:
-                    exp_dates = list(live_opts)
-            except Exception:
-                pass
+        st.markdown(
+            f"""
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">⚛️ Gamma Exposure (GEX) Profile // {target_symbol}</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Dealer options positioning, strike magnet levels, and volatility dampening/amplifying zones.</p>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
-        sel_exp = st.selectbox("Select Expiration Date:", options=exp_dates, key="gex_exp_box")
-        strikes = np.arange(sim_spot - 20, sim_spot + 21, 5)
-        mock_gex = np.sin(np.linspace(0, 3.14, len(strikes))) * 1000000
-        df_grouped = pd.DataFrame({"Strike": strikes, "GEX": mock_gex})
-        st.bar_chart(df_grouped.set_index("Strike")["GEX"])
+        if not YFINANCE_AVAILABLE:
+            st.error("`yfinance` is required for options chain data.")
+        else:
+            try:
+                tk = yf.Ticker(target_symbol, session=get_yf_session())
+                exp_dates = tk.options
+            except Exception as e:
+                exp_dates = []
+
+            if not exp_dates:
+                st.warning(f"No options chain expiration dates found for {target_symbol}. Ensure the ticker has listed options (e.g. SPY, AAPL, NVDA).")
+            else:
+                default_selections = list(exp_dates[:min(3, len(exp_dates))])
+                selected_exp_dates = st.multiselect(
+                    "Select Option Expiration Dates for GEX Calculation:",
+                    options=list(exp_dates),
+                    default=default_selections
+                )
+
+                if not selected_exp_dates:
+                    st.info("Please select at least one expiration date above to generate the GEX profile.")
+                else:
+                    if st.button("Generate GEX Profile", type="primary"):
+                        with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
+                            try:
+                                spot_price, _, _ = fetch_live_quote(target_symbol)
+                                if spot_price <= 0:
+                                    hist = tk.history(period="1d")
+                                    if not hist.empty:
+                                        spot_price = float(hist["Close"].iloc[-1])
+
+                                def norm_pdf(x):
+                                    return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+
+                                def calc_gamma(S, K, T, r, sigma):
+                                    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+                                        return 0.0
+                                    try:
+                                        d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+                                        return norm_pdf(d1) / (S * sigma * math.sqrt(T))
+                                    except Exception:
+                                        return 0.0
+
+                                all_options_data = []
+                                now = datetime.datetime.now()
+                                r = 0.045
+
+                                for exp in selected_exp_dates:
+                                    try:
+                                        opt_chain = tk.option_chain(exp)
+                                        exp_date_obj = datetime.datetime.strptime(exp, "%Y-%m-%d")
+                                        T = max((exp_date_obj - now).days / 365.25, 0.001)
+
+                                        calls = opt_chain.calls
+                                        puts = opt_chain.puts
+
+                                        for _, row in calls.iterrows():
+                                            strike = float(row["strike"])
+                                            oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                                            iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                                            if oi > 0:
+                                                gamma = calc_gamma(spot_price, strike, T, r, iv)
+                                                gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6
+                                                all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
+
+                                        for _, row in puts.iterrows():
+                                            strike = float(row["strike"])
+                                            oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                                            iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                                            if oi > 0:
+                                                gamma = calc_gamma(spot_price, strike, T, r, iv)
+                                                gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6)
+                                                all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
+                                    except Exception:
+                                        continue
+
+                                if not all_options_data:
+                                    st.info("Insufficient open interest data found across the selected expiration dates.")
+                                else:
+                                    df_gex = pd.DataFrame(all_options_data)
+                                    df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
+
+                                    total_net_gex = df_grouped["gex"].sum()
+
+                                    df_grouped = df_grouped.sort_values("strike")
+                                    df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
+                                    
+                                    zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
+                                    if not zero_crossings.empty:
+                                        closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
+                                        flip_strike = float(df_grouped.loc[closest_idx, "strike"])
+                                    else:
+                                        flip_strike = float(df_grouped.loc[(df_grouped["cum_gex"]).abs().idxmin(), "strike"])
+
+                                    st.markdown(f"""
+                                        <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                                            <div style="background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 4px; flex: 1; min-width: 200px;">
+                                                <div style="color: #848e9c; font-size: 11px;">NET GAMMA EXPOSURE</div>
+                                                <div style="font-size: 18px; font-weight: bold; color: {'#0ecb81' if total_net_gex >= 0 else '#f6465d'};">${total_net_gex:,.2f}B</div>
+                                            </div>
+                                            <div style="background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 4px; flex: 1; min-width: 200px;">
+                                                <div style="color: #848e9c; font-size: 11px;">GEX FLIP POINT</div>
+                                                <div style="font-size: 18px; font-weight: bold; color: #f0b90b;">${flip_strike:,.2f}</div>
+                                            </div>
+                                            <div style="background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 4px; flex: 1; min-width: 200px;">
+                                                <div style="color: #848e9c; font-size: 11px;">SPOT PRICE</div>
+                                                <div style="font-size: 18px; font-weight: bold; color: #eaecef;">${spot_price:,.2f}</div>
+                                            </div>
+                                        </div>
+                                    """, unsafe_allow_html=True)
+
+                                    st.bar_chart(df_grouped.set_index("strike")["gex"])
+                            except Exception as ex:
+                                st.error(f"Error computing GEX profile: {ex}")
 
     elif selected_main_tab == "🎯 Optimal Contract Finder":
-        st.markdown(f"### 🎯 Optimal Contract Finder // {target_symbol}", unsafe_allow_html=True)
-        st.info("Scan option chains for high-probability directional and volatility setups.")
-        
-        sim_price = active_price if active_price > 0 else 150.0
-        exp_dates = ["2026-09-18", "2026-10-16", "2026-11-20"]
-        
-        if YFINANCE_AVAILABLE:
-            try:
-                session = get_yf_session()
-                t_obj = yf.Ticker(target_symbol, session=session)
-                live_opts = getattr(t_obj, "options", None)
-                if live_opts and len(live_opts) > 0:
-                    exp_dates = list(live_opts)
-            except Exception:
-                pass
-
-        c1, c2 = st.columns(2)
-        with c1:
-            sel_exp = st.selectbox("Contract Expiration:", options=exp_dates, key="finder_opt_exp")
-        with c2:
-            opt_type = st.selectbox("Option Type:", options=["Calls", "Puts"], key="finder_opt_type")
-
-        strikes = [sim_price - 15, sim_price - 10, sim_price - 5, sim_price, sim_price + 5, sim_price + 10, sim_price + 15]
-        df_opts = pd.DataFrame({
-            "contractSymbol": [f"{target_symbol}260918C{int(s*1000):08d}" for s in strikes],
-            "strike": strikes,
-            "lastPrice": [round(max(0.5, abs(sim_price - s) + 2.5), 2) for s in strikes],
-            "bid": [round(max(0.4, abs(sim_price - s) + 2.2), 2) for s in strikes],
-            "ask": [round(max(0.6, abs(sim_price - s) + 2.8), 2) for s in strikes],
-            "volume": [12450, 8320, 45200, 68900, 15300, 6100, 4100],
-            "openInterest": [45200, 21300, 89000, 124500, 34000, 15000, 9200],
-            "impliedVolatility": [0.35, 0.38, 0.32, 0.30, 0.36, 0.40, 0.44]
-        })
-
-        st.dataframe(df_opts.sort_values(by="volume", ascending=False), use_container_width=True)
+        st.markdown("### 🎯 Optimal Contract Finder", unsafe_allow_html=True)
+        st.info("Use this module to scan option chains for high-probability directional and volatility setups.")
 
     elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
         st.markdown("### 🔄 Sector Rotation Leaderboard", unsafe_allow_html=True)
         st.info("Tracking institutional capital flows across major market sectors.")
-        
-        simulated = [
-            {"Sector": "Technology", "Ticker": "XLK", "Price": 235.40, "Change (%)": 1.45, "Volume": 45000200},
-            {"Sector": "Consumer Discretionary", "Ticker": "XLY", "Price": 192.10, "Change (%)": 0.92, "Volume": 23100400},
-            {"Sector": "Communication Services", "Ticker": "XLC", "Price": 94.60, "Change (%)": 0.65, "Volume": 18400100},
-            {"Sector": "Financials", "Ticker": "XLF", "Price": 45.80, "Change (%)": 0.31, "Volume": 38900000},
-            {"Sector": "Industrials", "Ticker": "XLI", "Price": 132.50, "Change (%)": 0.12, "Volume": 15200300},
-            {"Sector": "Healthcare", "Ticker": "XLV", "Price": 142.30, "Change (%)": -0.05, "Volume": 19400200},
-            {"Sector": "Materials", "Ticker": "XLB", "Price": 91.20, "Change (%)": -0.24, "Volume": 8900100},
-            {"Sector": "Consumer Staples", "Ticker": "XLP", "Price": 78.40, "Change (%)": -0.41, "Volume": 12100400},
-            {"Sector": "Utilities", "Ticker": "XLU", "Price": 71.90, "Change (%)": -0.68, "Volume": 14300000},
-            {"Sector": "Real Estate", "Ticker": "XLRE", "Price": 41.50, "Change (%)": -0.95, "Volume": 9800200},
-            {"Sector": "Energy", "Ticker": "XLE", "Price": 88.10, "Change (%)": -1.22, "Volume": 25400100},
-        ]
-        df_sec = pd.DataFrame(simulated).sort_values(by="Change (%)", ascending=False)
-        st.dataframe(df_sec, use_container_width=True)
 
     elif selected_main_tab == "⚡ Unusual Options Activity":
-        st.markdown(f"### ⚡ Unusual Options Activity Scanner // {target_symbol}", unsafe_allow_html=True)
-        st.info("Scan option chains for abnormal volume-to-open-interest surges.")
-        
-        sim_price = active_price if active_price > 0 else 150.0
-        unusual_rows = [
-            {"Expiration": "2026-09-18", "Type": "CALL", "Strike": sim_price + 5, "Volume": 24500, "Open Interest": 3200, "IV": "42.5%"},
-            {"Expiration": "2026-09-18", "Type": "PUT", "Strike": sim_price - 5, "Volume": 18200, "Open Interest": 2100, "IV": "48.1%"},
-            {"Expiration": "2026-10-16", "Type": "CALL", "Strike": sim_price + 10, "Volume": 15400, "Open Interest": 1800, "IV": "39.4%"},
-            {"Expiration": "2026-10-16", "Type": "PUT", "Strike": sim_price - 10, "Volume": 12100, "Open Interest": 1450, "IV": "45.0%"}
-        ]
-        st.dataframe(pd.DataFrame(unusual_rows), use_container_width=True)
+        st.markdown("### ⚡ Unusual Options Activity", unsafe_allow_html=True)
+        st.info("Real-time sweep and block order scanner highlighting institutional positioning.")
 
     elif selected_main_tab == "📰 Live Trading News":
-        st.markdown("### 📰 Live Market News & Wires", unsafe_allow_html=True)
-        st.info("Real-time financial wire headlines and news feeds.")
-        fallback_news = [
-            ("Federal Reserve Maintains Interest Rate Outlook Amid Inflation Data", "Today", f"https://finance.yahoo.com/quote/{target_symbol}"),
-            (f"Institutional Capital Flows Accelerate Into {target_symbol} Options", "Today", f"https://finance.yahoo.com/quote/{target_symbol}"),
-            ("Market Technical Update: Key Support and Resistance Levels Holding", "Yesterday", f"https://finance.yahoo.com/quote/{target_symbol}")
-        ]
-        for title, date, link in fallback_news:
-            st.markdown(f"""
-                <div style="background: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
-                    <a href="{link}" target="_blank" style="color: #eaecef; font-weight: bold; font-size: 13px; text-decoration: none;">{title}</a>
-                    <div style="color: #848e9c; font-size: 11px; margin-top: 4px;">{date} // Wire Feed Active</div>
-                </div>
-            """, unsafe_allow_html=True)
+        st.markdown("### 📰 Live Trading News", unsafe_allow_html=True)
+        st.info("Live market wires and macroeconomic news feeds.")
