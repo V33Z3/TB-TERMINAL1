@@ -344,11 +344,11 @@ else:
 
   render_live_header(target_symbol)
 
-  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), and AI Optimal Contract Finder
+  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), and Optimal Contract Finder
   main_tab_chart, main_tab_gex, main_tab_finder = st.tabs([
       "📈 Terminal Chart & Watchlist",
       "⚛️ Gamma Exposure (GEX) Analysis",
-      "🎯 AI Optimal Option Contract Finder"
+      "🎯 Optimal Option Contract Finder"
   ])
 
   with main_tab_chart:
@@ -638,7 +638,7 @@ else:
     st.markdown(
         f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 AI Optimal Option Contract Finder // {target_symbol}</h3>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Optimal Option Contract Finder // {target_symbol}</h3>
                 <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Automatically analyzes the options chain to identify and rank the highest-conviction Call and Put contracts based on institutional liquidity, tight bid-ask spreads, and optimal 0.35–0.50 Delta exposure.</p>
             </div>
         """,
@@ -662,7 +662,7 @@ else:
           selected_finder_exp = st.selectbox("Select Expiration Date", options=list(finder_exp_dates), key="finder_exp_select")
         with f_col2:
           st.markdown("<br>", unsafe_allow_html=True)
-          scan_triggered = st.button("⚡ Run AI Contract Selection", use_container_width=True, type="primary")
+          scan_triggered = st.button("⚡ Run Contract Selection", use_container_width=True, type="primary")
 
         if scan_triggered or "finder_scanned" in st.session_state:
           st.session_state.finder_scanned = True
@@ -737,7 +737,7 @@ else:
 
               with c_col1:
                 st.markdown("<div style='background: #080808; border: 1px solid #1a1a1a; padding: 15px; border-radius: 6px;'>", unsafe_allow_html=True)
-                st.markdown("<h4 style='color: #0ecb81; margin-top: 0;'>🟢 AI Top Recommended Call Contract</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #0ecb81; margin-top: 0;'>🟢 Top Recommended Call Contract</h4>", unsafe_allow_html=True)
                 if top_call:
                   st.markdown(f"**Contract:** `{top_call['Contract']}`")
                   mc1, mc2, mc3 = st.columns(3)
@@ -756,7 +756,7 @@ else:
 
               with c_col2:
                 st.markdown("<div style='background: #080808; border: 1px solid #1a1a1a; padding: 15px; border-radius: 6px;'>", unsafe_allow_html=True)
-                st.markdown("<h4 style='color: #f6465d; margin-top: 0;'>🔴 AI Top Recommended Put Contract</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #f6465d; margin-top: 0;'>🔴 Top Recommended Put Contract</h4>", unsafe_allow_html=True)
                 if top_put:
                   st.markdown(f"**Contract:** `{top_put['Contract']}`")
                   mp1, mp2, mp3 = st.columns(3)
