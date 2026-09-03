@@ -1,4 +1,5 @@
 import datetime
+import math
 import time
 from groq import Groq
 import numpy as np
@@ -8,25 +9,16 @@ import streamlit as st
 import streamlit.components.v1 as components
 from supabase import Client, create_client
 
-# Try importing yfinance for market quotes (used for header badges & volume)
+# Try importing yfinance for market quotes and options data
 try:
   import yfinance as yf
   YFINANCE_AVAILABLE = True
 except ImportError:
   YFINANCE_AVAILABLE = False
 
-# Try importing Alpaca SDK for historical market data quotes
-try:
-  from alpaca.data.enums import DataFeed
-  from alpaca.data.historical import StockHistoricalDataClient
-  from alpaca.data.requests import StockLatestQuoteRequest
-  ALPACA_DATA_AVAILABLE = True
-except ImportError:
-  ALPACA_DATA_AVAILABLE = False
-
 # Page configuration - Wide mode with expanded sidebar by default
 st.set_page_config(
-    page_title="TB TERMINAL // Institutional Market Research",
+    page_title="TB TERMINAL // Institutional Market Research & GEX",
     layout="wide",
     page_icon="📈",
     initial_sidebar_state="expanded",
@@ -149,10 +141,6 @@ if "show_splash" not in st.session_state:
   st.session_state.show_splash = False
 if "active_ticker" not in st.session_state:
   st.session_state.active_ticker = "AAPL"
-if "alpaca_key" not in st.session_state:
-  st.session_state.alpaca_key = ""
-if "alpaca_secret" not in st.session_state:
-  st.session_state.alpaca_secret = ""
 if "watchlist" not in st.session_state:
   st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
 
@@ -197,7 +185,7 @@ else:
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
                     <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">LOADING QUANT RESEARCH SUITE...</p>
+                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">LOADING QUANT RESEARCH SUITE & GEX MODULE...</p>
                     
                     <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.95);">
                         <svg width="100%" height="260" viewBox="0 0 600 260" style="overflow: visible;">
@@ -233,7 +221,7 @@ else:
                                 <span style="display:inline-block; width:12px; height:12px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
                                 <span style="display:inline-block; width:12px; height:12px; background:#3b82f6; border-radius:50%; margin-left:12px;"></span> SMA 50 (Slow)
                             </span>
-                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 RESEARCH MODE ACTIVE ▲</span>
+                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 GEX MODULE READY ▲</span>
                         </div>
                     </div>
 
@@ -279,7 +267,7 @@ else:
 
   with st.sidebar:
     st.markdown("### ⚙️ Research Terminal")
-    st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & Analytics Only</b> (Execution Disabled)</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & GEX Analytics</b></p>", unsafe_allow_html=True)
     if st.button("Log Out", use_container_width=True):
       supabase.auth.sign_out()
       st.session_state.user = None
@@ -356,127 +344,289 @@ else:
 
   render_live_header(target_symbol)
 
-  # Main Grid: TradingView Advanced Chart on Left, Watchlist & Research Tools on Right
-  col_chart, col_research = st.columns([3.4, 1.2])
+  # TOP-LEVEL TABS: Research Chart / Watchlist vs Gamma Exposure (GEX)
+  main_tab_chart, main_tab_gex = st.tabs(["📈 Terminal Chart & Watchlist", "⚛️ Gamma Exposure (GEX) Analysis"])
 
-  with col_chart:
+  with main_tab_chart:
+    # Main Grid: TradingView Advanced Chart on Left, Watchlist & Research Tools on Right
+    col_chart, col_research = st.columns([3.4, 1.2])
+
+    with col_chart:
+      st.markdown(
+          f"""
+              <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
+                  <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+              </div>
+          """,
+          unsafe_allow_html=True,
+      )
+
+      tv_html = f"""
+          <div class="tradingview-widget-container" style="height:630px;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+            {{
+              "autosize": false,
+              "width": "100%",
+              "height": "630",
+              "symbol": "{target_symbol}",
+              "interval": "D",
+              "timezone": "Etc/UTC",
+              "theme": "dark",
+              "style": "1",
+              "locale": "en",
+              "enable_publishing": false,
+              "allow_symbol_change": true,
+              "calendar": false,
+              "support_host": "https://www.tradingview.com",
+              "isTransparent": true
+            }}
+            </script>
+          </div>
+          """
+      components.html(tv_html, height=640)
+
+    with col_research:
+      st.markdown(
+          """
+              <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
+                  <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
+              </div>
+          """,
+          unsafe_allow_html=True,
+      )
+
+      with st.form("add_watchlist_form", clear_on_submit=True):
+        col_w1, col_w2 = st.columns([3, 1])
+        with col_w1:
+          new_ticker_input = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", label_visibility="collapsed")
+        with col_w2:
+          add_btn = st.form_submit_button("＋ Add", use_container_width=True)
+
+        if add_btn and new_ticker_input.strip():
+          clean_sym = new_ticker_input.upper().strip()
+          if clean_sym not in st.session_state.watchlist:
+            st.session_state.watchlist.append(clean_sym)
+            save_watchlist_to_db()
+            st.rerun()
+
+      @st.fragment(run_every="3s")
+      def render_watchlist_fragment():
+        st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
+        if not st.session_state.watchlist:
+          st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
+        else:
+          for sym in list(st.session_state.watchlist):
+            p_val, p_pct, p_vol = fetch_live_quote(sym)
+            color = "#0ecb81" if p_pct >= 0 else "#f6465d"
+            sign = "+" if p_pct >= 0 else ""
+            logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
+            vol_str = format_vol(p_vol) if p_vol > 0 else "-"
+
+            w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
+            with w_col_info:
+              st.markdown(
+                  f"""
+                      <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                          <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
+                          <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
+                      </a>
+                      """,
+                  unsafe_allow_html=True,
+              )
+            with w_col_vol:
+              st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
+            with w_col_price:
+              st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+            with w_col_del:
+              st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+              if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
+                st.session_state.watchlist.remove(sym)
+                save_watchlist_to_db()
+                st.rerun()
+              st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+      render_watchlist_fragment()
+
+    with st.expander("🤖 Groq Quant Intelligence Assistant"):
+      ai_c1, ai_c2 = st.columns([4, 1])
+      with ai_c1:
+        ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
+      with ai_c2:
+        ai_btn = st.button("Ask AI", use_container_width=True)
+
+      if ai_btn and groq_key and ai_query.strip():
+        with st.spinner("Processing..."):
+          try:
+            ai_client = Groq(api_key=groq_key)
+            completion = ai_client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[
+                    {"role": "system", "content": "You are an expert institutional market research analyst."},
+                    {"role": "user", "content": ai_query},
+                ],
+                temperature=0.7,
+            )
+            st.write(completion.choices[0].message.content)
+          except Exception as e:
+            st.error(f"AI Error: {e}")
+
+  with main_tab_gex:
     st.markdown(
         f"""
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">⚛️ Gamma Exposure (GEX) Profile // {target_symbol}</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Dealer options positioning, strike magnet levels, and volatility dampening/amplifying zones.</p>
             </div>
         """,
         unsafe_allow_html=True,
     )
 
-    tv_html = f"""
-        <div class="tradingview-widget-container" style="height:650px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {{
-            "autosize": false,
-            "width": "100%",
-            "height": "650",
-            "symbol": "{target_symbol}",
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "enable_publishing": false,
-            "allow_symbol_change": true,
-            "calendar": false,
-            "support_host": "https://www.tradingview.com",
-            "isTransparent": true
-          }}
-          </script>
-        </div>
-        """
-    components.html(tv_html, height=660)
-
-  with col_research:
-    st.markdown(
-        """
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
-                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
-            </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    with st.form("add_watchlist_form", clear_on_submit=True):
-      col_w1, col_w2 = st.columns([3, 1])
-      with col_w1:
-        new_ticker_input = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", label_visibility="collapsed")
-      with col_w2:
-        add_btn = st.form_submit_button("＋ Add", use_container_width=True)
-
-      if add_btn and new_ticker_input.strip():
-        clean_sym = new_ticker_input.upper().strip()
-        if clean_sym not in st.session_state.watchlist:
-          st.session_state.watchlist.append(clean_sym)
-          save_watchlist_to_db()
-          st.rerun()
-
-    @st.fragment(run_every="3s")
-    def render_watchlist_fragment():
-      st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 530px; overflow-y: auto;'>", unsafe_allow_html=True)
-      if not st.session_state.watchlist:
-        st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
-      else:
-        for sym in list(st.session_state.watchlist):
-          p_val, p_pct, p_vol = fetch_live_quote(sym)
-          color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-          sign = "+" if p_pct >= 0 else ""
-          logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
-          vol_str = format_vol(p_vol) if p_vol > 0 else "-"
-
-          w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
-          with w_col_info:
-            st.markdown(
-                f"""
-                    <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
-                        <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
-                        <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
-                    </a>
-                    """,
-                unsafe_allow_html=True,
-            )
-          with w_col_vol:
-            st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
-          with w_col_price:
-            st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
-          with w_col_del:
-            st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
-            if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
-              st.session_state.watchlist.remove(sym)
-              save_watchlist_to_db()
-              st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-      st.markdown("</div>", unsafe_allow_html=True)
-
-    render_watchlist_fragment()
-
-  with st.expander("🤖 Groq Quant Intelligence Assistant"):
-    ai_c1, ai_c2 = st.columns([4, 1])
-    with ai_c1:
-      ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
-    with ai_c2:
-      ai_btn = st.button("Ask AI", use_container_width=True)
-
-    if ai_btn and groq_key and ai_query.strip():
-      with st.spinner("Processing..."):
+    if not YFINANCE_AVAILABLE:
+      st.error("`yfinance` is required for options chain data.")
+    else:
+      with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
         try:
-          ai_client = Groq(api_key=groq_key)
-          completion = ai_client.chat.completions.create(
-              model="openai/gpt-oss-120b",
-              messages=[
-                  {"role": "system", "content": "You are an expert institutional market research analyst."},
-                  {"role": "user", "content": ai_query},
-              ],
-              temperature=0.7,
-          )
-          st.write(completion.choices[0].message.content)
+          session = get_yf_session()
+          tk = yf.Ticker(target_symbol, session=session)
+          exp_dates = tk.options
+
+          if not exp_dates:
+            st.warning(f"No options chain expiration dates found for {target_symbol}.")
+          else:
+            spot_price, _, _ = fetch_live_quote(target_symbol)
+            if spot_price <= 0:
+              hist = tk.history(period="1d")
+              if not hist.empty:
+                spot_price = float(hist["Close"].iloc[-1])
+
+            # Helper functions for Black-Scholes gamma calculation
+            def norm_pdf(x):
+              return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+
+            def calc_gamma(S, K, T, r, sigma):
+              if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+                return 0.0
+              try:
+                d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+                return norm_pdf(d1) / (S * sigma * math.sqrt(T))
+              except Exception:
+                return 0.0
+
+            # Aggregate options across nearest 4 expiration dates
+            all_options_data = []
+            now = datetime.datetime.now()
+            r = 0.045  # Risk-free rate assumption
+
+            selected_exp_dates = exp_dates[:4] # Take nearest 4 expirations
+            for exp in selected_exp_dates:
+              try:
+                opt_chain = tk.option_chain(exp)
+                exp_date_obj = datetime.datetime.strptime(exp, "%Y-%m-%d")
+                T = max((exp_date_obj - now).days / 365.25, 0.001)
+
+                calls = opt_chain.calls
+                puts = opt_chain.puts
+
+                for _, row in calls.iterrows():
+                  strike = float(row["strike"])
+                  oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                  iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                  if oi > 0:
+                    gamma = calc_gamma(spot_price, strike, T, r, iv)
+                    # GEX in millions: Gamma * OI * 100 * Spot^2 * 0.01 / 1e9
+                    gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9
+                    all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
+
+                for _, row in puts.iterrows():
+                  strike = float(row["strike"])
+                  oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                  iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                  if oi > 0:
+                    gamma = calc_gamma(spot_price, strike, T, r, iv)
+                    # Put GEX is negative contribution for dealers short puts
+                    gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9)
+                    all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
+              except Exception:
+                continue
+
+            if not all_options_data:
+              st.info("Insufficient open interest data found across near-term options chains.")
+            else:
+              df_gex = pd.DataFrame(all_options_data)
+              df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
+
+              # Filter strikes within +/- 25% of spot price for clean charting
+              df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
+
+              total_net_gex = df_grouped["gex"].sum()
+
+              # Estimate Gamma Flip Point (strike where cumulative GEX transitions from negative to positive)
+              df_grouped = df_grouped.sort_values("strike")
+              df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
+              
+              flip_strike = spot_price
+              # Find zero crossing closest to spot price
+              zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
+              if not zero_crossings.empty:
+                # Find closest strike to spot price among crossings
+                closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
+                flip_strike = zero_crossings.loc[closest_idx, "strike"]
+
+              # Metrics summary row
+              m1, m2, m3, m4 = st.columns(4)
+              with m1:
+                st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
+              with m2:
+                gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
+                st.metric("Total Net GEX", f"${total_net_gex:,.2f}B", delta=gex_color_label)
+              with m3:
+                st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
+              with m4:
+                st.metric("Expirations Analyzed", f"{len(selected_exp_dates)} Near-Term")
+
+              st.markdown("<br>", unsafe_allow_html=True)
+
+              # Charting GEX by strike using Altair
+              import altair as alt
+
+              df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
+
+              chart = alt.Chart(df_filtered).mark_bar().encode(
+                  x=alt.X("strike:Q", title="Strike Price ($)", scale=alt.Scale(zero=False)),
+                  y=alt.Y("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
+                  color=alt.Color("color:N", scale=None),
+                  tooltip=["strike", "gex"]
+              ).properties(
+                  height=420,
+                  background="#080808"
+              ).configure_view(
+                  strokeWidth=0
+              ).configure_axis(
+                  gridColor="#1a1a1a",
+                  domainColor="#333333",
+                  labelColor="#848e9c",
+                  titleColor="#eaecef"
+              ).configure_background(
+                  fill="#080808"
+              )
+
+              st.altair_chart(chart, use_container_width=True)
+
+              st.markdown(
+                  f"""
+                  <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
+                      <b>Quant Intelligence Note:</b> 
+                      <ul>
+                          <li><b>Positive GEX (Green Bars):</b> Market makers are long gamma and must dynamically hedge by selling into rallies and buying into dips, which tends to compress intraday volatility.</li>
+                          <li><b>Negative GEX (Red Bars):</b> Market makers are short gamma and must chase momentum by buying rising markets and selling falling markets, amplifying volatility.</li>
+                          <li><b>Gamma Flip Point (~${flip_strike:,.2f}):</b> The critical institutional pivot level where dealer hedging behavior flips polarity.</li>
+                      </ul>
+                  </div>
+                  """,
+                  unsafe_allow_html=True,
+              )
         except Exception as e:
-          st.error(f"AI Error: {e}")
+          st.error(f"Error computing Gamma Exposure: {e}")
