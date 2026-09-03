@@ -226,9 +226,9 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        // Spawn rate slowed down by 1 second (increased threshold by 60 frames)
+        // Spawn rate tuned to exactly match the 10-second duration (~600 frames / 50 candles = 12 frames per candle)
         spawnTimer++;
-        if (spawnTimer > 66.0 && candles.length < maxCandles) {
+        if (spawnTimer > 12 && candles.length < maxCandles) {
             spawnNewCandle();
             spawnTimer = 0;
         } else {
