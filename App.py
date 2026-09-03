@@ -156,8 +156,8 @@ def get_groq_key():
 groq_key = get_groq_key()
 
 # Session state initializations
-if "user" not in st.session_state:
-    st.session_state.user = None
+if "terminal_opened" not in st.session_state:
+    st.session_state.terminal_opened = False
 if "show_splash" not in st.session_state:
     st.session_state.show_splash = False
 if "active_ticker" not in st.session_state:
@@ -169,79 +169,72 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
-# Authentication Gate
-if not st.session_state.user:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col_auth1, col_auth2, col_auth3 = st.columns([1, 1.2, 1])
+# Landing Gate with Open Button & Trading Animation
+if not st.session_state.terminal_opened:
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    col_auth1, col_auth2, col_auth3 = st.columns([1, 1.3, 1])
     with col_auth2:
-        st.markdown("<h2 style='text-align: center; color: #eaecef;'>TB TERMINAL LOGIN</h2>", unsafe_allow_html=True)
-        if not supabase:
-            st.error("Supabase credentials missing from Streamlit Secrets.")
-        else:
-            auth_tab1, auth_tab2 = st.tabs(["Sign In", "Register"])
-            with auth_tab1:
-                with st.form("login_form"):
-                    login_email = st.text_input("Email")
-                    login_pass = st.text_input("Password", type="password")
-                    login_btn = st.form_submit_button("Access Terminal", use_container_width=True)
-                    if login_btn:
-                        try:
-                            res = supabase.auth.sign_in_with_password({"email": login_email, "password": login_pass})
-                            st.session_state.user = res.user
-                            st.session_state.show_splash = True
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-            with auth_tab2:
-                with st.form("signup_form"):
-                    signup_email = st.text_input("Email")
-                    signup_pass = st.text_input("Password", type="password")
-                    signup_btn = st.form_submit_button("Create Account", use_container_width=True)
-                    if signup_btn:
-                        try:
-                            supabase.auth.sign_up({"email": signup_email, "password": signup_pass})
-                            st.success("Account created! You can now sign in.")
-                        except Exception as e:
-                            st.error(f"Error: {e}")
+        st.markdown("<h1 style='text-align: center; color: #f0b90b; letter-spacing: 3px; margin-bottom: 5px;'>⚡ TB TERMINAL</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #848e9c; font-size: 14px; font-family: monospace; letter-spacing: 1px; margin-bottom: 30px;'>INSTITUTIONAL QUANT RESEARCH & GEX ANALYTICS</p>", unsafe_allow_html=True)
+        
+        if st.button("OPEN TERMINAL", use_container_width=True, type="primary"):
+            st.session_state.show_splash = True
+            st.session_state.terminal_opened = True
+            st.rerun()
 else:
     if st.session_state.show_splash:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
-                    <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">LOADING QUANT RESEARCH SUITE & GEX MODULE...</p>
+                    <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px; animation: pulseGlow 1.2s infinite ease-in-out;">⚡ TB TERMINAL</div>
+                    <p style="color: #0ecb81; font-size: 15px; font-family: monospace; letter-spacing: 2px; margin-bottom: 30px;">INITIALIZING LIVE ORDER BOOKS, GEX KERNEL & FEED...</p>
+                    <div style="width: 320px; height: 4px; background: #1a1a1a; margin: 0 auto; border-radius: 2px; overflow: hidden; border: 1px solid #333;">
+                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #f0b90b, #0ecb81); animation: scanLine 1.4s infinite linear;"></div>
+                    </div>
                 </div>
             </div>
+            <style>
+            @keyframes scanLine {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+            }
+            @keyframes pulseGlow {
+                0% { opacity: 0.5; transform: scale(0.98); }
+                50% { opacity: 1; transform: scale(1.0); }
+                100% { opacity: 0.5; transform: scale(0.98); }
+            }
+            </style>
             """,
-            height=300,
+            height=350,
         )
-        time.sleep(1.2)
+        time.sleep(1.5)
         st.session_state.show_splash = False
         st.rerun()
 
-    # Load watchlist from DB into Session State if empty
+    # Load watchlist from DB into Session State if available
     try:
-        wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", st.session_state.user.id).execute()
-        if wl_res.data and len(wl_res.data) > 0 and wl_res.data[0].get("symbols"):
-            st.session_state.watchlist = wl_res.data[0].get("symbols")
+        if supabase:
+            wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", "guest_terminal_user").execute()
+            if wl_res.data and len(wl_res.data) > 0 and wl_res.data[0].get("symbols"):
+                st.session_state.watchlist = wl_res.data[0].get("symbols")
     except Exception:
         pass
 
     def save_watchlist_to_db():
         try:
-            supabase.table("user_watchlists").upsert(
-                {"user_id": st.session_state.user.id, "symbols": st.session_state.watchlist}
-            ).execute()
+            if supabase:
+                supabase.table("user_watchlists").upsert(
+                    {"user_id": "guest_terminal_user", "symbols": st.session_state.watchlist}
+                ).execute()
         except Exception:
             pass
 
     with st.sidebar:
         st.markdown("### ⚙️ Research Terminal")
         st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & GEX Analytics</b></p>", unsafe_allow_html=True)
-        if st.button("Log Out", use_container_width=True):
-            supabase.auth.sign_out()
-            st.session_state.user = None
+        if st.button("Lock Terminal", use_container_width=True):
+            st.session_state.terminal_opened = False
             st.rerun()
 
     # Ticker Search Input Row
