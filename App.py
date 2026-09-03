@@ -25,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Map tabs to short query param codes (including Live Trading News)
+# Map tabs to short query param codes (including Live Trading News with Trump feed option)
 tab_to_param = {
     "📈 Terminal Chart & Watchlist": "chart",
     "⚛️ Gamma Exposure (GEX) Analysis": "gex",
@@ -957,8 +957,8 @@ else:
         st.markdown(
             f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">📰 Live Financial & Trading News // {target_symbol} & Markets</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Real-time headlines, press releases, and market intelligence.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">📰 Live Financial & Trading News // {target_symbol} & Macro/Trump Feed</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Real-time headlines, press releases, market intelligence, and political statements.</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -966,7 +966,11 @@ else:
         
         news_col1, news_col2 = st.columns([2, 1])
         with news_col1:
-            news_source_type = st.radio("News Scope", options=[f"Ticker Specific ({target_symbol})", "General Market & Macro"], horizontal=True)
+            news_source_type = st.radio(
+                "News Scope", 
+                options=[f"Ticker Specific ({target_symbol})", "General Market & Macro", "Trump Statements (Truth Social / Filtered)"], 
+                horizontal=True
+            )
         with news_col2:
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🔄 Refresh News Feed", use_container_width=True):
@@ -1003,7 +1007,7 @@ else:
                     except Exception:
                         pass
             
-            if not articles:
+            if not articles or mode.startswith("General") or mode.startswith("Trump"):
                 try:
                     rss_url = "https://finance.yahoo.com/news/rss"
                     resp = requests.get(rss_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
@@ -1014,14 +1018,41 @@ else:
                             pub = item.find("source").text if item.find("source") is not None else "Yahoo Finance"
                             link = item.find("link").text if item.find("link") is not None else "#"
                             pub_date = item.find("pubDate").text if item.find("pubDate") is not None else ""
-                            articles.append({
-                                "title": title,
-                                "publisher": pub,
-                                "link": link,
-                                "time": pub_date[:16]
-                            })
+                            
+                            if mode.startswith("Trump"):
+                                if any(kw in title.lower() for kw in ["trump", "tariff", "white house", "executive order", "duty", "trade"]):
+                                    articles.append({
+                                        "title": title,
+                                        "publisher": f"Macro / {pub}",
+                                        "link": link,
+                                        "time": pub_date[:16]
+                                    })
+                            elif mode.startswith("General"):
+                                articles.append({
+                                    "title": title,
+                                    "publisher": pub,
+                                    "link": link,
+                                    "time": pub_date[:16]
+                                })
                 except Exception:
                     pass
+
+            if mode.startswith("Trump") and len(articles) <= 1:
+                try:
+                    from truthbrush import Api
+                    api = Api(require_auth=False)
+                    statuses = api.user(username="realDonaldTrump")
+                    for status in list(statuses)[:15]:
+                        text_content = getattr(status, "content", str(status))
+                        articles.append({
+                            "title": text_content[:180] + "...",
+                            "publisher": "Truth Social (@realDonaldTrump)",
+                            "link": "https://truthsocial.com/@realDonaldTrump",
+                            "time": "Live Feed"
+                        })
+                except Exception:
+                    pass
+
             return articles
 
         articles = fetch_news_feed(target_symbol, news_source_type)
