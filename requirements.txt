@@ -1,8 +1,4 @@
 streamlit
+pandas
 yfinance
 plotly
-pandas
-numpy
-groq
-supabase
-alpaca-py
