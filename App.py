@@ -133,7 +133,7 @@ if not st.session_state.started:
             st.session_state.animating = True
             st.rerun()
 
-# 10-Second Fibonacci Trading Back-Test Animation Sequence
+# 10-Second Real Price Action Fibonacci Animation Sequence
 elif st.session_state.started and st.session_state.animating:
     st.markdown(
         """
@@ -156,7 +156,6 @@ elif st.session_state.started and st.session_state.animating:
     
     let candles = [];
     let maxCandles = 38;
-    let spawnCounter = 0;
     
     const fibLevels = [
         {val: 0.20, label: '0.236 (Retrace)', color: '#f6465d'},
@@ -166,41 +165,51 @@ elif st.session_state.started and st.session_state.animating:
         {val: 0.80, label: '0.786 (Deep Value)', color: '#ab47bc'}
     ];
 
-    function spawnCandle() {
-        if (candles.length < maxCandles) {
-            // Freeze the previous active candle when a new one spawns
-            if (candles.length > 0) {
-                let lastCandle = candles[candles.length - 1];
-                let wave = Math.sin(Date.now() * 0.0035 + lastCandle.oscillationOffset) * 22;
-                lastCandle.lockedY = lastCandle.baseY + wave;
-                lastCandle.isFrozen = true;
-            }
+    function valToY(v) {
+        return canvas.height * v;
+    }
 
-            let x = 45 + candles.length * 23;
-            let baseY = canvas.height * (0.3 + Math.random() * 0.4);
-            let height = 20 + Math.random() * 55;
-            let isGreen = Math.random() > 0.42;
-            candles.push({
-                x: x,
-                baseY: baseY,
-                height: height,
-                isGreen: isGreen,
-                alpha: 0,
-                oscillationOffset: Math.random() * Math.PI * 2,
-                isFrozen: false,
-                lockedY: null
-            });
+    let initialPrice = 0.5;
+    let activeCandle = {
+        x: 45,
+        open: initialPrice,
+        close: initialPrice,
+        high: initialPrice,
+        low: initialPrice,
+        isGreen: true
+    };
+
+    let spawnTimer = 0;
+    let startTime = Date.now();
+
+    function spawnNewCandle() {
+        if (candles.length < maxCandles) {
+            candles.push({...activeCandle});
+            
+            let nextX = 45 + candles.length * 22;
+            let open = activeCandle.close; // Real price action: open links to previous close
+            
+            // Random walk step respecting boundaries
+            let change = (Math.random() - 0.48) * 0.05;
+            let close = Math.max(0.15, Math.min(0.85, open + change));
+            
+            activeCandle = {
+                x: nextX,
+                open: open,
+                close: close,
+                high: Math.max(open, close) + Math.random() * 0.02,
+                low: Math.min(open, close) - Math.random() * 0.02,
+                isGreen: close >= open
+            };
         }
     }
 
-    let startTime = Date.now();
-    
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Grid & Fib Lines
+        // Draw Fibonacci Grid Lines
         fibLevels.forEach(fib => {
-            let y = canvas.height * fib.val;
+            let y = valToY(fib.val);
             ctx.strokeStyle = fib.color;
             ctx.lineWidth = 1;
             ctx.setLineDash([5, 5]);
@@ -215,42 +224,49 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        spawnCounter++;
-        if (spawnCounter % 16 === 0) {
-            spawnCandle();
+        // Manage Candle Spawning & Live Tick Fluctuations
+        spawnTimer++;
+        if (spawnTimer > 20 && candles.length < maxCandles) {
+            spawnNewCandle();
+            spawnTimer = 0;
+        } else {
+            // Actively fluctuate the live forming candle close and wicks
+            let tickChange = (Math.random() - 0.5) * 0.003;
+            activeCandle.close = Math.max(0.15, Math.min(0.85, activeCandle.close + tickChange));
+            if (activeCandle.close > activeCandle.high) activeCandle.high = activeCandle.close;
+            if (activeCandle.close < activeCandle.low) activeCandle.low = activeCandle.close;
+            activeCandle.isGreen = activeCandle.close >= activeCandle.open;
         }
 
         let timeSec = (Date.now() - startTime) / 1000;
         let remaining = Math.max(0, (10.0 - timeSec)).toFixed(1);
         document.getElementById('timerText').innerText = "Fibonacci Back-test in Progress... " + remaining + "s remaining";
 
-        candles.forEach((c) => {
-            if (c.alpha < 1) c.alpha += 0.06;
+        // Draw all completed candles + active live candle
+        let allCandles = [...candles, activeCandle];
+        allCandles.forEach((c) => {
+            let openY = valToY(c.open);
+            let closeY = valToY(c.close);
+            let highY = valToY(c.high);
+            let lowY = valToY(c.low);
             
-            let currentY;
-            if (c.isFrozen) {
-                currentY = c.lockedY;
-            } else {
-                // Only the latest/active candle moves up and down
-                let wave = Math.sin(Date.now() * 0.0035 + c.oscillationOffset) * 22;
-                currentY = c.baseY + wave;
-            }
+            let topY = Math.min(openY, closeY);
+            let bodyHeight = Math.max(2, Math.abs(openY - closeY));
 
             ctx.save();
-            ctx.globalAlpha = c.alpha;
             ctx.strokeStyle = c.isGreen ? '#0ecb81' : '#f6465d';
-            ctx.fillStyle = c.isGreen ? 'rgba(14, 203, 129, 0.25)' : 'rgba(246, 70, 93, 0.25)';
+            ctx.fillStyle = c.isGreen ? 'rgba(14, 203, 129, 0.3)' : 'rgba(246, 70, 93, 0.3)';
             ctx.lineWidth = 1.5;
 
             // Wick
             ctx.beginPath();
-            ctx.moveTo(c.x, currentY - c.height/2 - 10);
-            ctx.lineTo(c.x, currentY + c.height/2 + 10);
+            ctx.moveTo(c.x, highY);
+            ctx.lineTo(c.x, lowY);
             ctx.stroke();
 
             // Body
-            ctx.fillRect(c.x - 6, currentY - c.height/2, 12, c.height);
-            ctx.strokeRect(c.x - 6, currentY - c.height/2, 12, c.height);
+            ctx.fillRect(c.x - 5, topY, 10, bodyHeight);
+            ctx.strokeRect(c.x - 5, topY, 10, bodyHeight);
 
             ctx.restore();
         });
@@ -258,15 +274,6 @@ elif st.session_state.started and st.session_state.animating:
         if (timeSec < 10.0) {
             requestAnimationFrame(animate);
         } else {
-            // Freeze final active candle when timer ends
-            if (candles.length > 0) {
-                let finalCandle = candles[candles.length - 1];
-                if (!finalCandle.isFrozen) {
-                    let wave = Math.sin(Date.now() * 0.0035 + finalCandle.oscillationOffset) * 22;
-                    finalCandle.lockedY = finalCandle.baseY + wave;
-                    finalCandle.isFrozen = true;
-                }
-            }
             document.getElementById('timerText').innerHTML = "<span style='color: #0ecb81;'>✔ Back-Test Complete! Launching Terminal...</span>";
         }
     }
