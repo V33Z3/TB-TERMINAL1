@@ -344,11 +344,11 @@ else:
 
   render_live_header(target_symbol)
 
-  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), and Best Option Contract Finder
+  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), and AI Optimal Contract Finder
   main_tab_chart, main_tab_gex, main_tab_finder = st.tabs([
       "📈 Terminal Chart & Watchlist",
       "⚛️ Gamma Exposure (GEX) Analysis",
-      "🎯 Best Option Contract Finder"
+      "🎯 AI Optimal Option Contract Finder"
   ])
 
   with main_tab_chart:
@@ -638,8 +638,8 @@ else:
     st.markdown(
         f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Best Option Contract Finder // {target_symbol}</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Scan and rank high-liquidity call and put contracts based on volume, open interest, IV, and Black-Scholes Delta.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 AI Optimal Option Contract Finder // {target_symbol}</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Automatically analyzes the options chain to identify and rank the highest-conviction Call and Put contracts based on institutional liquidity, tight bid-ask spreads, and optimal 0.35–0.50 Delta exposure.</p>
             </div>
         """,
         unsafe_allow_html=True,
@@ -657,18 +657,16 @@ else:
       if not finder_exp_dates:
         st.warning(f"No option expiration dates found for {target_symbol}.")
       else:
-        f_col1, f_col2, f_col3, f_col4 = st.columns(4)
+        f_col1, f_col2 = st.columns([2, 2])
         with f_col1:
-          selected_finder_exp = st.selectbox("Expiration Date", options=list(finder_exp_dates), key="finder_exp_select")
+          selected_finder_exp = st.selectbox("Select Expiration Date", options=list(finder_exp_dates), key="finder_exp_select")
         with f_col2:
-          contract_type_filter = st.selectbox("Contract Type", options=["Calls", "Puts", "Both"], key="finder_type_select")
-        with f_col3:
-          min_volume = st.number_input("Min Volume", min_value=0, value=10, step=10, key="finder_min_vol")
-        with f_col4:
-          min_oi = st.number_input("Min Open Interest", min_value=0, value=50, step=50, key="finder_min_oi")
+          st.markdown("<br>", unsafe_allow_html=True)
+          scan_triggered = st.button("⚡ Run AI Contract Selection", use_container_width=True, type="primary")
 
-        if st.button("Scan Contracts", use_container_width=True, type="primary"):
-          with st.spinner(f"Scanning option contracts for {target_symbol} ({selected_finder_exp})..."):
+        if scan_triggered or "finder_scanned" in st.session_state:
+          st.session_state.finder_scanned = True
+          with st.spinner(f"Evaluating optimal contracts for {target_symbol} ({selected_finder_exp})..."):
             try:
               spot_price, _, _ = fetch_live_quote(target_symbol)
               if spot_price <= 0:
@@ -685,63 +683,101 @@ else:
               def norm_cdf(x):
                 return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
 
-              def compute_metrics(row, opt_type):
-                strike = float(row["strike"])
-                vol = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
-                oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                last_p = float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0
-                bid = float(row["bid"]) if not pd.isna(row["bid"]) else 0.0
-                ask = float(row["ask"]) if not pd.isna(row["ask"]) else 0.0
+              def evaluate_contracts(df_chain, opt_type):
+                scored_contracts = []
+                for _, row in df_chain.iterrows():
+                  strike = float(row["strike"])
+                  vol = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
+                  oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                  iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                  last_p = float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0
+                  bid = float(row["bid"]) if not pd.isna(row["bid"]) else 0.0
+                  ask = float(row["ask"]) if not pd.isna(row["ask"]) else 0.0
 
-                # Black-Scholes Delta
-                try:
-                  d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
-                  call_d = norm_cdf(d1)
-                  delta = call_d if opt_type == "Call" else call_d - 1.0
-                except Exception:
-                  delta = 0.5 if opt_type == "Call" else -0.5
+                  if vol < 5 and oi < 20:
+                    continue
 
-                # Opportunity Score: rewards high volume, open interest, and liquidity tightness
-                spread = max(ask - bid, 0.01)
-                liquidity_score = (vol * 1.5 + oi * 0.5) / (spread * 100 + 1)
+                  # Black-Scholes Delta
+                  try:
+                    d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
+                    call_d = norm_cdf(d1)
+                    delta = call_d if opt_type == "Call" else call_d - 1.0
+                  except Exception:
+                    delta = 0.5 if opt_type == "Call" else -0.5
 
-                return {
-                    "Ticker": row["contractSymbol"],
-                    "Type": opt_type,
-                    "Strike": strike,
-                    "Last Price": last_p,
-                    "Bid": bid,
-                    "Ask": ask,
-                    "Volume": int(vol),
-                    "Open Interest": int(oi),
-                    "Implied Vol (%)": round(iv * 100, 2),
-                    "Delta": round(delta, 3),
-                    "Score": round(liquidity_score, 2)
-                }
+                  # Penalty for deviation from optimal directional swing delta (~0.40)
+                  delta_penalty = abs(abs(delta) - 0.40)
+                  spread = max(ask - bid, 0.01)
 
-              processed_contracts = []
+                  # Algorithmic institutional score
+                  score = (vol * 2.0 + oi * 1.0) / ((spread * 100.0 + 1.0) * (delta_penalty + 0.5))
 
-              if contract_type_filter in ["Calls", "Both"]:
-                for _, r_row in opt_chain.calls.iterrows():
-                  res = compute_metrics(r_row, "Call")
-                  if res["Volume"] >= min_volume and res["Open Interest"] >= min_oi:
-                    processed_contracts.append(res)
+                  scored_contracts.append({
+                      "Contract": row["contractSymbol"],
+                      "Type": opt_type,
+                      "Strike": strike,
+                      "Last": last_p,
+                      "Bid": bid,
+                      "Ask": ask,
+                      "Volume": int(vol),
+                      "Open Interest": int(oi),
+                      "IV (%)": round(iv * 100, 1),
+                      "Delta": round(delta, 2),
+                      "Score": score
+                  })
+                return sorted(scored_contracts, key=lambda x: x["Score"], reverse=True)
 
-              if contract_type_filter in ["Puts", "Both"]:
-                for _, r_row in opt_chain.puts.iterrows():
-                  res = compute_metrics(r_row, "Put")
-                  if res["Volume"] >= min_volume and res["Open Interest"] >= min_oi:
-                    processed_contracts.append(res)
+              best_calls = evaluate_contracts(opt_chain.calls, "Call")
+              best_puts = evaluate_contracts(opt_chain.puts, "Put")
 
-              if not processed_contracts:
-                st.warning("No option contracts met your criteria. Try lowering the minimum volume or open interest filters.")
-              else:
-                df_results = pd.DataFrame(processed_contracts)
-                df_results = df_results.sort_values(by="Score", ascending=False).reset_index(drop=True)
+              top_call = best_calls[0] if best_calls else None
+              top_put = best_puts[0] if best_puts else None
 
-                st.markdown(f"<p style='color: #0ecb81; font-weight: bold;'>Found {len(df_results)} qualifying contracts, ranked by liquidity and momentum score:</p>", unsafe_allow_html=True)
-                st.dataframe(df_results, use_container_width=True, height=500)
+              c_col1, c_col2 = st.columns(2)
+
+              with c_col1:
+                st.markdown("<div style='background: #080808; border: 1px solid #1a1a1a; padding: 15px; border-radius: 6px;'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #0ecb81; margin-top: 0;'>🟢 AI Top Recommended Call Contract</h4>", unsafe_allow_html=True)
+                if top_call:
+                  st.markdown(f"**Contract:** `{top_call['Contract']}`")
+                  mc1, mc2, mc3 = st.columns(3)
+                  mc1.metric("Strike", f"${top_call['Strike']:,.2f}")
+                  mc2.metric("Last Price", f"${top_call['Last']:,.2f}")
+                  mc3.metric("Delta", f"{top_call['Delta']}")
+
+                  mc4, mc5, mc6 = st.columns(3)
+                  mc4.metric("Volume", f"{top_call['Volume']:,}")
+                  mc5.metric("Open Interest", f"{top_call['Open Interest']:,}")
+                  mc6.metric("Implied Vol", f"{top_call['IV (%)']}%")
+                  st.markdown(f"<p style='color: #848e9c; font-size: 11px; margin-bottom: 0;'>Bid: ${top_call['Bid']:,.2f} | Ask: ${top_call['Ask']:,.2f}</p>", unsafe_allow_html=True)
+                else:
+                  st.warning("No qualifying call contracts found for this expiration.")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+              with c_col2:
+                st.markdown("<div style='background: #080808; border: 1px solid #1a1a1a; padding: 15px; border-radius: 6px;'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #f6465d; margin-top: 0;'>🔴 AI Top Recommended Put Contract</h4>", unsafe_allow_html=True)
+                if top_put:
+                  st.markdown(f"**Contract:** `{top_put['Contract']}`")
+                  mp1, mp2, mp3 = st.columns(3)
+                  mp1.metric("Strike", f"${top_put['Strike']:,.2f}")
+                  mp2.metric("Last Price", f"${top_put['Last']:,.2f}")
+                  mp3.metric("Delta", f"{top_put['Delta']}")
+
+                  mp4, mp5, mp6 = st.columns(3)
+                  mp4.metric("Volume", f"{top_put['Volume']:,}")
+                  mp5.metric("Open Interest", f"{top_put['Open Interest']:,}")
+                  mp6.metric("Implied Vol", f"{top_put['IV (%)']}%")
+                  st.markdown(f"<p style='color: #848e9c; font-size: 11px; margin-bottom: 0;'>Bid: ${top_put['Bid']:,.2f} | Ask: ${top_put['Ask']:,.2f}</p>", unsafe_allow_html=True)
+                else:
+                  st.warning("No qualifying put contracts found for this expiration.")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+              st.markdown("<br><h4 style='color: #eaecef; font-size: 14px;'>Alternative Ranked Contracts</h4>", unsafe_allow_html=True)
+              all_ranked = best_calls[:5] + best_puts[:5]
+              if all_ranked:
+                df_top = pd.DataFrame(all_ranked).drop(columns=["Score"])
+                st.dataframe(df_top, use_container_width=True, height=250)
 
             except Exception as e:
-              st.error(f"Error scanning option contracts: {e}")
+              st.error(f"Error selecting optimal contracts: {e}")
