@@ -269,7 +269,7 @@ else:
             </div>
 
             <script>
-            // Accelerated Sequential Animation: Much faster bounce and transition times.
+            // Ultra-accelerated Sequential Animation: Lightning fast bounce and spawn rates.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
@@ -287,7 +287,6 @@ else:
                 const targetRy = parseFloat(candle.getAttribute('data-ry'));
                 const targetRh = parseFloat(candle.getAttribute('data-rh'));
 
-                // Pick a unique random resting spot relative to the template
                 const randomOffset = (Math.random() - 0.5) * 12;
                 const finalY1 = targetY1 + randomOffset;
                 const finalY2 = targetY2 + randomOffset;
@@ -295,14 +294,13 @@ else:
                 const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
 
                 let startTime = performance.now();
-                let bounceDuration = 120 + Math.random() * 80; // Significantly faster active bouncing (was 700+500)
+                let bounceDuration = 40 + Math.random() * 25; // Much faster active bouncing
 
                 function frame(now) {
                     let elapsed = now - startTime;
                     let progress = Math.min(1, elapsed / bounceDuration);
 
                     if (progress < 1) {
-                        // Up and down oscillation motion while bouncing into place
                         let bounceAmplitude = 12 * (1 - progress); 
                         let currentRy = finalRy + Math.sin(elapsed / 30) * bounceAmplitude;
                         let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 20) * 3);
@@ -316,28 +314,25 @@ else:
 
                         requestAnimationFrame(frame);
                     } else {
-                        // Lock completely into its final random spot and stop moving
                         rect.setAttribute('y', finalRy);
                         rect.setAttribute('height', finalRh);
                         line.setAttribute('y1', finalY1);
                         line.setAttribute('y2', finalY2);
 
-                        // Move on to spawn and animate the next candle much faster
                         currentIndex++;
-                        setTimeout(animateNextCandle, 12); // Reduced delay between candles (was 40)
+                        setTimeout(animateNextCandle, 3); // Extremely quick delay between candles
                     }
                 }
 
                 requestAnimationFrame(frame);
             }
 
-            // Start sequence
             animateNextCandle();
             </script>
             """,
             height=320,
         )
-        time.sleep(2.2) # Shortened total splash wait time to match faster animation
+        time.sleep(1.0) # Shortened total splash wait time for instantaneous transition
         st.session_state.show_splash = False
         st.rerun()
 
