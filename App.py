@@ -143,10 +143,6 @@ if "active_ticker" not in st.session_state:
   st.session_state.active_ticker = "AAPL"
 if "watchlist" not in st.session_state:
   st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
-if "active_sector_drill" not in st.session_state:
-  st.session_state.active_sector_drill = None
-if "active_sector_ticker" not in st.session_state:
-  st.session_state.active_sector_ticker = None
 
 # Authentication Gate
 if not st.session_state.user:
@@ -788,11 +784,62 @@ else:
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Dashboard</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Visual capital flow tracker across GICS sectors. Click <b>"View Stocks"</b> on any sector card to examine leading equities.</p>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Visual capital flow tracker across GICS sectors. Click <b>"View Stocks"</b> on any sector card to examine leading equities in a clean popup view.</p>
             </div>
         """,
         unsafe_allow_html=True,
     )
+
+    sector_constituents = {
+        "XLK": ["AAPL", "MSFT", "NVDA", "AVGO", "ADBE", "CRM", "AMD", "QCOM"],
+        "XLE": ["XOM", "CVX", "COP", "SLB", "EOG", "OXY", "MPC", "PSX"],
+        "XLF": ["JPM", "V", "MA", "BAC", "WFC", "MS", "GS", "SPGI"],
+        "XLV": ["UNH", "JNJ", "LLY", "ABBV", "MRK", "TMO", "PFE", "ABT"],
+        "XLY": ["AMZN", "TSLA", "HD", "MCD", "NKE", "SBUX", "BKNG", "LOW"],
+        "XLP": ["PG", "COST", "WMT", "PM", "KO", "PEP", "MO", "CL"],
+        "XLI": ["GE", "CAT", "RTX", "UNP", "HON", "DE", "LMT", "ETN"],
+        "XLU": ["NEE", "SO", "DUK", "SRE", "AEP", "PCG", "EXC", "ED"],
+        "XLRE": ["PLD", "AMT", "EQIX", "SPG", "OFC", "PSA", "CCI", "WY"],
+        "XLB": ["LIN", "SHW", "FCX", "NEM", "ECL", "APD", "DOW", "PPG"],
+        "XLC": ["GOOGL", "META", "NFLX", "DIS", "CMCSA", "TMUS", "VZ", "T"]
+    }
+
+    @st.dialog("Sector Top Constituents", width="large")
+    def sector_stocks_dialog(sector_name, ticker):
+      st.markdown(f"<p style='color: #848e9c; font-size: 13px; margin-bottom: 15px;'>Top outperforming equities for <b>{sector_name} ({ticker})</b> based on recent price action.</p>", unsafe_allow_html=True)
+      session = get_yf_session()
+      stocks_to_check = sector_constituents.get(ticker, [])
+      stock_rows = []
+      for sym in stocks_to_check:
+        try:
+          t_stock = yf.Ticker(sym, session=session)
+          hist_s = t_stock.history(period="5d")
+          if not hist_s.empty:
+            s_price = float(hist_s["Close"].iloc[-1])
+            s_p1d = float(hist_s["Close"].iloc[-2]) if len(hist_s) > 1 else s_price
+            s_p5d = float(hist_s["Close"].iloc[-5]) if len(hist_s) >= 5 else float(hist_s["Close"].iloc[0])
+            s_chg_1d = ((s_price - s_p1d) / s_p1d) * 100
+            s_chg_5d = ((s_price - s_p5d) / s_p5d) * 100
+            stock_rows.append({
+                "Stock": sym,
+                "Price ($)": round(s_price, 2),
+                "1D Return (%)": round(s_chg_1d, 2),
+                "5D Return (%)": round(s_chg_5d, 2),
+            })
+        except Exception:
+          pass
+
+      if stock_rows:
+        df_stocks = pd.DataFrame(stock_rows).sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
+        
+        def color_returns(val):
+          color = "#0ecb81" if val >= 0 else "#f6465d"
+          return f"color: {color}; font-weight: bold;"
+
+        styled_stocks = df_stocks.style.map(color_returns, subset=["1D Return (%)", "5D Return (%)"]) if hasattr(df_stocks.style, "map") else df_stocks.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)"])
+        st.dataframe(styled_stocks, use_container_width=True, height=350)
+      else:
+        st.warning("Could not load constituent stock details.")
 
     if not YFINANCE_AVAILABLE:
       st.error("`yfinance` is required to load sector performance data.")
@@ -811,20 +858,6 @@ else:
               "Real Estate": "XLRE",
               "Materials": "XLB",
               "Communication Services": "XLC",
-          }
-
-          sector_constituents = {
-              "XLK": ["AAPL", "MSFT", "NVDA", "AVGO", "ADBE", "CRM", "AMD", "QCOM"],
-              "XLE": ["XOM", "CVX", "COP", "SLB", "EOG", "OXY", "MPC", "PSX"],
-              "XLF": ["JPM", "V", "MA", "BAC", "WFC", "MS", "GS", "SPGI"],
-              "XLV": ["UNH", "JNJ", "LLY", "ABBV", "MRK", "TMO", "PFE", "ABT"],
-              "XLY": ["AMZN", "TSLA", "HD", "MCD", "NKE", "SBUX", "BKNG", "LOW"],
-              "XLP": ["PG", "COST", "WMT", "PM", "KO", "PEP", "MO", "CL"],
-              "XLI": ["GE", "CAT", "RTX", "UNP", "HON", "DE", "LMT", "ETN"],
-              "XLU": ["NEE", "SO", "DUK", "SRE", "AEP", "PCG", "EXC", "ED"],
-              "XLRE": ["PLD", "AMT", "EQIX", "SPG", "OFC", "PSA", "CCI", "WY"],
-              "XLB": ["LIN", "SHW", "FCX", "NEM", "ECL", "APD", "DOW", "PPG"],
-              "XLC": ["GOOGL", "META", "NFLX", "DIS", "CMCSA", "TMUS", "VZ", "T"]
           }
 
           sector_rows = []
@@ -888,56 +921,7 @@ else:
                 )
                 
                 if st.button("🔍 View Stocks", key=f"btn_card_{item['Ticker']}", use_container_width=True):
-                  st.session_state.active_sector_drill = item['Sector']
-                  st.session_state.active_sector_ticker = item['Ticker']
-
-            # Drill-Down Panel (Displayed when a card button is clicked)
-            if st.session_state.active_sector_drill:
-              st.markdown(
-                  f"""
-                  <br>
-                  <div style="background-color: #080808; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px;">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                          <h4 style="margin: 0; color: #eaecef; font-size: 15px;">🔍 Top Outperforming Equities in {st.session_state.active_sector_drill} ({st.session_state.active_sector_ticker})</h4>
-                      </div>
-                  """,
-                  unsafe_allow_html=True,
-              )
-
-              stocks_to_check = sector_constituents.get(st.session_state.active_sector_ticker, [])
-              stock_rows = []
-              for sym in stocks_to_check:
-                try:
-                  t_stock = yf.Ticker(sym, session=session)
-                  hist_s = t_stock.history(period="5d")
-                  if not hist_s.empty:
-                    s_price = float(hist_s["Close"].iloc[-1])
-                    s_p1d = float(hist_s["Close"].iloc[-2]) if len(hist_s) > 1 else s_price
-                    s_p5d = float(hist_s["Close"].iloc[-5]) if len(hist_s) >= 5 else float(hist_s["Close"].iloc[0])
-                    s_chg_1d = ((s_price - s_p1d) / s_p1d) * 100
-                    s_chg_5d = ((s_price - s_p5d) / s_p5d) * 100
-                    stock_rows.append({
-                        "Stock": sym,
-                        "Price ($)": round(s_price, 2),
-                        "1D Return (%)": round(s_chg_1d, 2),
-                        "5D Return (%)": round(s_chg_5d, 2),
-                    })
-                except Exception:
-                  pass
-
-              if stock_rows:
-                df_stocks = pd.DataFrame(stock_rows).sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
-                
-                def color_returns(val):
-                  color = "#0ecb81" if val >= 0 else "#f6465d"
-                  return f"color: {color}; font-weight: bold;"
-
-                styled_stocks = df_stocks.style.map(color_returns, subset=["1D Return (%)", "5D Return (%)"]) if hasattr(df_stocks.style, "map") else df_stocks.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)"])
-                st.dataframe(styled_stocks, use_container_width=True, height=260)
-              else:
-                st.warning("Could not load constituent stock details.")
-
-              st.markdown("</div>", unsafe_allow_html=True)
+                  sector_stocks_dialog(item['Sector'], item['Ticker'])
 
             st.markdown(
                 """
