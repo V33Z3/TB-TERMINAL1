@@ -353,7 +353,6 @@ else:
   ])
 
   with main_tab_chart:
-    # Main Grid: TradingView Advanced Chart on Left, Watchlist & Research Tools on Right
     col_chart, col_research = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -847,11 +846,14 @@ else:
               color = "#0ecb81" if val >= 0 else "#f6465d"
               return f"color: {color}; font-weight: bold;"
 
-            st.dataframe(
-                df_sectors.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"]),
-                use_container_width=True,
-                height=450
-            )
+            # Version-safe Pandas Styler check (.map replaces applymap in newer versions)
+            styler_obj = df_sectors.style
+            if hasattr(styler_obj, "map"):
+              styled_df = styler_obj.map(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"])
+            else:
+              styled_df = styler_obj.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"])
+
+            st.dataframe(styled_df, use_container_width=True, height=450)
 
             st.markdown(
                 """
