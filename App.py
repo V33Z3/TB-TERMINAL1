@@ -466,121 +466,123 @@ else:
     st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
     if selected_main_tab == "📈 Terminal Chart & Watchlist":
-        col_chart, col_research = st.columns([3.4, 1.2])
+        @st.fragment
+        def render_terminal_workspace():
+            col_chart, col_research = st.columns([3.4, 1.2])
 
-        with col_chart:
-            st.markdown(
-                f"""
-                <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-                    <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+            with col_chart:
+                st.markdown(
+                    f"""
+                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
+                        <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+                    </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+
+                tv_html = f"""
+                <div class="tradingview-widget-container" style="height:630px;width:100%">
+                  <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+                  {{
+                    "autosize": false,
+                    "width": "100%",
+                    "height": "630",
+                    "symbol": "{target_symbol}",
+                    "interval": "D",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "enable_publishing": false,
+                    "allow_symbol_change": true,
+                    "calendar": false,
+                    "support_host": "https://www.tradingview.com",
+                    "isTransparent": true,
+                    "hide_side_toolbar": false
+                  }}
+                  </script>
                 </div>
-            """,
-                unsafe_allow_html=True,
-            )
-
-            tv_html = f"""
-            <div class="tradingview-widget-container" style="height:630px;width:100%">
-              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-              {{
-                "autosize": false,
-                "width": "100%",
-                "height": "630",
-                "symbol": "{target_symbol}",
-                "interval": "D",
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "enable_publishing": false,
-                "allow_symbol_change": true,
-                "calendar": false,
-                "support_host": "https://www.tradingview.com",
-                "isTransparent": true,
-                "hide_side_toolbar": false
-              }}
-              </script>
-            </div>
-            """
-            components.html(tv_html, height=640)
-
-        with col_research:
-            st.markdown(
                 """
-                <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
-                    <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
+                components.html(tv_html, height=640)
 
-            with st.form("add_watchlist_form", clear_on_submit=True):
-                col_w1, col_w2 = st.columns([3, 1])
-                with col_w1:
-                    new_ticker_input = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", label_visibility="collapsed")
-                with col_w2:
-                    add_btn = st.form_submit_button("＋ Add", use_container_width=True)
+            with col_research:
+                st.markdown(
+                    """
+                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
+                        <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
+                    </div>
+                """,
+                    unsafe_allow_html=True,
+                )
 
-                if add_btn and new_ticker_input.strip():
-                    clean_sym = new_ticker_input.upper().strip()
-                    if clean_sym not in st.session_state.watchlist:
-                        st.session_state.watchlist.append(clean_sym)
-                        save_watchlist_to_db()
-                        st.rerun()
+                with st.form("add_watchlist_form", clear_on_submit=True):
+                    col_w1, col_w2 = st.columns([3, 1])
+                    with col_w1:
+                        new_ticker_input = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", label_visibility="collapsed")
+                    with col_w2:
+                        add_btn = st.form_submit_button("＋ Add", use_container_width=True)
 
-            st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
-            if not st.session_state.watchlist:
-                st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
-            else:
-                for sym in list(st.session_state.watchlist):
-                    p_val, p_pct, p_vol = fetch_live_quote(sym)
-                    color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-                    sign = "+" if p_pct >= 0 else ""
-                    vol_str = format_vol(p_vol) if p_vol > 0 else "-"
-
-                    w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
-                    with w_col_info:
-                        if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
-                            st.session_state.active_ticker = sym
-                            st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-                            st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
-                            st.rerun()
-                    with w_col_vol:
-                        st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
-                    with w_col_price:
-                        st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 6px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
-                    with w_col_del:
-                        st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
-                        if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
-                            st.session_state.watchlist.remove(sym)
+                    if add_btn and new_ticker_input.strip():
+                        clean_sym = new_ticker_input.upper().strip()
+                        if clean_sym not in st.session_state.watchlist:
+                            st.session_state.watchlist.append(clean_sym)
                             save_watchlist_to_db()
                             st.rerun()
-                        st.markdown("</div>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
 
-        with st.expander("🤖 Groq Quant Intelligence Assistant"):
-            ai_c1, ai_c2 = st.columns([4, 1])
-            with ai_c1:
-                ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
-            with ai_c2:
-                ai_btn = st.button("Ask AI", use_container_width=True)
+                st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
+                if not st.session_state.watchlist:
+                    st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
+                else:
+                    for sym in list(st.session_state.watchlist):
+                        p_val, p_pct, p_vol = fetch_live_quote(sym)
+                        color = "#0ecb81" if p_pct >= 0 else "#f6465d"
+                        sign = "+" if p_pct >= 0 else ""
+                        vol_str = format_vol(p_vol) if p_vol > 0 else "-"
 
-            if ai_btn and groq_key and ai_query.strip():
-                with st.spinner("Processing..."):
-                    try:
-                        ai_client = Groq(api_key=groq_key)
-                        completion = ai_client.chat.completions.create(
-                            model="openai/gpt-oss-120b",
-                            messages=[
-                                {"role": "system", "content": "You are an expert institutional market research analyst."},
-                                {"role": "user", "content": ai_query},
-                            ],
-                            temperature=0.7,
-                        )
-                        st.write(completion.choices[0].message.content)
-                    except Exception as e:
-                        st.error(f"AI Error: {e}")
+                        w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
+                        with w_col_info:
+                            if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
+                                st.session_state.active_ticker = sym
+                                st.rerun()
+                        with w_col_vol:
+                            st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
+                        with w_col_price:
+                            st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 6px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                        with w_col_del:
+                            st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+                            if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
+                                st.session_state.watchlist.remove(sym)
+                                save_watchlist_to_db()
+                                st.rerun()
+                            st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            with st.expander("🤖 Groq Quant Intelligence Assistant"):
+                ai_c1, ai_c2 = st.columns([4, 1])
+                with ai_c1:
+                    ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
+                with ai_c2:
+                    ai_btn = st.button("Ask AI", use_container_width=True)
+
+                if ai_btn and groq_key and ai_query.strip():
+                    with st.spinner("Processing..."):
+                        try:
+                            ai_client = Groq(api_key=groq_key)
+                            completion = ai_client.chat.completions.create(
+                                model="openai/gpt-oss-120b",
+                                messages=[
+                                    {"role": "system", "content": "You are an expert institutional market research analyst."},
+                                    {"role": "user", "content": ai_query},
+                                ],
+                                temperature=0.7,
+                            )
+                            st.write(completion.choices[0].message.content)
+                        except Exception as e:
+                            st.error(f"AI Error: {e}")
+
+        render_terminal_workspace()
 
     elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
         st.markdown(
