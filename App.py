@@ -403,7 +403,6 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # TradingView Advanced Chart Widget Embedding (Transparent Background)
         tv_html = f"""
         <div class="tradingview-widget-container" style="height:630px;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
@@ -481,16 +480,15 @@ else:
                         res = client.submit_order(order_data=req)
                         st.success(f"Order executed! ID: {res.id}")
             except Exception as e:
-                st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}) and that your API keys are correct. Details: {e}")
+                st.error(f"Connection error: {e}")
 
-        # Persistent Custom Interactive Watchlist Section
+        # Persistent Custom Interactive Watchlist with Icon Badges
         st.markdown("""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
                 <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
             </div>
         """, unsafe_allow_html=True)
 
-        # Form to add symbols to watchlist
         with st.form("add_watchlist_form", clear_on_submit=True):
             col_w1, col_w2 = st.columns([3, 1])
             with col_w1:
@@ -505,24 +503,32 @@ else:
                     save_watchlist_to_db()
                     st.rerun()
 
-        # Render Watchlist items with live price, click-to-load, and delete buttons
+        # Render Watchlist items with Logo/Icon Badge, Live Price, and Delete Controls
         st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 320px; overflow-y: auto;'>", unsafe_allow_html=True)
         
         if not st.session_state.watchlist:
             st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
         else:
-            for sym in list(st.session_state.watchlist):
+            # Color palette generator for icon badges
+            badge_colors = ["#2962ff", "#0ecb81", "#f0b90b", "#9c27b0", "#ff9800", "#e91e63", "#00bcd4"]
+            
+            for idx, sym in enumerate(list(st.session_state.watchlist)):
                 p_val, p_pct = fetch_live_quote(sym, existing_key, existing_sec)
                 color = "#0ecb81" if p_pct >= 0 else "#f6465d"
                 sign = "+" if p_pct >= 0 else ""
                 
-                w_col1, w_col2, w_col3 = st.columns([2, 2, 1])
+                # Pick deterministic badge color based on symbol character codes
+                bg_badge = badge_colors[sum(ord(c) for c in sym) % len(badge_colors)]
+                initials = sym[:2]
+                
+                w_col1, w_col2, w_col3 = st.columns([2.2, 1.8, 0.9])
                 with w_col1:
-                    if st.button(sym, key=f"btn_load_{sym}", use_container_width=True):
+                    # Render button with icon layout look
+                    if st.button(f" {sym}", key=f"btn_load_{sym}", use_container_width=True):
                         st.session_state.active_ticker = sym
                         st.rerun()
                 with w_col2:
-                    st.markdown(f"<div style='font-size: 12px; text-align: right; padding-top: 6px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 5px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
                 with w_col3:
                     if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
                         st.session_state.watchlist.remove(sym)
