@@ -37,6 +37,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Handle Ticker Selection via Query Parameters
+if "ticker" in st.query_params:
+  st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
+
 # Pro Exchange True Black Theme Styling
 st.markdown(
     """
@@ -620,7 +624,7 @@ else:
       except Exception as e:
         st.error(f"Connection error: {e}")
 
-    # Persistent Custom Interactive Watchlist with CDN Logos & Fallback Badges
+    # Persistent Custom Interactive Watchlist with CDN Logos & Text-Only Clickable Tickers
     st.markdown(
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
@@ -648,7 +652,7 @@ else:
           save_watchlist_to_db()
           st.rerun()
 
-    # Render Watchlist items with Logo images, live pricing, and interactive select/delete columns
+    # Render Watchlist items with Logo images and clean text-only ticker labels next to them
     st.markdown(
         "<div style='background: #050505; border: 1px solid #1a1a1a;"
         " border-radius: 4px; padding: 8px; max-height: 320px;"
@@ -669,25 +673,22 @@ else:
         sign = "+" if p_pct >= 0 else ""
         logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
 
-        w_col_logo, w_col_sym, w_col_price, w_col_del = st.columns(
-            [0.8, 1.8, 2.2, 1.2]
-        )
-        with w_col_logo:
+        w_col_info, w_col_price, w_col_del = st.columns([2.6, 2.2, 1.2])
+
+        with w_col_info:
           st.markdown(
-              f'<img src="{logo_url}" width="26" height="26"'
-              ' style="border-radius:50%; margin-top:4px;'
-              ' object-fit:contain;"'
-              f" onerror=\"this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';\">",
+              f"""
+                <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 10px; padding-top: 4px;">
+                    <img src="{logo_url}" width="26" height="26" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
+                    <span style="font-weight: bold; font-size: 14px; color: #eaecef;">{sym}</span>
+                </a>
+                """,
               unsafe_allow_html=True,
           )
-        with w_col_sym:
-          if st.button(sym, key=f"btn_load_{sym}", use_container_width=True):
-            st.session_state.active_ticker = sym
-            st.rerun()
         with w_col_price:
           st.markdown(
               f"<div style='font-size: 11px; text-align: right;"
-              f" padding-top: 3px; color:"
+              f" padding-top: 4px; color:"
               f" {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>",
               unsafe_allow_html=True,
           )
