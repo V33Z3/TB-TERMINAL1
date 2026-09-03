@@ -169,7 +169,7 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
-# Landing Gate with Open Button & Trading Animation
+# Landing Gate with Start Trading Button & Candlestick/SMA Chart Animation Splash Screen
 if not st.session_state.terminal_opened:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.3, 1])
@@ -186,29 +186,102 @@ else:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
-                <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
-                    <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px; animation: pulseGlow 1.2s infinite ease-in-out;">⚡ TB TERMINAL</div>
-                    <p style="color: #0ecb81; font-size: 15px; font-family: monospace; letter-spacing: 2px; margin-bottom: 30px;">INITIALIZING LIVE ORDER BOOKS, GEX KERNEL & FEED...</p>
-                    <div style="width: 320px; height: 4px; background: #1a1a1a; margin: 0 auto; border-radius: 2px; overflow: hidden; border: 1px solid #333;">
-                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #f0b90b, #0ecb81); animation: scanLine 1.4s infinite linear;"></div>
-                    </div>
+                <div style="text-align: center; width: 100%; max-width: 650px; padding: 0 20px;">
+                    <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
+                    <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 20px;">INITIALIZING LIVE ORDER BOOKS, GEX KERNEL & FEED...</p>
+                    
+                    <svg viewBox="0 0 600 200" style="width: 100%; max-width: 600px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
+                        <!-- Grid lines -->
+                        <line x1="0" y1="50" x2="600" y2="50" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="100" x2="600" y2="100" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="150" x2="600" y2="150" stroke="#151515" stroke-width="1" />
+
+                        <!-- SMA Lines -->
+                        <path d="M 20,130 Q 150,110 300,80 T 580,30" fill="none" stroke="#f0b90b" stroke-width="2" opacity="0.8">
+                            <animate attributeName="stroke-dasharray" from="0,1000" to="1000,0" dur="1.2s" fill="freeze" />
+                        </path>
+                        <path d="M 20,150 Q 150,130 300,100 T 580,50" fill="none" stroke="#0ecb81" stroke-width="2" opacity="0.8">
+                            <animate attributeName="stroke-dasharray" from="0,1000" to="1000,0" dur="1.4s" fill="freeze" />
+                        </path>
+
+                        <!-- Candlesticks rising above SMA lines -->
+                        <g transform="translate(50, 0)">
+                            <line x1="10" y1="140" x2="10" y2="170" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="145" width="10" height="20" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="170; 145" dur="0.6s" fill="freeze" />
+                                <animate attributeName="height" values="0; 20" dur="0.6s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(100, 0)">
+                            <line x1="10" y1="120" x2="10" y2="160" stroke="#f6465d" stroke-width="1.5" />
+                            <rect x="5" y="125" width="10" height="25" fill="#f6465d" rx="1">
+                                <animate attributeName="y" values="160; 125" dur="0.7s" fill="freeze" />
+                                <animate attributeName="height" values="0; 25" dur="0.7s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(150, 0)">
+                            <line x1="10" y1="100" x2="10" y2="145" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="105" width="10" height="30" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="145; 105" dur="0.8s" fill="freeze" />
+                                <animate attributeName="height" values="0; 30" dur="0.8s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(200, 0)">
+                            <line x1="10" y1="90" x2="10" y2="130" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="95" width="10" height="28" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="130; 95" dur="0.9s" fill="freeze" />
+                                <animate attributeName="height" values="0; 28" dur="0.9s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(250, 0)">
+                            <line x1="10" y1="75" x2="10" y2="115" stroke="#f6465d" stroke-width="1.5" />
+                            <rect x="5" y="80" width="10" height="22" fill="#f6465d" rx="1">
+                                <animate attributeName="y" values="115; 80" dur="1.0s" fill="freeze" />
+                                <animate attributeName="height" values="0; 22" dur="1.0s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(300, 0)">
+                            <line x1="10" y1="55" x2="10" y2="95" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="60" width="10" height="30" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="95; 60" dur="1.1s" fill="freeze" />
+                                <animate attributeName="height" values="0; 30" dur="1.1s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(350, 0)">
+                            <line x1="10" y1="45" x2="10" y2="85" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="50" width="10" height="32" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="85; 50" dur="1.2s" fill="freeze" />
+                                <animate attributeName="height" values="0; 32" dur="1.2s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(400, 0)">
+                            <line x1="10" y1="35" x2="10" y2="70" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="40" width="10" height="25" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="70; 40" dur="1.3s" fill="freeze" />
+                                <animate attributeName="height" values="0; 25" dur="1.3s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(450, 0)">
+                            <line x1="10" y1="20" x2="10" y2="60" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="25" width="10" height="30" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="60; 25" dur="1.4s" fill="freeze" />
+                                <animate attributeName="height" values="0; 30" dur="1.4s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(500, 0)">
+                            <line x1="10" y1="15" x2="10" y2="50" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="20" width="10" height="28" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="50; 20" dur="1.5s" fill="freeze" />
+                                <animate attributeName="height" values="0; 28" dur="1.5s" fill="freeze" />
+                            </rect>
+                        </g>
+                    </svg>
                 </div>
             </div>
-            <style>
-            @keyframes scanLine {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-            @keyframes pulseGlow {
-                0% { opacity: 0.5; transform: scale(0.98); }
-                50% { opacity: 1; transform: scale(1.0); }
-                100% { opacity: 0.5; transform: scale(0.98); }
-            }
-            </style>
             """,
-            height=350,
+            height=320,
         )
-        time.sleep(1.5)
+        time.sleep(1.6)
         st.session_state.show_splash = False
         st.rerun()
 
