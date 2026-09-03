@@ -344,8 +344,12 @@ else:
 
   render_live_header(target_symbol)
 
-  # TOP-LEVEL TABS: Research Chart / Watchlist vs Gamma Exposure (GEX)
-  main_tab_chart, main_tab_gex = st.tabs(["📈 Terminal Chart & Watchlist", "⚛️ Gamma Exposure (GEX) Analysis"])
+  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), and Best Option Contract Finder
+  main_tab_chart, main_tab_gex, main_tab_finder = st.tabs([
+      "📈 Terminal Chart & Watchlist",
+      "⚛️ Gamma Exposure (GEX) Analysis",
+      "🎯 Best Option Contract Finder"
+  ])
 
   with main_tab_chart:
     # Main Grid: TradingView Advanced Chart on Left, Watchlist & Research Tools on Right
@@ -496,7 +500,6 @@ else:
       if not exp_dates:
         st.warning(f"No options chain expiration dates found for {target_symbol}. Ensure the ticker has listed options (e.g. SPY, AAPL, NVDA).")
       else:
-        # Expiration Picker Multiselect
         default_selections = list(exp_dates[:min(3, len(exp_dates))])
         selected_exp_dates = st.multiselect(
             "Select Option Expiration Dates for GEX Calculation:",
@@ -596,7 +599,6 @@ else:
 
                 df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
-                # Horizontal Bar Chart matching Unusual Whales layout (Strikes on Y-axis, GEX extending left/right on X-axis in Millions)
                 chart = alt.Chart(df_filtered).mark_bar().encode(
                     y=alt.Y("strike:O", title="Strike Price ($)", sort="descending"),
                     x=alt.X("gex:Q", title="Gamma Exposure ($ Millions per 1% Move)"),
@@ -631,3 +633,115 @@ else:
                 )
             except Exception as e:
               st.error(f"Error computing Gamma Exposure: {e}")
+
+  with main_tab_finder:
+    st.markdown(
+        f"""
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Best Option Contract Finder // {target_symbol}</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Scan and rank high-liquidity call and put contracts based on volume, open interest, IV, and Black-Scholes Delta.</p>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not YFINANCE_AVAILABLE:
+      st.error("`yfinance` is required for options chain data.")
+    else:
+      try:
+        tk_finder = yf.Ticker(target_symbol, session=get_yf_session())
+        finder_exp_dates = tk_finder.options
+      except Exception as e:
+        finder_exp_dates = []
+
+      if not finder_exp_dates:
+        st.warning(f"No option expiration dates found for {target_symbol}.")
+      else:
+        f_col1, f_col2, f_col3, f_col4 = st.columns(4)
+        with f_col1:
+          selected_finder_exp = st.selectbox("Expiration Date", options=list(finder_exp_dates), key="finder_exp_select")
+        with f_col2:
+          contract_type_filter = st.selectbox("Contract Type", options=["Calls", "Puts", "Both"], key="finder_type_select")
+        with f_col3:
+          min_volume = st.number_input("Min Volume", min_value=0, value=10, step=10, key="finder_min_vol")
+        with f_col4:
+          min_oi = st.number_input("Min Open Interest", min_value=0, value=50, step=50, key="finder_min_oi")
+
+        if st.button("Scan Contracts", use_container_width=True, type="primary"):
+          with st.spinner(f"Scanning option contracts for {target_symbol} ({selected_finder_exp})..."):
+            try:
+              spot_price, _, _ = fetch_live_quote(target_symbol)
+              if spot_price <= 0:
+                hist = tk_finder.history(period="1d")
+                if not hist.empty:
+                  spot_price = float(hist["Close"].iloc[-1])
+
+              opt_chain = tk_finder.option_chain(selected_finder_exp)
+              now = datetime.datetime.now()
+              exp_dt = datetime.datetime.strptime(selected_finder_exp, "%Y-%m-%d")
+              T = max((exp_dt - now).days / 365.25, 0.001)
+              r = 0.045
+
+              def norm_cdf(x):
+                return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
+
+              def compute_metrics(row, opt_type):
+                strike = float(row["strike"])
+                vol = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
+                oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                last_p = float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0
+                bid = float(row["bid"]) if not pd.isna(row["bid"]) else 0.0
+                ask = float(row["ask"]) if not pd.isna(row["ask"]) else 0.0
+
+                # Black-Scholes Delta
+                try:
+                  d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
+                  call_d = norm_cdf(d1)
+                  delta = call_d if opt_type == "Call" else call_d - 1.0
+                except Exception:
+                  delta = 0.5 if opt_type == "Call" else -0.5
+
+                # Opportunity Score: rewards high volume, open interest, and liquidity tightness
+                spread = max(ask - bid, 0.01)
+                liquidity_score = (vol * 1.5 + oi * 0.5) / (spread * 100 + 1)
+
+                return {
+                    "Ticker": row["contractSymbol"],
+                    "Type": opt_type,
+                    "Strike": strike,
+                    "Last Price": last_p,
+                    "Bid": bid,
+                    "Ask": ask,
+                    "Volume": int(vol),
+                    "Open Interest": int(oi),
+                    "Implied Vol (%)": round(iv * 100, 2),
+                    "Delta": round(delta, 3),
+                    "Score": round(liquidity_score, 2)
+                }
+
+              processed_contracts = []
+
+              if contract_type_filter in ["Calls", "Both"]:
+                for _, r_row in opt_chain.calls.iterrows():
+                  res = compute_metrics(r_row, "Call")
+                  if res["Volume"] >= min_volume and res["Open Interest"] >= min_oi:
+                    processed_contracts.append(res)
+
+              if contract_type_filter in ["Puts", "Both"]:
+                for _, r_row in opt_chain.puts.iterrows():
+                  res = compute_metrics(r_row, "Put")
+                  if res["Volume"] >= min_volume and res["Open Interest"] >= min_oi:
+                    processed_contracts.append(res)
+
+              if not processed_contracts:
+                st.warning("No option contracts met your criteria. Try lowering the minimum volume or open interest filters.")
+              else:
+                df_results = pd.DataFrame(processed_contracts)
+                df_results = df_results.sort_values(by="Score", ascending=False).reset_index(drop=True)
+
+                st.markdown(f"<p style='color: #0ecb81; font-weight: bold;'>Found {len(df_results)} qualifying contracts, ranked by liquidity and momentum score:</p>", unsafe_allow_html=True)
+                st.dataframe(df_results, use_container_width=True, height=500)
+
+            except Exception as e:
+              st.error(f"Error scanning option contracts: {e}")
