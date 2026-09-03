@@ -8,7 +8,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from supabase import Client, create_client
 
-# Try importing yfinance for market quotes (used for header badges)
+# Try importing yfinance for market quotes (used for header badges & volume)
 try:
   import yfinance as yf
 
@@ -41,7 +41,7 @@ st.set_page_config(
 if "ticker" in st.query_params:
   st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
 
-# Pro Exchange True Black Theme Styling
+# Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
     """
     <style>
@@ -91,6 +91,17 @@ st.markdown(
         border-radius: 3px !important;
         font-size: 13px !important;
         min-height: 30px !important;
+    }
+
+    /* Custom styling for red delete button in watchlist */
+    .delete-btn button {
+        background-color: rgba(246, 70, 93, 0.1) !important;
+        color: #f6465d !important;
+        border: 1px solid rgba(246, 70, 93, 0.3) !important;
+    }
+    .delete-btn button:hover {
+        background-color: rgba(246, 70, 93, 0.25) !important;
+        border-color: #f6465d !important;
     }
     </style>
 """,
@@ -379,7 +390,7 @@ else:
 
 
   def fetch_live_quote(symbol, a_key, a_sec):
-    price, pct = 0.0, 0.0
+    price, pct, vol = 0.0, 0.0, 0
 
     if ALPACA_AVAILABLE and a_key and a_sec:
       try:
@@ -408,20 +419,31 @@ else:
               if len(hist) > 1
               else float(hist["Open"].iloc[0])
           )
+          vol = int(hist["Volume"].iloc[-1])
           if price == 0.0:
             price = yf_close
           pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
       except Exception:
         pass
 
-    return price, pct
+    return price, pct, vol
+
+
+  def format_vol(v):
+    if v >= 1e9:
+      return f"{v/1e9:.2f}B"
+    elif v >= 1e6:
+      return f"{v/1e6:.2f}M"
+    elif v >= 1e3:
+      return f"{v/1e3:.1f}K"
+    return str(v)
 
 
   @st.fragment(run_every="3s")
   def render_live_header(sym, a_key, a_sec):
-    spy_price, spy_pct = fetch_live_quote("SPY", a_key, a_sec)
-    qqq_price, qqq_pct = fetch_live_quote("QQQ", a_key, a_sec)
-    active_price, active_pct = fetch_live_quote(sym, a_key, a_sec)
+    spy_price, spy_pct, _ = fetch_live_quote("SPY", a_key, a_sec)
+    qqq_price, qqq_pct, _ = fetch_live_quote("QQQ", a_key, a_sec)
+    active_price, active_pct, _ = fetch_live_quote(sym, a_key, a_sec)
 
     def format_badge(s, price, pct, bg_color, border_color):
       color = "#0ecb81" if pct >= 0 else "#f6465d"
@@ -624,7 +646,7 @@ else:
       except Exception as e:
         st.error(f"Connection error: {e}")
 
-    # Persistent Custom Interactive Watchlist with CDN Logos & Text-Only Clickable Tickers
+    # Persistent Custom Interactive Watchlist with CDN Logos, Text-Only Tickers, Volume, and Red Delete Buttons
     st.markdown(
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
@@ -652,7 +674,7 @@ else:
           save_watchlist_to_db()
           st.rerun()
 
-    # Render Watchlist items with Logo images and clean text-only ticker labels next to them
+    # Render Watchlist items with Logo images, text-only clickable tickers, volume, price, and red delete buttons
     st.markdown(
         "<div style='background: #050505; border: 1px solid #1a1a1a;"
         " border-radius: 4px; padding: 8px; max-height: 320px;"
@@ -668,35 +690,49 @@ else:
       )
     else:
       for sym in list(st.session_state.watchlist):
-        p_val, p_pct = fetch_live_quote(sym, existing_key, existing_sec)
+        p_val, p_pct, p_vol = fetch_live_quote(
+            sym, existing_key, existing_sec
+        )
         color = "#0ecb81" if p_pct >= 0 else "#f6465d"
         sign = "+" if p_pct >= 0 else ""
         logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
+        vol_str = format_vol(p_vol) if p_vol > 0 else "-"
 
-        w_col_info, w_col_price, w_col_del = st.columns([2.6, 2.2, 1.2])
+        w_col_info, w_col_vol, w_col_price, w_col_del = st.columns(
+            [2.2, 1.4, 1.8, 1.0]
+        )
 
         with w_col_info:
           st.markdown(
               f"""
-                <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 10px; padding-top: 4px;">
-                    <img src="{logo_url}" width="26" height="26" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
-                    <span style="font-weight: bold; font-size: 14px; color: #eaecef;">{sym}</span>
+                <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                    <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
+                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
                 </a>
                 """,
+              unsafe_allow_html=True,
+          )
+        with w_col_vol:
+          st.markdown(
+              f"<div style='font-size: 11px; text-align: center;"
+              f" padding-top: 6px; color: #848e9c;'><span"
+              f" style='font-size:9px;'>VOL</span><br><b>{vol_str}</b></div>",
               unsafe_allow_html=True,
           )
         with w_col_price:
           st.markdown(
               f"<div style='font-size: 11px; text-align: right;"
-              f" padding-top: 4px; color:"
+              f" padding-top: 3px; color:"
               f" {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>",
               unsafe_allow_html=True,
           )
         with w_col_del:
+          st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
           if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
             st.session_state.watchlist.remove(sym)
             save_watchlist_to_db()
             st.rerun()
+          st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
