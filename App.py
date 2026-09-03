@@ -143,6 +143,10 @@ if "active_ticker" not in st.session_state:
   st.session_state.active_ticker = "AAPL"
 if "watchlist" not in st.session_state:
   st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
+if "active_sector_drill" not in st.session_state:
+  st.session_state.active_sector_drill = None
+if "active_sector_ticker" not in st.session_state:
+  st.session_state.active_sector_ticker = None
 
 # Authentication Gate
 if not st.session_state.user:
@@ -349,7 +353,7 @@ else:
       "📈 Terminal Chart & Watchlist",
       "⚛️ Gamma Exposure (GEX) Analysis",
       "🎯 Optimal Contract Finder",
-      "🔄 Sector Rotation Matrix"
+      "🔄 Sector Rotation Grid"
   ])
 
   with main_tab_chart:
@@ -783,8 +787,8 @@ else:
     st.markdown(
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Matrix</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Tracks performance across the 11 GICS sector SPDR ETFs. Click on any sector row below to drill down into its top constituent stocks.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Dashboard</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Visual capital flow tracker across GICS sectors. Click <b>"View Stocks"</b> on any sector card to examine leading equities.</p>
             </div>
         """,
         unsafe_allow_html=True,
@@ -793,7 +797,7 @@ else:
     if not YFINANCE_AVAILABLE:
       st.error("`yfinance` is required to load sector performance data.")
     else:
-      with st.spinner("Fetching institutional sector rotation matrix..."):
+      with st.spinner("Fetching institutional sector rotation grid..."):
         try:
           sectors_dict = {
               "Technology": "XLK",
@@ -849,39 +853,58 @@ else:
               })
 
           if sector_rows:
-            df_sectors = pd.DataFrame(sector_rows)
-            df_sectors = df_sectors.sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
+            # Sort by 5D performance descending
+            sector_rows = sorted(sector_rows, key=lambda x: x["5D Return (%)"], reverse=True)
 
-            def color_returns(val):
-              color = "#0ecb81" if val >= 0 else "#f6465d"
-              return f"color: {color}; font-weight: bold;"
+            # Render Friendly Card Grid (3 columns wide)
+            grid_cols = st.columns(3)
+            for idx, item in enumerate(sector_rows):
+              col_target = grid_cols[idx % 3]
+              with col_target:
+                r_5d = item["5D Return (%)"]
+                r_1m = item["1M Return (%)"]
+                color_5d = "#0ecb81" if r_5d >= 0 else "#f6465d"
+                color_1m = "#0ecb81" if r_1m >= 0 else "#f6465d"
+                sign_5d = "+" if r_5d >= 0 else ""
+                sign_1m = "+" if r_1m >= 0 else ""
 
-            styler_obj = df_sectors.style
-            if hasattr(styler_obj, "map"):
-              styled_df = styler_obj.map(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"])
-            else:
-              styled_df = styler_obj.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"])
+                st.markdown(
+                    f"""
+                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 14px; border-radius: 6px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{item['Sector']}</span>
+                            <span style="font-size: 11px; background: #151922; color: #f0b90b; padding: 2px 6px; border-radius: 4px;">{item['Ticker']}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #848e9c; display: flex; justify-content: space-between;">
+                            <span>Price: ${item['Price ($)']:,.2f}</span>
+                        </div>
+                        <div style="font-size: 12px; margin-top: 4px; display: flex; justify-content: space-between;">
+                            <span>5D: <b style="color: {color_5d};">{sign_5d}{r_5d}%</b></span>
+                            <span>1M: <b style="color: {color_1m};">{sign_1m}{r_1m}%</b></span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                
+                if st.button("🔍 View Stocks", key=f"btn_card_{item['Ticker']}", use_container_width=True):
+                  st.session_state.active_sector_drill = item['Sector']
+                  st.session_state.active_sector_ticker = item['Ticker']
 
-            # Interactive DataFrame selection for drill-down
-            event = st.dataframe(
-                styled_df,
-                use_container_width=True,
-                height=450,
-                on_select="rerun",
-                selection_mode="single-row",
-                key="sector_table"
-            )
+            # Drill-Down Panel (Displayed when a card button is clicked)
+            if st.session_state.active_sector_drill:
+              st.markdown(
+                  f"""
+                  <br>
+                  <div style="background-color: #080808; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                          <h4 style="margin: 0; color: #eaecef; font-size: 15px;">🔍 Top Outperforming Equities in {st.session_state.active_sector_drill} ({st.session_state.active_sector_ticker})</h4>
+                      </div>
+                  """,
+                  unsafe_allow_html=True,
+              )
 
-            # Handle Drill-Down Selection
-            selected_rows = event.selection.rows
-            if selected_rows:
-              row_idx = selected_rows[0]
-              chosen_sector_name = df_sectors.iloc[row_idx]["Sector"]
-              chosen_ticker = df_sectors.iloc[row_idx]["Ticker"]
-
-              st.markdown(f"<br><h4 style='color: #eaecef; font-size: 15px;'>🔍 Drill-Down: Constituent Stocks in {chosen_sector_name} ({chosen_ticker})</h4>", unsafe_allow_html=True)
-              
-              stocks_to_check = sector_constituents.get(chosen_ticker, [])
+              stocks_to_check = sector_constituents.get(st.session_state.active_sector_ticker, [])
               stock_rows = []
               for sym in stocks_to_check:
                 try:
@@ -905,15 +928,21 @@ else:
               if stock_rows:
                 df_stocks = pd.DataFrame(stock_rows).sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
                 
+                def color_returns(val):
+                  color = "#0ecb81" if val >= 0 else "#f6465d"
+                  return f"color: {color}; font-weight: bold;"
+
                 styled_stocks = df_stocks.style.map(color_returns, subset=["1D Return (%)", "5D Return (%)"]) if hasattr(df_stocks.style, "map") else df_stocks.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)"])
-                st.dataframe(styled_stocks, use_container_width=True, height=300)
+                st.dataframe(styled_stocks, use_container_width=True, height=260)
               else:
-                st.warning(f"Could not load constituent stocks for {chosen_sector_name}.")
+                st.warning("Could not load constituent stock details.")
+
+              st.markdown("</div>", unsafe_allow_html=True)
 
             st.markdown(
                 """
                 <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
-                    <b>Rotation Insights:</b> Use this matrix to spot institutional momentum. Leading 5D and 1M returns in Cyclical/Discretionary sectors indicate risk-on behavior, while outperformance in Staples and Utilities signals a defensive flight to safety. Click any sector above to examine its leading individual equities.
+                    <b>Rotation Insights:</b> Leading 5D and 1M returns in Cyclical/Discretionary sectors signal a risk-on environment, whereas leading defensive sectors (Staples/Utilities) suggest a flight to safety. Click any sector card above to investigate its underlying top equities.
                 </div>
                 """,
                 unsafe_allow_html=True,
