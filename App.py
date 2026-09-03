@@ -139,6 +139,8 @@ if "alpaca_key" not in st.session_state:
     st.session_state.alpaca_key = ""
 if "alpaca_secret" not in st.session_state:
     st.session_state.alpaca_secret = ""
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
 
 # Authentication Gate
 if not st.session_state.user:
@@ -241,13 +243,29 @@ else:
         st.session_state.show_splash = False
         st.rerun()
 
-    # Load credentials from DB into Session State if empty
+    # Load credentials & watchlist from DB into Session State if empty
     if not st.session_state.alpaca_key or not st.session_state.alpaca_secret:
         try:
             db_res = supabase.table("user_credentials").select("*").eq("user_id", st.session_state.user.id).execute()
             if db_res.data and len(db_res.data) > 0:
                 st.session_state.alpaca_key = db_res.data[0].get("alpaca_key", "")
                 st.session_state.alpaca_secret = db_res.data[0].get("alpaca_secret", "")
+        except Exception:
+            pass
+
+    try:
+        wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", st.session_state.user.id).execute()
+        if wl_res.data and len(wl_res.data) > 0 and wl_res.data[0].get("symbols"):
+            st.session_state.watchlist = wl_res.data[0].get("symbols")
+    except Exception:
+        pass
+
+    def save_watchlist_to_db():
+        try:
+            supabase.table("user_watchlists").upsert({
+                "user_id": st.session_state.user.id,
+                "symbols": st.session_state.watchlist
+            }).execute()
         except Exception:
             pass
 
@@ -374,7 +392,7 @@ else:
                     time.sleep(1)
                     st.rerun()
 
-    # Main Grid: TradingView Advanced Chart on Left, Trading Desk & TradingView Watchlist on Right
+    # Main Grid: TradingView Advanced Chart on Left, Trading Desk & Interactive Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -465,44 +483,53 @@ else:
             except Exception as e:
                 st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}) and that your API keys are correct. Details: {e}")
 
-        # TradingView Watchlist Widget (Transparent Background)
+        # Persistent Custom Interactive Watchlist Section
         st.markdown("""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
-                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">TradingView Watchlist</div>
+                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
             </div>
         """, unsafe_allow_html=True)
 
-        tv_watchlist_html = """
-        <div class="tradingview-widget-container" style="height:350px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
-          {
-            "width": "100%",
-            "height": "350",
-            "symbolsGroups": [
-              {
-                "name": "Watchlist",
-                "symbols": [
-                  {"name": "NASDAQ:AAPL", "title": "Apple"},
-                  {"name": "NASDAQ:TSLA", "title": "Tesla"},
-                  {"name": "NASDAQ:NVDA", "title": "NVIDIA"},
-                  {"name": "NASDAQ:AMZN", "title": "Amazon"},
-                  {"name": "NASDAQ:MSFT", "title": "Microsoft"},
-                  {"name": "NASDAQ:GOOGL", "title": "Google"},
-                  {"name": "AMEX:SPY", "title": "S&P 500 ETF"},
-                  {"name": "NASDAQ:QQQ", "title": "Nasdaq ETF"}
-                ]
-              }
-            ],
-            "showSymbolLogo": true,
-            "colorTheme": "dark",
-            "isTransparent": true,
-            "locale": "en"
-          }
-          </script>
-        </div>
-        """
-        components.html(tv_watchlist_html, height=360)
+        # Form to add symbols to watchlist
+        with st.form("add_watchlist_form", clear_on_submit=True):
+            col_w1, col_w2 = st.columns([3, 1])
+            with col_w1:
+                new_ticker_input = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", label_visibility="collapsed")
+            with col_w2:
+                add_btn = st.form_submit_button("＋ Add", use_container_width=True)
+            
+            if add_btn and new_ticker_input.strip():
+                clean_sym = new_ticker_input.upper().strip()
+                if clean_sym not in st.session_state.watchlist:
+                    st.session_state.watchlist.append(clean_sym)
+                    save_watchlist_to_db()
+                    st.rerun()
+
+        # Render Watchlist items with live price, click-to-load, and delete buttons
+        st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 320px; overflow-y: auto;'>", unsafe_allow_html=True)
+        
+        if not st.session_state.watchlist:
+            st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
+        else:
+            for sym in list(st.session_state.watchlist):
+                p_val, p_pct = fetch_live_quote(sym, existing_key, existing_sec)
+                color = "#0ecb81" if p_pct >= 0 else "#f6465d"
+                sign = "+" if p_pct >= 0 else ""
+                
+                w_col1, w_col2, w_col3 = st.columns([2, 2, 1])
+                with w_col1:
+                    if st.button(sym, key=f"btn_load_{sym}", use_container_width=True):
+                        st.session_state.active_ticker = sym
+                        st.rerun()
+                with w_col2:
+                    st.markdown(f"<div style='font-size: 12px; text-align: right; padding-top: 6px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                with w_col3:
+                    if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
+                        st.session_state.watchlist.remove(sym)
+                        save_watchlist_to_db()
+                        st.rerun()
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # AI Assistant drawer
     with st.expander("🤖 Groq Quant Intelligence Assistant"):
