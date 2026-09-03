@@ -269,7 +269,7 @@ else:
             </div>
 
             <script>
-            // Strict Sequential Animation: One candle spawns, bounces up and down, locks into a random resting spot, then the next candle spawns.
+            // Accelerated Sequential Animation: Much faster bounce and transition times.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
@@ -295,7 +295,7 @@ else:
                 const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
 
                 let startTime = performance.now();
-                let bounceDuration = 700 + Math.random() * 500; // Duration of active bouncing up and down
+                let bounceDuration = 120 + Math.random() * 80; // Significantly faster active bouncing (was 700+500)
 
                 function frame(now) {
                     let elapsed = now - startTime;
@@ -304,8 +304,8 @@ else:
                     if (progress < 1) {
                         // Up and down oscillation motion while bouncing into place
                         let bounceAmplitude = 12 * (1 - progress); 
-                        let currentRy = finalRy + Math.sin(elapsed / 70) * bounceAmplitude;
-                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 50) * 3);
+                        let currentRy = finalRy + Math.sin(elapsed / 30) * bounceAmplitude;
+                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 20) * 3);
                         let currentY1 = currentRy - (finalRy - finalY1);
                         let currentY2 = currentRy + (finalY2 - finalRy);
 
@@ -322,9 +322,9 @@ else:
                         line.setAttribute('y1', finalY1);
                         line.setAttribute('y2', finalY2);
 
-                        // Move on to spawn and animate the next candle
+                        // Move on to spawn and animate the next candle much faster
                         currentIndex++;
-                        setTimeout(animateNextCandle, 40);
+                        setTimeout(animateNextCandle, 12); // Reduced delay between candles (was 40)
                     }
                 }
 
@@ -337,7 +337,7 @@ else:
             """,
             height=320,
         )
-        time.sleep(5.0)
+        time.sleep(2.2) # Shortened total splash wait time to match faster animation
         st.session_state.show_splash = False
         st.rerun()
 
