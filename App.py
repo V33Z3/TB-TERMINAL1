@@ -186,7 +186,6 @@ else:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden; position: relative;">
-                <!-- Win Flash Overlay -->
                 <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.05s ease-in-out; z-index: 9999;"></div>
 
                 <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
@@ -194,7 +193,6 @@ else:
                     <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
                     
                     <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
-                        <!-- Grid Lines -->
                         <line x1="0" y1="40" x2="700" y2="40" stroke="#151515" stroke-width="1" />
                         <line x1="0" y1="85" x2="700" y2="85" stroke="#151515" stroke-width="1" />
                         <line x1="0" y1="130" x2="700" y2="130" stroke="#151515" stroke-width="1" />
@@ -204,7 +202,6 @@ else:
                         <line x1="350" y1="0" x2="350" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
                         <line x1="560" y1="0" x2="560" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
 
-                        <!-- Volume Histogram Bars at Bottom -->
                         <g opacity="0.65">
                             <rect x="30" y="195" width="12" height="25" fill="#f6465d" rx="1"/>
                             <rect x="55" y="190" width="12" height="30" fill="#0ecb81" rx="1"/>
@@ -234,11 +231,9 @@ else:
                             <rect x="655" y="140" width="12" height="80" fill="#0ecb81" rx="1"/>
                         </g>
 
-                        <!-- Moving Average Curves -->
                         <path d="M 30 140 Q 180 130 350 115 T 670 75" fill="none" stroke="#f0b90b" stroke-width="1.8" opacity="0.9"/>
                         <path d="M 30 155 Q 180 145 350 130 T 670 95" fill="none" stroke="#0ecb81" stroke-width="1.8" opacity="0.9"/>
 
-                        <!-- Candlesticks Container -->
                         <g id="candlestick-container">
                             <g class="candle" data-y1="125" data-y2="155" data-ry="132" data-rh="16"><line x1="36" y1="140" x2="36" y2="140" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="140" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
                             <g class="candle" data-y1="130" data-y2="160" data-ry="138" data-rh="14"><line x1="61" y1="145" x2="61" y2="145" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="145" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
@@ -272,13 +267,11 @@ else:
             </div>
 
             <script>
-            // Ultra-fast accelerated Sequential Animation with Transparent Green Win Flash right as it finishes.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
             function animateNextCandle() {
                 if (currentIndex >= candles.length) {
-                    // Final flash state
                     const flash = document.getElementById('winFlash');
                     if (flash) {
                         flash.style.opacity = '0.95';
@@ -286,7 +279,6 @@ else:
                     return;
                 }
 
-                // Trigger transparent green flash right when the final candle starts/completes
                 if (currentIndex >= candles.length - 2) {
                     const flash = document.getElementById('winFlash');
                     if (flash) {
@@ -312,7 +304,7 @@ else:
                 const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 3);
 
                 let startTime = performance.now();
-                let bounceDuration = 10 + Math.random() * 10; // Much faster speed
+                let bounceDuration = 10 + Math.random() * 10;
 
                 function frame(now) {
                     let elapsed = now - startTime;
@@ -338,7 +330,7 @@ else:
                         line.setAttribute('y2', finalY2);
 
                         currentIndex++;
-                        setTimeout(animateNextCandle, 1); // Extremely fast interval between candles
+                        setTimeout(animateNextCandle, 1);
                     }
                 }
 
@@ -350,11 +342,10 @@ else:
             """,
             height=320,
         )
-        time.sleep(0.25) # Shortened transition wait time to match increased speed
+        time.sleep(0.25)
         st.session_state.show_splash = False
         st.rerun()
 
-    # Load watchlist from DB into Session State if available
     try:
         if supabase:
             wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", "guest_terminal_user").execute()
@@ -379,7 +370,6 @@ else:
             st.session_state.terminal_opened = False
             st.rerun()
 
-    # Ticker Search Input Row
     def on_ticker_change():
         st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
     st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
@@ -416,7 +406,6 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    # Header display ticker badges & TB TERMINAL TITLE on the top green bar line
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -441,7 +430,6 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # NAVIGATION CALLBACK TO SYNC STATE AND URL QUERY PARAMS
     def on_nav_change():
         selected = st.session_state.main_nav_radio
         st.session_state.active_main_tab = selected
@@ -596,17 +584,24 @@ else:
 
     elif selected_main_tab == "🎯 Optimal Contract Finder":
         st.markdown(f"### 🎯 Optimal Contract Finder // {target_symbol}", unsafe_allow_html=True)
+        st.info("Scan option chains for high-probability directional and volatility setups.")
+        
         if not YFINANCE_AVAILABLE:
-            st.error("yfinance is required.")
+            st.error("yfinance library is not installed.")
         else:
-            try:
-                tk = yf.Ticker(target_symbol, session=get_yf_session())
-                exp_dates = tk.options
-            except Exception:
-                exp_dates = []
+            @st.cache_data(ttl=60)
+            def get_ticker_options(symbol):
+                try:
+                    tk = yf.Ticker(symbol, session=get_yf_session())
+                    return list(tk.options)
+                except Exception:
+                    return []
+
+            with st.spinner(f"Fetching option expirations for {target_symbol}..."):
+                exp_dates = get_ticker_options(target_symbol)
 
             if not exp_dates:
-                st.warning(f"No options available for {target_symbol}.")
+                st.warning(f"Unable to load option expirations for {target_symbol} (Yahoo Finance rate limit or invalid symbol). Try a major ticker like AAPL, SPY, or TSLA.")
             else:
                 c1, c2 = st.columns(2)
                 with c1:
@@ -614,17 +609,25 @@ else:
                 with c2:
                     opt_type = st.selectbox("Option Type:", options=["Calls", "Puts"], key="opt_type")
 
-                try:
-                    chain = tk.option_chain(sel_exp)
-                    df_opts = chain.calls if opt_type == "Calls" else chain.puts
-                    if not df_opts.empty:
-                        display_cols = ["contractSymbol", "strike", "lastPrice", "bid", "ask", "volume", "openInterest", "impliedVolatility"]
-                        avail_cols = [c for c in display_cols if c in df_opts.columns]
-                        st.dataframe(df_opts[avail_cols].sort_values(by="volume", ascending=False).head(25), use_container_width=True)
-                    else:
-                        st.info("No contracts found.")
-                except Exception as e:
-                    st.error(f"Error loading contract chain: {e}")
+                @st.cache_data(ttl=60)
+                def get_option_chain_cached(symbol, exp):
+                    try:
+                        tk = yf.Ticker(symbol, session=get_yf_session())
+                        chain = tk.option_chain(exp)
+                        return chain.calls, chain.puts
+                    except Exception:
+                        return pd.DataFrame(), pd.DataFrame()
+
+                with st.spinner("Loading contract chain data..."):
+                    calls_df, puts_df = get_option_chain_cached(target_symbol, sel_exp)
+                    df_opts = calls_df if opt_type == "Calls" else puts_df
+
+                if not df_opts.empty:
+                    display_cols = ["contractSymbol", "strike", "lastPrice", "bid", "ask", "volume", "openInterest", "impliedVolatility"]
+                    avail_cols = [c for c in display_cols if c in df_opts.columns]
+                    st.dataframe(df_opts[avail_cols].sort_values(by="volume", ascending=False).head(25), use_container_width=True)
+                else:
+                    st.info("No contract data found for this expiration date.")
 
     elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
         st.markdown("### 🔄 Sector Rotation Leaderboard", unsafe_allow_html=True)
