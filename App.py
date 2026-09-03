@@ -228,50 +228,64 @@ if not st.session_state.user:
             except Exception as e:
               st.error(f"Error: {e}")
 else:
-  # Splash Animation
+  # Splash Animation with Bigger Size & SMA Trading Theme
   if st.session_state.show_splash:
     components.html(
         """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
-                <div style="text-align: center; width: 100%; max-width: 420px;">
-                    <div style="font-size: 28px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 5px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 11px; font-family: monospace; letter-spacing: 1px; margin-bottom: 20px;">CONNECTING TO EXCHANGE LIQUIDITY & MARKET FEED...</p>
+                <div style="text-align: center; width: 100%; max-width: 640px;">
+                    <div style="font-size: 36px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
+                    <p style="color: #848e9c; font-size: 13px; font-family: monospace; letter-spacing: 1.5px; margin-bottom: 25px;">INITIALIZING SMA ALGO STRATEGIES & LIQUIDITY FEED...</p>
                     
-                    <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-                        <svg width="100%" height="110" viewBox="0 0 300 110" style="overflow: visible;">
-                            <line x1="0" y1="25" x2="300" y2="25" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="55" x2="300" y2="55" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="85" x2="300" y2="85" stroke="#1a1a1a" stroke-width="1" />
+                    <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.9);">
+                        <svg width="100%" height="160" viewBox="0 0 400 160" style="overflow: visible;">
+                            <line x1="0" y1="30" x2="400" y2="30" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="70" x2="400" y2="70" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="110" x2="400" y2="110" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="150" x2="400" y2="150" stroke="#1a1a1a" stroke-width="1" />
                             
-                            <rect x="35" y="45" width="7" height="30" fill="#f6465d" rx="2" />
-                            <line x1="38" y1="35" x2="38" y2="90" stroke="#f6465d" stroke-width="2" />
+                            <rect x="45" y="60" width="10" height="40" fill="#f6465d" rx="2" />
+                            <line x1="50" y1="45" x2="50" y2="120" stroke="#f6465d" stroke-width="2" />
                             
-                            <rect x="75" y="60" width="7" height="20" fill="#0ecb81" rx="2" />
-                            <line x1="78" y1="50" x2="78" y2="95" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="95" y="80" width="10" height="30" fill="#0ecb81" rx="2" />
+                            <line x1="100" y1="65" x2="100" y2="130" stroke="#0ecb81" stroke-width="2" />
                             
-                            <rect x="115" y="40" width="7" height="35" fill="#0ecb81" rx="2" />
-                            <line x1="118" y1="25" x2="118" y2="90" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="145" y="50" width="10" height="50" fill="#0ecb81" rx="2" />
+                            <line x1="150" y1="35" x2="150" y2="120" stroke="#0ecb81" stroke-width="2" />
                             
-                            <rect x="155" y="50" width="7" height="25" fill="#f6465d" rx="2" />
-                            <line x1="158" y1="40" x2="158" y2="80" stroke="#f6465d" stroke-width="2" />
+                            <rect x="195" y="65" width="10" height="35" fill="#f6465d" rx="2" />
+                            <line x1="200" y1="50" x2="200" y2="115" stroke="#f6465d" stroke-width="2" />
                             
-                            <rect x="195" y="30" width="7" height="45" fill="#0ecb81" rx="2" />
-                            <line x1="198" y1="15" x2="198" y2="85" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="245" y="40" width="10" height="60" fill="#0ecb81" rx="2" />
+                            <line x1="250" y1="20" x2="250" y2="110" stroke="#0ecb81" stroke-width="2" />
 
-                            <rect x="235" y="15" width="7" height="55" fill="#0ecb81" rx="2" />
-                            <line x1="238" y1="5" x2="238" y2="85" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="295" y="25" width="10" height="70" fill="#0ecb81" rx="2" />
+                            <line x1="300" y1="10" x2="300" y2="105" stroke="#0ecb81" stroke-width="2" />
 
-                            <path d="M 15 75 Q 55 85, 95 60 T 175 45 T 255 15" fill="none" stroke="#0ecb81" stroke-width="3" stroke-linecap="round" class="glow-line" />
+                            <rect x="345" y="15" width="10" height="75" fill="#0ecb81" rx="2" />
+                            <line x1="350" y1="5" x2="350" y2="95" stroke="#0ecb81" stroke-width="2" />
+
+                            <!-- SMA 50 (Blue Slow Moving Average) -->
+                            <path d="M 20 120 Q 110 110, 200 85 T 380 40" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" opacity="0.85" />
+
+                            <!-- SMA 20 (Yellow Fast Moving Average) -->
+                            <path d="M 20 110 Q 110 95, 200 65 T 380 25" fill="none" stroke="#f0b90b" stroke-width="2.5" stroke-linecap="round" opacity="0.9" />
+
+                            <!-- Main Glowing Price Line -->
+                            <path d="M 20 100 Q 70 115, 120 75 T 220 55 T 320 20 T 380 15" fill="none" stroke="#0ecb81" stroke-width="3.5" stroke-linecap="round" class="glow-line" />
                         </svg>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12px;">
-                            <span style="color: #848e9c; font-family: monospace;">MOMENTUM SURGE</span>
-                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.15); padding: 2px 6px; border-radius: 3px;">+5.42% ▲</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px;">
+                            <span style="color: #848e9c; font-family: monospace; display: flex; align-items: center; gap: 6px;">
+                                <span style="display:inline-block; width:10px; height:10px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
+                                <span style="display:inline-block; width:10px; height:10px; background:#3b82f6; border-radius:50%; margin-left:8px;"></span> SMA 50 (Slow)
+                            </span>
+                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.15); padding: 4px 10px; border-radius: 4px;">GOLDEN CROSS ▲</span>
                         </div>
                     </div>
 
-                    <div style="width: 100%; height: 3px; background: #1a1a1a; border-radius: 2px; margin: 25px 0 10px 0; overflow: hidden;">
-                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, transparent); animation: slide 1.1s infinite linear;"></div>
+                    <div style="width: 100%; height: 4px; background: #1a1a1a; border-radius: 2px; margin: 30px 0 10px 0; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, #3b82f6, transparent); animation: slide 1.2s infinite linear;"></div>
                     </div>
                 </div>
             </div>
@@ -281,17 +295,17 @@ else:
                 100% { transform: translateX(100%); }
             }
             .glow-line {
-                filter: drop-shadow(0px 0px 8px rgba(14, 203, 129, 0.7));
-                stroke-dasharray: 400;
-                stroke-dashoffset: 400;
-                animation: drawChart 1.4s ease-in-out forwards;
+                filter: drop-shadow(0px 0px 10px rgba(14, 203, 129, 0.8));
+                stroke-dasharray: 500;
+                stroke-dashoffset: 500;
+                animation: drawChart 1.5s ease-in-out forwards;
             }
             @keyframes drawChart {
                 to { stroke-dashoffset: 0; }
             }
             </style>
         """,
-        height=700,
+        height=750,
     )
     time.sleep(1.8)
     st.session_state.show_splash = False
