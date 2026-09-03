@@ -185,7 +185,10 @@ else:
     if st.session_state.show_splash:
         components.html(
             """
-            <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
+            <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden; position: relative;">
+                <!-- Win Flash Overlay -->
+                <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.45); opacity: 0; pointer-events: none; transition: opacity 0.08s ease-in-out; z-index: 9999;"></div>
+
                 <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
                     <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 6px;">⚡ TB TERMINAL</div>
                     <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
@@ -269,12 +272,27 @@ else:
             </div>
 
             <script>
-            // Ultra-accelerated Sequential Animation: Lightning fast bounce and spawn rates.
+            // Ultra-accelerated Sequential Animation with Green Win Flash right before finish.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
             function animateNextCandle() {
-                if (currentIndex >= candles.length) return;
+                if (currentIndex >= candles.length) {
+                    // Flash green screen right before finishing
+                    const flash = document.getElementById('winFlash');
+                    if (flash) {
+                        flash.style.opacity = '1';
+                    }
+                    return;
+                }
+
+                // Flash green screen right when the very last candle starts animating
+                if (currentIndex === candles.length - 1) {
+                    const flash = document.getElementById('winFlash');
+                    if (flash) {
+                        flash.style.opacity = '0.9';
+                    }
+                }
 
                 const candle = candles[currentIndex];
                 const rect = candle.querySelector('rect');
@@ -294,7 +312,7 @@ else:
                 const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
 
                 let startTime = performance.now();
-                let bounceDuration = 40 + Math.random() * 25; // Much faster active bouncing
+                let bounceDuration = 30 + Math.random() * 20; // Even faster active bouncing
 
                 function frame(now) {
                     let elapsed = now - startTime;
@@ -320,7 +338,7 @@ else:
                         line.setAttribute('y2', finalY2);
 
                         currentIndex++;
-                        setTimeout(animateNextCandle, 3); // Extremely quick delay between candles
+                        setTimeout(animateNextCandle, 2); // Instantaneous interval between candles
                     }
                 }
 
@@ -332,7 +350,7 @@ else:
             """,
             height=320,
         )
-        time.sleep(1.0) # Shortened total splash wait time for instantaneous transition
+        time.sleep(0.4) # Slightly faster total transition time
         st.session_state.show_splash = False
         st.rerun()
 
