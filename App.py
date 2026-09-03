@@ -19,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Initialize Session State Variables
 if "started" not in st.session_state:
     st.session_state.started = False
 
@@ -38,7 +37,6 @@ if "main_nav_radio" not in st.session_state:
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN"]
 
-# 1. Landing/Splash Screen Gate
 if not st.session_state.started:
     st.markdown(
         """
@@ -56,7 +54,6 @@ if not st.session_state.started:
             st.session_state.started = True
             st.rerun()
 
-# 2. Main Terminal App (Loads only after clicking Start Trading)
 else:
     st.markdown(
         """
@@ -255,6 +252,7 @@ else:
                         for s in syms:
                             if s not in st.session_state.watchlist:
                                 st.session_state.watchlist.append(s)
+                        st.rerun()
 
                 st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
@@ -267,11 +265,13 @@ else:
                     with w_col1:
                         if st.button(symbol, key=f"wl_btn_{symbol}", use_container_width=True):
                             st.session_state.active_ticker = symbol
+                            st.rerun()
                     with w_col2:
                         st.markdown(f"<div style='font-size: 11px; text-align: right; color: #eaecef;'>${p:,.2f}<br><span style='color: {color};'>{sign}{pct:.2f}%</span></div>", unsafe_allow_html=True)
                     with w_col3:
                         if st.button("🗑️", key=f"wl_del_{symbol}"):
                             st.session_state.watchlist = [s for s in st.session_state.watchlist if s != symbol]
+                            st.rerun()
 
         render_terminal_workspace()
 
