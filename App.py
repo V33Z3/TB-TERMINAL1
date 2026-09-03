@@ -168,6 +168,14 @@ elif st.session_state.started and st.session_state.animating:
 
     function spawnCandle() {
         if (candles.length < maxCandles) {
+            // Freeze the previous active candle when a new one spawns
+            if (candles.length > 0) {
+                let lastCandle = candles[candles.length - 1];
+                let wave = Math.sin(Date.now() * 0.0035 + lastCandle.oscillationOffset) * 22;
+                lastCandle.lockedY = lastCandle.baseY + wave;
+                lastCandle.isFrozen = true;
+            }
+
             let x = 45 + candles.length * 23;
             let baseY = canvas.height * (0.3 + Math.random() * 0.4);
             let height = 20 + Math.random() * 55;
@@ -178,7 +186,9 @@ elif st.session_state.started and st.session_state.animating:
                 height: height,
                 isGreen: isGreen,
                 alpha: 0,
-                oscillationOffset: Math.random() * Math.PI * 2
+                oscillationOffset: Math.random() * Math.PI * 2,
+                isFrozen: false,
+                lockedY: null
             });
         }
     }
@@ -217,9 +227,14 @@ elif st.session_state.started and st.session_state.animating:
         candles.forEach((c) => {
             if (c.alpha < 1) c.alpha += 0.06;
             
-            // Move candles smoothly up and down based on market oscillation
-            let wave = Math.sin(Date.now() * 0.0035 + c.oscillationOffset) * 22;
-            let currentY = c.baseY + wave;
+            let currentY;
+            if (c.isFrozen) {
+                currentY = c.lockedY;
+            } else {
+                // Only the latest/active candle moves up and down
+                let wave = Math.sin(Date.now() * 0.0035 + c.oscillationOffset) * 22;
+                currentY = c.baseY + wave;
+            }
 
             ctx.save();
             ctx.globalAlpha = c.alpha;
@@ -243,6 +258,15 @@ elif st.session_state.started and st.session_state.animating:
         if (timeSec < 10.0) {
             requestAnimationFrame(animate);
         } else {
+            // Freeze final active candle when timer ends
+            if (candles.length > 0) {
+                let finalCandle = candles[candles.length - 1];
+                if (!finalCandle.isFrozen) {
+                    let wave = Math.sin(Date.now() * 0.0035 + finalCandle.oscillationOffset) * 22;
+                    finalCandle.lockedY = finalCandle.baseY + wave;
+                    finalCandle.isFrozen = true;
+                }
+            }
             document.getElementById('timerText').innerHTML = "<span style='color: #0ecb81;'>✔ Back-Test Complete! Launching Terminal...</span>";
         }
     }
