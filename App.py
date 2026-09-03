@@ -4,12 +4,11 @@ import numpy as np
 import datetime
 import time
 import requests
-import plotly.graph_objects as go
 import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
 
-# Try importing yfinance for market quotes and gap-free extended-hours charts
+# Try importing yfinance for market quotes (used for fallback/headers)
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
@@ -370,59 +369,41 @@ else:
                     time.sleep(1)
                     st.rerun()
 
-    # Main Grid: Real-Time Plotly Chart on Left, Execution Desk & Watchlist on Right
+    # Main Grid: TradingView Widget Chart on Left, Execution Desk & Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
         st.markdown(f"""
             <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Continuous Extended-Hours Feed // {target_symbol} (Pre-Market & After-Hours Included)</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● GAP-FREE FEED</span>
+                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● LIVE STREAM</span>
             </div>
         """, unsafe_allow_html=True)
 
-        @st.fragment(run_every="10s")
-        def render_gapfree_chart(symbol):
-            if not YFINANCE_AVAILABLE:
-                st.error("yfinance library not available for chart data.")
-                return
-            try:
-                session = get_yf_session()
-                t = yf.Ticker(symbol, session=session)
-                df = t.history(period="60d", interval="5m", prepost=True)
-                
-                if not df.empty:
-                    df['time_str'] = df.index.strftime('%Y-%m-%d %H:%M')
-                        
-                    fig = go.Figure(data=[go.Candlestick(
-                        x=df['time_str'],
-                        open=df['Open'],
-                        high=df['High'],
-                        low=df['Low'],
-                        close=df['Close'],
-                        increasing_line_color='#0ecb81',
-                        decreasing_line_color='#f6465d'
-                    )])
-                    
-                    fig.update_layout(
-                        template="plotly_dark",
-                        paper_bgcolor="#131722",
-                        plot_bgcolor="#131722",
-                        margin=dict(l=10, r=10, t=10, b=10),
-                        height=630,
-                        dragmode='pan',
-                        uirevision=symbol,
-                        xaxis=dict(type='category', showgrid=False, nticks=10),
-                        xaxis_rangeslider_visible=False,
-                        font=dict(color="#b7bdc6", size=11)
-                    )
-                    st.plotly_chart(fig, use_container_width=True, config={'scrollZoom': True})
-                else:
-                    st.info("Awaiting market data feed...")
-            except Exception as e:
-                st.error(f"Chart error: {e}")
-
-        render_gapfree_chart(target_symbol)
+        # TradingView Advanced Chart Widget Embedding
+        tv_html = f"""
+        <div class="tradingview-widget-container" style="height:630px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {{
+            "autosize": false,
+            "width": "100%",
+            "height": "630",
+            "symbol": "{target_symbol}",
+            "interval": "D",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "enable_publishing": false,
+            "allow_symbol_change": true,
+            "calendar": false,
+            "support_host": "https://www.tradingview.com"
+          }}
+          </script>
+        </div>
+        """
+        components.html(tv_html, height=640)
 
     with col_trade:
         st.markdown("""
