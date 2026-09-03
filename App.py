@@ -24,24 +24,27 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Handle Ticker and Tab Selection via Query Parameters
+# Map tabs to short query param codes
+tab_to_param = {
+    "📈 Terminal Chart & Watchlist": "chart",
+    "⚛️ Gamma Exposure (GEX) Analysis": "gex",
+    "🎯 Optimal Contract Finder": "finder",
+    "🔄 Sector Rotation Leaderboard": "sectors"
+}
+param_to_tab = {v: k for k, v in tab_to_param.items()}
+
+# Handle Ticker from Query Parameters
 if "ticker" in st.query_params:
     st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
 
+# Handle Tab Query Parameters without overriding manual clicks
 if "tab" in st.query_params:
     tab_param = st.query_params["tab"].lower()
-    if tab_param == "chart":
-        st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-        st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
-    elif tab_param == "gex":
-        st.session_state.active_main_tab = "⚛️ Gamma Exposure (GEX) Analysis"
-        st.session_state.main_nav_radio = "⚛️ Gamma Exposure (GEX) Analysis"
-    elif tab_param == "finder":
-        st.session_state.active_main_tab = "🎯 Optimal Contract Finder"
-        st.session_state.main_nav_radio = "🎯 Optimal Contract Finder"
-    elif tab_param == "sectors":
-        st.session_state.active_main_tab = "🔄 Sector Rotation Leaderboard"
-        st.session_state.main_nav_radio = "🔄 Sector Rotation Leaderboard"
+    if tab_param in param_to_tab:
+        expected_tab = param_to_tab[tab_param]
+        if st.session_state.get("active_main_tab") != expected_tab:
+            st.session_state.active_main_tab = expected_tab
+            st.session_state.main_nav_radio = expected_tab
 
 # Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
@@ -161,7 +164,7 @@ if "watchlist" not in st.session_state:
 if "active_main_tab" not in st.session_state:
     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
 if "main_nav_radio" not in st.session_state:
-    st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
+    st.session_state.main_nav_radio = st.session_state.active_main_tab
 
 # Authentication Gate
 if not st.session_state.user:
@@ -304,13 +307,14 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # TOP-LEVEL NAVIGATION USING STATE RADIO WITH EXPLICIT KEY SYNC
-    nav_options = [
-        "📈 Terminal Chart & Watchlist",
-        "⚛️ Gamma Exposure (GEX) Analysis",
-        "🎯 Optimal Contract Finder",
-        "🔄 Sector Rotation Leaderboard"
-    ]
+    # NAVIGATION CALLBACK TO SYNC STATE AND URL QUERY PARAMS
+    def on_nav_change():
+        selected = st.session_state.main_nav_radio
+        st.session_state.active_main_tab = selected
+        if selected in tab_to_param:
+            st.query_params["tab"] = tab_to_param[selected]
+
+    nav_options = list(tab_to_param.keys())
     
     if st.session_state.active_main_tab not in nav_options:
         st.session_state.active_main_tab = nav_options[0]
@@ -320,6 +324,7 @@ else:
         "Navigation", 
         options=nav_options, 
         key="main_nav_radio",
+        on_change=on_nav_change,
         horizontal=True, 
         label_visibility="collapsed"
     )
