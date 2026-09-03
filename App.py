@@ -187,7 +187,7 @@ else:
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden; position: relative;">
                 <!-- Win Flash Overlay -->
-                <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.45); opacity: 0; pointer-events: none; transition: opacity 0.08s ease-in-out; z-index: 9999;"></div>
+                <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.05s ease-in-out; z-index: 9999;"></div>
 
                 <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
                     <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 6px;">⚡ TB TERMINAL</div>
@@ -272,25 +272,25 @@ else:
             </div>
 
             <script>
-            // Ultra-accelerated Sequential Animation with Green Win Flash right before finish.
+            // Ultra-fast accelerated Sequential Animation with Transparent Green Win Flash right as it finishes.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
             function animateNextCandle() {
                 if (currentIndex >= candles.length) {
-                    // Flash green screen right before finishing
+                    // Final flash state
                     const flash = document.getElementById('winFlash');
                     if (flash) {
-                        flash.style.opacity = '1';
+                        flash.style.opacity = '0.95';
                     }
                     return;
                 }
 
-                // Flash green screen right when the very last candle starts animating
-                if (currentIndex === candles.length - 1) {
+                // Trigger transparent green flash right when the final candle starts/completes
+                if (currentIndex >= candles.length - 2) {
                     const flash = document.getElementById('winFlash');
                     if (flash) {
-                        flash.style.opacity = '0.9';
+                        flash.style.opacity = '0.75';
                     }
                 }
 
@@ -305,23 +305,23 @@ else:
                 const targetRy = parseFloat(candle.getAttribute('data-ry'));
                 const targetRh = parseFloat(candle.getAttribute('data-rh'));
 
-                const randomOffset = (Math.random() - 0.5) * 12;
+                const randomOffset = (Math.random() - 0.5) * 8;
                 const finalY1 = targetY1 + randomOffset;
                 const finalY2 = targetY2 + randomOffset;
                 const finalRy = targetRy + randomOffset;
-                const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
+                const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 3);
 
                 let startTime = performance.now();
-                let bounceDuration = 30 + Math.random() * 20; // Even faster active bouncing
+                let bounceDuration = 10 + Math.random() * 10; // Much faster speed
 
                 function frame(now) {
                     let elapsed = now - startTime;
                     let progress = Math.min(1, elapsed / bounceDuration);
 
                     if (progress < 1) {
-                        let bounceAmplitude = 12 * (1 - progress); 
-                        let currentRy = finalRy + Math.sin(elapsed / 30) * bounceAmplitude;
-                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 20) * 3);
+                        let bounceAmplitude = 8 * (1 - progress); 
+                        let currentRy = finalRy + Math.sin(elapsed / 20) * bounceAmplitude;
+                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 15) * 2);
                         let currentY1 = currentRy - (finalRy - finalY1);
                         let currentY2 = currentRy + (finalY2 - finalRy);
 
@@ -338,7 +338,7 @@ else:
                         line.setAttribute('y2', finalY2);
 
                         currentIndex++;
-                        setTimeout(animateNextCandle, 2); // Instantaneous interval between candles
+                        setTimeout(animateNextCandle, 1); // Extremely fast interval between candles
                     }
                 }
 
@@ -350,7 +350,7 @@ else:
             """,
             height=320,
         )
-        time.sleep(0.4) # Slightly faster total transition time
+        time.sleep(0.25) # Shortened transition wait time to match increased speed
         st.session_state.show_splash = False
         st.rerun()
 
