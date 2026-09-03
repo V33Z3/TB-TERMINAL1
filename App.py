@@ -209,7 +209,7 @@ elif st.session_state.started and st.session_state.animating:
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        # Draw Fibonacci Grid Lines
+        // Draw Fibonacci Grid Lines
         fibLevels.forEach(fib => {
             let y = valToY(fib.val);
             ctx.strokeStyle = fib.color;
@@ -226,7 +226,7 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        # Adjusted spawn rate slightly slower (every 9 frames instead of 7)
+        // Adjusted spawn rate slightly slower (every 9 frames instead of 7)
         spawnTimer++;
         if (spawnTimer > 9 && candles.length < maxCandles) {
             spawnNewCandle();
