@@ -231,7 +231,6 @@ if selected_main_tab == "📈 Terminal Chart":
                     for s in syms:
                         if s not in st.session_state.watchlist:
                             st.session_state.watchlist.append(s)
-                    st.rerun()
 
             st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
@@ -244,13 +243,11 @@ if selected_main_tab == "📈 Terminal Chart":
                 with w_col1:
                     if st.button(symbol, key=f"wl_btn_{symbol}", use_container_width=True):
                         st.session_state.active_ticker = symbol
-                        st.rerun()
                 with w_col2:
                     st.markdown(f"<div style='font-size: 11px; text-align: right; color: #eaecef;'>${p:,.2f}<br><span style='color: {color};'>{sign}{pct:.2f}%</span></div>", unsafe_allow_html=True)
                 with w_col3:
                     if st.button("🗑️", key=f"wl_del_{symbol}"):
                         st.session_state.watchlist = [s for s in st.session_state.watchlist if s != symbol]
-                        st.rerun()
 
     render_terminal_workspace()
 
