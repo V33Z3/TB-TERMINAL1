@@ -1,6 +1,9 @@
 streamlit
 pandas
-yfinance
-plotly
-scipy
 numpy
+requests
+plotly
+yfinance
+alpaca-py
+groq
+supabase
