@@ -226,9 +226,9 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        // Adjusted spawn rate slightly slower (every 12 frames)
+        // Spawn rate adjusted slightly faster to reach the end precisely by the animation end
         spawnTimer++;
-        if (spawnTimer > 12 && candles.length < maxCandles) {
+        if (spawnTimer > 6.4 && candles.length < maxCandles) {
             spawnNewCandle();
             spawnTimer = 0;
         } else {
@@ -680,17 +680,62 @@ else:
         st.markdown(
             """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Leaderboard</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Relative strength and performance metrics across major sector ETFs.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Leaderboard & Drill-Down</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Click a sector row below or select from the dropdown to view its top 25 constituent stocks.</p>
             </div>
         """,
             unsafe_allow_html=True,
         )
-        sectors = ["XLF", "XLE", "XLK", "XLV", "XLI", "XLP", "XLY", "XLU", "XLRE", "XLB", "XLC"]
+
+        sectors_dict = {
+            "XLK": ["AAPL", "MSFT", "NVDA", "AVGO", "CRM", "AMD", "QCOM", "INTC", "IBM", "TXN", "AMAT", "NOW", "MU", "LRCX", "ADI", "SNPS", "CDNS", "KLAC", "PANW", "MCHP", "FTNT", "ANSS", "ADBE", "SMCI", "ARM"],
+            "XLF": ["BRK-B", "JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "SPGI", "BLK", "AXP", "C", "PGR", "CB", "MMC", "ICE", "CME", "AON", "TRV", "PNC", "USB", "TFC", "COF", "MET", "AIG"],
+            "XLV": ["LLY", "UNH", "JNJ", "MRK", "ABBV", "TMO", "ABT", "PFE", "AMGN", "ISRG", "ELV", "MDT", "CVS", "GILD", "REGN", "VRTX", "ZTS", "BSX", "CI", "BDX", "HUM", "SYK", "CNC", "EW", "BAX"],
+            "XLY": ["AMZN", "TSLA", "HD", "MCD", "NKE", "SBUX", "TJX", "LOW", "BKNG", "CMG", "MAR", "ORLY", "AZO", "HLT", "YUM", "ROST", "DHI", "LEN", "GM", "F", "EBAY", "TSCO", "EXPE", "ULTA", "BBY"],
+            "XLC": ["GOOGL", "META", "NFLX", "DIS", "CMCSA", "TMUS", "VZ", "T", "CHTR", "EA", "TTWO", "OMC", "IPG", "PARA", "WBD", "FOXA", "FOX", "LYV", "MAN", "ROKU", "PINS", "SNAP", "ZD", "NWSA", "NWS"],
+            "XLE": ["XOM", "CVX", "COP", "SLB", "EOG", "MPC", "PSX", "VLO", "OXY", "WMB", "KMI", "HAL", "BKR", "DVN", "FANG", "HES", "TRGP", "CTRA", "MRO", "EQT", "APA", "OVV", "NOV", "CHX", "AR"],
+            "XLI": ["GE", "CAT", "RTX", "UNP", "HON", "DE", "LMT", "ETN", "GD", "CSX", "NSC", "CP", "EMR", "MMM", "PH", "CMI", "ITW", "WM", "PCAR", "FDX", "UPS", "NSC", "JCI", "FAST", "ROK"],
+            "XLP": ["WMT", "PG", "COST", "KO", "PEP", "PM", "MO", "CL", "MDLZ", "TGT", "KHC", "GIS", "STZ", "HSY", "EL", "ADM", "KMB", "SYY", "EA", "KR", "CAG", "TSN", "HRL", "SJM", "CHD"],
+            "XLU": ["NEE", "SO", "DUK", "CEG", "SRE", "AEP", "D", "PCG", "EXC", "XEL", "ED", "WEC", "ES", "ETR", "FE", "AEE", "DTE", "PPL", "CMS", "EVRG", "CNP", "NI", "LNT", "ATO", "IDA"],
+            "XLRE": ["PLD", "AMT", "EQIX", "SPG", "WELL", "O", "VICI", "PSA", "CCI", "CSGP", "DLR", "SBAC", "EXR", "AVB", "EQR", "WY", "ARE", "MAA", "UDR", "ESS", "KIM", "REG", "CPT", "HST", "BXP"],
+            "XLB": ["LIN", "SHW", "FCX", "NEM", "APD", "ECL", "CTVA", "DOW", "DD", "NUE", "MLM", "VMC", "CF", "MOS", "IFF", "ALB", "EMN", "PKG", "WRK", "SON", "CE", "FMC", "ASH", "CC", "OLN"]
+        }
+
         sector_data = []
-        for sec in sectors:
+        for sec in sectors_dict.keys():
             p, pct, vol = fetch_live_quote(sec)
             sector_data.append({"Sector ETF": sec, "Price ($)": p, "Change (%)": pct, "Volume": format_vol(vol)})
         
-        df_sectors = pd.DataFrame(sector_data).sort_values(by="Change (%)", ascending=False)
-        st.dataframe(df_sectors, use_container_width=True, hide_index=True)
+        df_sectors = pd.DataFrame(sector_data).sort_values(by="Change (%)", ascending=False).reset_index(drop=True)
+
+        selected_sec_dropdown = st.selectbox("Or Choose Sector Directly:", options=list(sectors_dict.keys()), key="sector_dropdown")
+
+        event = st.dataframe(
+            df_sectors, 
+            use_container_width=True, 
+            hide_index=True, 
+            selection_mode="single-row", 
+            on_select="rerun", 
+            key="sector_table_selection"
+        )
+
+        chosen_sector = selected_sec_dropdown
+        if event and event.selection and event.selection.rows:
+            selected_row_idx = event.selection.rows[0]
+            chosen_sector = df_sectors.iloc[selected_row_idx]["Sector ETF"]
+
+        st.markdown(f"### 📌 Constituent Stocks for {chosen_sector}")
+
+        stock_list = sectors_dict.get(chosen_sector, [])
+        stock_rows = []
+        for sym in stock_list:
+            sp, spct, svol = fetch_live_quote(sym)
+            stock_rows.append({
+                "Ticker": sym,
+                "Price ($)": sp,
+                "Change (%)": spct,
+                "Volume": format_vol(svol)
+            })
+
+        df_stocks = pd.DataFrame(stock_rows).sort_values(by="Change (%)", ascending=False).reset_index(drop=True)
+        st.dataframe(df_stocks, use_container_width=True, hide_index=True)
