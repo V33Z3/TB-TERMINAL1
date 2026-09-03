@@ -537,24 +537,19 @@ else:
                     p_val, p_pct, p_vol = fetch_live_quote(sym)
                     color = "#0ecb81" if p_pct >= 0 else "#f6465d"
                     sign = "+" if p_pct >= 0 else ""
-                    logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
                     vol_str = format_vol(p_vol) if p_vol > 0 else "-"
 
                     w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
                     with w_col_info:
-                        st.markdown(
-                            f"""
-                            <a href="?ticker={sym}&tab=chart" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
-                                <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
-                                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
-                            </a>
-                            """,
-                            unsafe_allow_html=True,
-                        )
+                        if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
+                            st.session_state.active_ticker = sym
+                            st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+                            st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
+                            st.rerun()
                     with w_col_vol:
-                        st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
                     with w_col_price:
-                        st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 6px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
                     with w_col_del:
                         st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
                         if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
