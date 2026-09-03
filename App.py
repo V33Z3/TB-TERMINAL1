@@ -1,13 +1,12 @@
 import datetime
 import math
 import time
-from groq import Groq
+import altair as alt
 import numpy as np
 import pandas as pd
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
-from supabase import Client, create_client
 
 # Try importing yfinance for market quotes and options data
 try:
@@ -37,7 +36,7 @@ if "tab" in st.query_params:
     elif tab_param == "finder":
         st.session_state.active_main_tab = "🎯 Optimal Contract Finder"
     elif tab_param == "sectors":
-        st.session_state.active_main_tab = "🔄 Sector Rotation Grid"
+        st.session_state.active_main_tab = "🔄 Sector Rotation Leaderboard"
 
 # Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
@@ -105,51 +104,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Robust Secret Loader for Supabase & Groq
-@st.cache_resource
-def init_supabase():
-    url = ""
-    key = ""
-    try:
-        if "SUPABASE_URL" in st.secrets:
-            url = st.secrets["SUPABASE_URL"]
-        elif "supabase" in st.secrets and "SUPABASE_URL" in st.secrets["supabase"]:
-            url = st.secrets["supabase"]["SUPABASE_URL"]
-
-        if "SUPABASE_KEY" in st.secrets:
-            key = st.secrets["SUPABASE_KEY"]
-        elif "SUPABASE_SECRET_KEY" in st.secrets:
-            key = st.secrets["SUPABASE_SECRET_KEY"]
-        elif "supabase" in st.secrets and "SUPABASE_KEY" in st.secrets["supabase"]:
-            key = st.secrets["supabase"]["SUPABASE_KEY"]
-        elif "supabase" in st.secrets and "SUPABASE_SECRET_KEY" in st.secrets["supabase"]:
-            key = st.secrets["supabase"]["SUPABASE_SECRET_KEY"]
-    except Exception:
-        pass
-
-    if url and key:
-        return create_client(url, key)
-    return None
-
-supabase = init_supabase()
-
-def get_groq_key():
-    try:
-        if "GROQ_API_KEY" in st.secrets:
-            return st.secrets["GROQ_API_KEY"]
-        elif "groq" in st.secrets and "GROQ_API_KEY" in st.secrets["groq"]:
-            return st.secrets["groq"]["GROQ_API_KEY"]
-    except Exception:
-        pass
-    return ""
-
-groq_key = get_groq_key()
-
 # Session state initializations
-if "user" not in st.session_state:
-    st.session_state.user = None
-if "show_splash" not in st.session_state:
-    st.session_state.show_splash = False
+if "started" not in st.session_state:
+    st.session_state.started = False
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
 if "watchlist" not in st.session_state:
@@ -157,79 +114,32 @@ if "watchlist" not in st.session_state:
 if "active_main_tab" not in st.session_state:
     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
 
-# Authentication Gate
-if not st.session_state.user:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col_auth1, col_auth2, col_auth3 = st.columns([1, 1.2, 1])
-    with col_auth2:
-        st.markdown("<h2 style='text-align: center; color: #eaecef;'>TB TERMINAL LOGIN</h2>", unsafe_allow_html=True)
-        if not supabase:
-            st.error("Supabase credentials missing from Streamlit Secrets.")
-        else:
-            auth_tab1, auth_tab2 = st.tabs(["Sign In", "Register"])
-            with auth_tab1:
-                with st.form("login_form"):
-                    login_email = st.text_input("Email")
-                    login_pass = st.text_input("Password", type="password")
-                    login_btn = st.form_submit_button("Access Terminal", use_container_width=True)
-                    if login_btn:
-                        try:
-                            res = supabase.auth.sign_in_with_password({"email": login_email, "password": login_pass})
-                            st.session_state.user = res.user
-                            st.session_state.show_splash = True
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-            with auth_tab2:
-                with st.form("signup_form"):
-                    signup_email = st.text_input("Email")
-                    signup_pass = st.text_input("Password", type="password")
-                    signup_btn = st.form_submit_button("Create Account", use_container_width=True)
-                    if signup_btn:
-                        try:
-                            supabase.auth.sign_up({"email": signup_email, "password": signup_pass})
-                            st.success("Account created! You can now sign in.")
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-else:
-    if st.session_state.show_splash:
-        components.html(
+# Main Landing Page / Entry Gate with Start Back-Testing Button
+if not st.session_state.started:
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    col_l1, col_l2, col_l3 = st.columns([1, 1.5, 1])
+    with col_l2:
+        st.markdown(
             """
-            <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
-                <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
-                    <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">LOADING QUANT RESEARCH SUITE & GEX MODULE...</p>
-                </div>
+            <div style="text-align: center; padding: 40px 20px; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px;">
+                <div style="font-size: 42px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 10px;">⚡ TB TERMINAL</div>
+                <p style="color: #848e9c; font-size: 14px; font-family: monospace; letter-spacing: 1.5px; margin-bottom: 30px;">
+                    INSTITUTIONAL QUANT RESEARCH, GEX ANALYTICS & BACK-TESTING SUITE
+                </p>
             </div>
             """,
-            height=300,
+            unsafe_allow_html=True,
         )
-        time.sleep(1.2)
-        st.session_state.show_splash = False
-        st.rerun()
-
-    # Load watchlist from DB into Session State if empty
-    try:
-        wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", st.session_state.user.id).execute()
-        if wl_res.data and len(wl_res.data) > 0 and wl_res.data[0].get("symbols"):
-            st.session_state.watchlist = wl_res.data[0].get("symbols")
-    except Exception:
-        pass
-
-    def save_watchlist_to_db():
-        try:
-            supabase.table("user_watchlists").upsert(
-                {"user_id": st.session_state.user.id, "symbols": st.session_state.watchlist}
-            ).execute()
-        except Exception:
-            pass
-
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Start Back-Testing", use_container_width=True, type="primary"):
+            st.session_state.started = True
+            st.rerun()
+else:
     with st.sidebar:
         st.markdown("### ⚙️ Research Terminal")
-        st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & GEX Analytics</b></p>", unsafe_allow_html=True)
-        if st.button("Log Out", use_container_width=True):
-            supabase.auth.sign_out()
-            st.session_state.user = None
+        st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Back-Testing & GEX Analytics</b></p>", unsafe_allow_html=True)
+        if st.button("Return to Home", use_container_width=True):
+            st.session_state.started = False
             st.rerun()
 
     header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
@@ -274,7 +184,6 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    # Header display ticker badges
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -298,7 +207,6 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # TOP-LEVEL NAVIGATION USING STATE RADIO
     nav_options = [
         "📈 Terminal Chart & Watchlist",
         "⚛️ Gamma Exposure (GEX) Analysis",
@@ -380,7 +288,6 @@ else:
                     clean_sym = new_ticker_input.upper().strip()
                     if clean_sym not in st.session_state.watchlist:
                         st.session_state.watchlist.append(clean_sym)
-                        save_watchlist_to_db()
                         st.rerun()
 
             st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
@@ -413,33 +320,9 @@ else:
                         st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
                         if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
                             st.session_state.watchlist.remove(sym)
-                            save_watchlist_to_db()
                             st.rerun()
                         st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
-
-        with st.expander("🤖 Groq Quant Intelligence Assistant"):
-            ai_c1, ai_c2 = st.columns([4, 1])
-            with ai_c1:
-                ai_query = st.text_input("Prompt AI:", "Analyze technical momentum for trading setups.", label_visibility="collapsed")
-            with ai_c2:
-                ai_btn = st.button("Ask AI", use_container_width=True)
-
-            if ai_btn and groq_key and ai_query.strip():
-                with st.spinner("Processing..."):
-                    try:
-                        ai_client = Groq(api_key=groq_key)
-                        completion = ai_client.chat.completions.create(
-                            model="openai/gpt-oss-120b",
-                            messages=[
-                                {"role": "system", "content": "You are an expert institutional market research analyst."},
-                                {"role": "user", "content": ai_query},
-                            ],
-                            temperature=0.7,
-                        )
-                        st.write(completion.choices[0].message.content)
-                    except Exception as e:
-                        st.error(f"AI Error: {e}")
 
     elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
         st.markdown(
@@ -458,11 +341,11 @@ else:
             try:
                 tk = yf.Ticker(target_symbol, session=get_yf_session())
                 exp_dates = tk.options
-            except Exception as e:
+            except Exception:
                 exp_dates = []
 
             if not exp_dates:
-                st.warning(f"No options chain expiration dates found for {target_symbol}. Ensure the ticker has listed options (e.g. SPY, AAPL, NVDA).")
+                st.warning(f"No options chain expiration dates found for {target_symbol}.")
             else:
                 default_selections = list(exp_dates[:min(3, len(exp_dates))])
                 selected_exp_dates = st.multiselect(
@@ -471,9 +354,7 @@ else:
                     default=default_selections
                 )
 
-                if not selected_exp_dates:
-                    st.info("Please select at least one expiration date above to generate the GEX profile.")
-                else:
+                if selected_exp_dates:
                     if st.button("Generate GEX Profile", type="primary"):
                         with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
                             try:
@@ -528,14 +409,10 @@ else:
                                     except Exception:
                                         continue
 
-                                if not all_options_data:
-                                    st.info("Insufficient open interest data found across the selected expiration dates.")
-                                else:
+                                if all_options_data:
                                     df_gex = pd.DataFrame(all_options_data)
                                     df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
-
                                     df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
-
                                     total_net_gex = df_grouped["gex"].sum()
 
                                     df_grouped = df_grouped.sort_values("strike")
@@ -559,9 +436,6 @@ else:
                                         st.metric("Expirations Selected", f"{len(selected_exp_dates)}")
 
                                     st.markdown("<br>", unsafe_allow_html=True)
-
-                                    import altair as alt
-
                                     df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
                                     chart = alt.Chart(df_filtered).mark_bar().encode(
@@ -602,7 +476,7 @@ else:
             try:
                 tk_finder = yf.Ticker(target_symbol, session=get_yf_session())
                 finder_exp_dates = tk_finder.options
-            except Exception as e:
+            except Exception:
                 finder_exp_dates = []
 
             if not finder_exp_dates:
@@ -626,227 +500,35 @@ else:
                                     spot_price = float(hist["Close"].iloc[-1])
 
                             opt_chain = tk_finder.option_chain(selected_finder_exp)
-                            now = datetime.datetime.now()
-                            exp_dt = datetime.datetime.strptime(selected_finder_exp, "%Y-%m-%d")
-                            T = max((exp_dt - now).days / 365.25, 0.001)
-                            r = 0.045
-
-                            def norm_cdf(x):
-                                return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
-
-                            def evaluate_contracts(df_chain, opt_type):
-                                scored_contracts = []
-                                for _, row in df_chain.iterrows():
-                                    strike = float(row["strike"])
-                                    bid = float(row["bid"]) if not pd.isna(row["bid"]) else 0.0
-                                    ask = float(row["ask"]) if not pd.isna(row["ask"]) else 0.0
-                                    last = float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0
-                                    volume = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
-                                    oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                                    iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                                    
-                                    if iv <= 0 or spot_price <= 0:
-                                        continue
-                                        
-                                    d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
-                                    delta = norm_cdf(d1) if opt_type == "call" else norm_cdf(d1) - 1.0
-                                        
-                                    abs_delta = abs(delta)
-                                    if 0.30 <= abs_delta <= 0.60:
-                                        spread = ask - bid if ask >= bid else 0.0
-                                        mid_price = (bid + ask) / 2 if (bid > 0 and ask > 0) else last
-                                        spread_pct = (spread / mid_price) if mid_price > 0 else 1.0
-                                        
-                                        liquidity_score = volume * 1.5 + oi * 0.5
-                                        spread_penalty = max(0.0, 1.0 - spread_pct * 2)
-                                        score = liquidity_score * spread_penalty
-                                        
-                                        scored_contracts.append({
-                                            "Contract": row["contractSymbol"],
-                                            "Type": opt_type.upper(),
-                                            "Strike": strike,
-                                            "Bid": bid,
-                                            "Ask": ask,
-                                            "Last": last,
-                                            "Volume": int(volume),
-                                            "Open Interest": int(oi),
-                                            "IV": f"{iv*100:.1f}%",
-                                            "Delta": round(delta, 2),
-                                            "Score": score
-                                        })
-                                        
-                                df_res = pd.DataFrame(scored_contracts)
-                                if not df_res.empty:
-                                    df_res = df_res.sort_values(by="Score", ascending=False).head(5)
-                                return df_res
-
-                            calls_df = evaluate_contracts(opt_chain.calls, "call")
-                            puts_df = evaluate_contracts(opt_chain.puts, "put")
+                            st.success(f"Successfully loaded options chain for {target_symbol} expiring {selected_finder_exp}. Spot Price: ${spot_price:,.2f}")
                             
-                            col_c1, col_c2 = st.columns(2)
-                            with col_c1:
-                                st.markdown("#### 🔥 Top Ranked Call Contracts")
-                                if not calls_df.empty:
-                                    st.dataframe(calls_df.drop(columns=["Score"]), use_container_width=True, hide_index=True)
-                                else:
-                                    st.info("No call contracts met the optimal delta and liquidity criteria.")
-                                    
-                            with col_c2:
-                                st.markdown("#### 🩸 Top Ranked Put Contracts")
-                                if not puts_df.empty:
-                                    st.dataframe(puts_df.drop(columns=["Score"]), use_container_width=True, hide_index=True)
-                                else:
-                                    st.info("No put contracts met the optimal delta and liquidity criteria.")
+                            c_col1, c_col2 = st.columns(2)
+                            with c_col1:
+                                st.markdown("#### 📈 Top Call Contracts")
+                                calls_df = opt_chain.calls.sort_values(by="openInterest", ascending=False).head(5)
+                                st.dataframe(calls_df[["strike", "lastPrice", "bid", "ask", "volume", "openInterest", "impliedVolatility"]], use_container_width=True)
+                            with c_col2:
+                                st.markdown("#### 📉 Top Put Contracts")
+                                puts_df = opt_chain.puts.sort_values(by="openInterest", ascending=False).head(5)
+                                st.dataframe(puts_df[["strike", "lastPrice", "bid", "ask", "volume", "openInterest", "impliedVolatility"]], use_container_width=True)
                         except Exception as e:
-                            st.error(f"Error scanning options contracts: {e}")
+                            st.error(f"Error scanning option chain: {e}")
 
     elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
         st.markdown(
             """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 All 11 GICS Sectors Performance Leaderboard</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Ranked live from best to worst performing sector. Click any constituent stock to inspect it on the terminal chart.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Leaderboard</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Relative strength and performance metrics across major sector ETFs.</p>
             </div>
-            """,
+        """,
             unsafe_allow_html=True,
         )
-
-        sectors_master = {
-            "Technology (XLK)": {
-                "etf": "XLK",
-                "constituents": [{"ticker": "AAPL", "price": 225.50}, {"ticker": "MSFT", "price": 440.20}, {"ticker": "NVDA", "price": 128.40}, {"ticker": "AVGO", "price": 165.20}, {"ticker": "CRM", "price": 265.40}]
-            },
-            "Financials (XLF)": {
-                "etf": "XLF",
-                "constituents": [{"ticker": "JPM", "price": 210.30}, {"ticker": "BAC", "price": 39.40}, {"ticker": "WFC", "price": 58.20}, {"ticker": "GS", "price": 475.10}, {"ticker": "MS", "price": 102.50}]
-            },
-            "Energy (XLE)": {
-                "etf": "XLE",
-                "constituents": [{"ticker": "XOM", "price": 116.80}, {"ticker": "CVX", "price": 152.70}, {"ticker": "COP", "price": 114.15}, {"ticker": "SLB", "price": 45.93}, {"ticker": "OXY", "price": 61.01}]
-            },
-            "Healthcare (XLV)": {
-                "etf": "XLV",
-                "constituents": [{"ticker": "LLY", "price": 950.20}, {"ticker": "UNH", "price": 560.10}, {"ticker": "JNJ", "price": 160.40}, {"ticker": "MRK", "price": 125.30}, {"ticker": "ABBV", "price": 185.60}]
-            },
-            "Consumer Discretionary (XLY)": {
-                "etf": "XLY",
-                "constituents": [{"ticker": "AMZN", "price": 185.20}, {"ticker": "TSLA", "price": 220.40}, {"ticker": "HD", "price": 385.10}, {"ticker": "NKE", "price": 85.30}, {"ticker": "MCD", "price": 290.10}]
-            },
-            "Consumer Staples (XLP)": {
-                "etf": "XLP",
-                "constituents": [{"ticker": "WMT", "price": 75.40}, {"ticker": "PG", "price": 170.20}, {"ticker": "COST", "price": 880.50}, {"ticker": "KO", "price": 68.40}, {"ticker": "PEP", "price": 175.20}]
-            },
-            "Industrials (XLI)": {
-                "etf": "XLI",
-                "constituents": [{"ticker": "GE", "price": 175.40}, {"ticker": "CAT", "price": 360.20}, {"ticker": "RTX", "price": 110.50}, {"ticker": "UNP", "price": 245.30}, {"ticker": "HON", "price": 210.10}]
-            },
-            "Utilities (XLU)": {
-                "etf": "XLU",
-                "constituents": [{"ticker": "NEE", "price": 80.40}, {"ticker": "SO", "price": 85.20}, {"ticker": "DUK", "price": 105.10}, {"ticker": "SRE", "price": 82.30}, {"ticker": "AEP", "price": 98.40}]
-            },
-            "Materials (XLB)": {
-                "etf": "XLB",
-                "constituents": [{"ticker": "LIN", "price": 460.20}, {"ticker": "SHW", "price": 350.40}, {"ticker": "FCX", "price": 48.20}, {"ticker": "APD", "price": 305.10}, {"ticker": "NEM", "price": 52.40}]
-            },
-            "Real Estate (XLRE)": {
-                "etf": "XLRE",
-                "constituents": [{"ticker": "PLD", "price": 125.40}, {"ticker": "AMT", "price": 220.50}, {"ticker": "EQIX", "price": 890.10}, {"ticker": "CCI", "price": 115.20}, {"ticker": "PSA", "price": 330.40}]
-            },
-            "Communication Services (XLC)": {
-                "etf": "XLC",
-                "constituents": [{"ticker": "GOOGL", "price": 178.10}, {"ticker": "META", "price": 510.40}, {"ticker": "NFLX", "price": 680.20}, {"ticker": "DIS", "price": 95.40}, {"ticker": "CMCSA", "price": 41.20}]
-            }
-        }
-
-        # Calculate live performance for all 11 sectors
-        sector_performance_list = []
-        for sec_name, data in sectors_master.items():
-            etf_sym = data["etf"]
-            price, pct, _ = fetch_live_quote(etf_sym)
-            sector_performance_list.append({
-                "Sector": sec_name,
-                "ETF": etf_sym,
-                "Price": price,
-                "Change": pct,
-                "constituents": data["constituents"]
-            })
-
-        # Sort descending by performance so the best sector is at the top
-        sector_performance_list = sorted(sector_performance_list, key=lambda x: x["Change"], reverse=True)
-
-        st.markdown("#### 🏆 Sector Performance Ranking (Best to Worst)")
+        sectors = ["XLF", "XLE", "XLK", "XLV", "XLI", "XLP", "XLY", "XLU", "XLRE", "XLB", "XLC"]
+        sector_data = []
+        for sec in sectors:
+            p, pct, vol = fetch_live_quote(sec)
+            sector_data.append({"Sector ETF": sec, "Price ($)": p, "Change (%)": pct, "Volume": format_vol(vol)})
         
-        # Display Leaderboard Header
-        l_col1, l_col2, l_col3, l_col4 = st.columns([3, 1.5, 2, 2])
-        with l_col1:
-            st.markdown("<b>Sector Name</b>", unsafe_allow_html=True)
-        with l_col2:
-            st.markdown("<b>ETF Ticker</b>", unsafe_allow_html=True)
-        with l_col3:
-            st.markdown("<b>ETF Price</b>", unsafe_allow_html=True)
-        with l_col4:
-            st.markdown("<b>Performance</b>", unsafe_allow_html=True)
-        st.divider()
-
-        # Render each sector in the leaderboard ranking
-        selected_sector_to_inspect = st.selectbox(
-            "Select Sector to View Top Constituents & Stocks", 
-            options=[s["Sector"] for s in sector_performance_list],
-            key="sector_drilldown_select"
-        )
-
-        for s_item in sector_performance_list:
-            sec_name = s_item["Sector"]
-            etf_sym = s_item["ETF"]
-            price = s_item["Price"]
-            pct = s_item["Change"]
-            color = "#0ecb81" if pct >= 0 else "#f6465d"
-            sign = "+" if pct >= 0 else ""
-
-            r_col1, r_col2, r_col3, r_col4 = st.columns([3, 1.5, 2, 2])
-            with r_col1:
-                st.markdown(f"<b>{sec_name}</b>", unsafe_allow_html=True)
-            with r_col2:
-                st.markdown(f"<code>{etf_sym}</code>", unsafe_allow_html=True)
-            with r_col3:
-                st.markdown(f"${price:,.2f}", unsafe_allow_html=True)
-            with r_col4:
-                st.markdown(f"<span style='color: {color}; font-weight: bold;'>{sign}{pct:.2f}%</span>", unsafe_allow_html=True)
-
-        st.markdown("<br><hr>", unsafe_allow_html=True)
-
-        # Show constituents for the user's selected sector
-        active_sec_data = next((s for s in sector_performance_list if s["Sector"] == selected_sector_to_inspect), sector_performance_list[0])
-        st.markdown(f"#### Top Constituents: {active_sec_data['Sector']}")
-
-        for item in active_sec_data["constituents"]:
-            sym = item["ticker"]
-            p_val, p_pct, _ = fetch_live_quote(sym)
-            if p_val <= 0:
-                p_val = item["price"]
-                
-            color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-            sign = "+" if p_pct >= 0 else ""
-
-            col_sec1, col_sec2, col_sec3, col_sec4 = st.columns([1.5, 2, 2, 2])
-            with col_sec1:
-                st.markdown(
-                    f"""
-                    <a href="?ticker={sym}&tab=chart" target="_self" style="text-decoration: none; font-weight: bold; color: #f0b90b; font-size: 14px;">
-                        ⚡ {sym}
-                    </a>
-                    """, 
-                    unsafe_allow_html=True
-                )
-            with col_sec2:
-                st.write(f"${p_val:,.2f}")
-            with col_sec3:
-                st.markdown(f"<span style='color: {color}; font-weight: bold;'>{sign}{p_pct:.2f}%</span>", unsafe_allow_html=True)
-            with col_sec4:
-                if st.button("Open Terminal Chart", key=f"btn_sector_term_{sym}", use_container_width=True):
-                    st.session_state.active_ticker = sym
-                    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-                    st.query_params["ticker"] = sym
-                    st.query_params["tab"] = "chart"
-                    st.rerun()
-            st.divider()
+        df_sectors = pd.DataFrame(sector_data).sort_values(by="Change (%)", ascending=False)
+        st.dataframe(df_sectors, use_container_width=True, hide_index=True)
