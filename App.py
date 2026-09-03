@@ -868,8 +868,8 @@ else:
         st.markdown(
             f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">⚡ Free Unusual Options Activity (UOA) Scanner</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Scans option chains for your watchlist where daily volume exceeds open interest, signaling fresh institutional positioning.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">⚡ S&P 500 Unusual Options Activity (UOA) Scanner</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Scans option chains across the S&P 500 universe for volume/OI anomalies.</p>
             </div>
         """,
             unsafe_allow_html=True,
@@ -878,28 +878,51 @@ else:
         if not YFINANCE_AVAILABLE:
             st.error("`yfinance` is required for options chain data.")
         else:
-            scan_scope = st.radio("Scan Universe", options=["Custom Watchlist", "Major Tech & Indices (SPY, QQQ, AAPL, NVDA, TSLA, AMZN, MSFT, META)"], horizontal=True)
-            
-            if st.button("Run UOA Scan", type="primary", use_container_width=True):
-                with st.spinner("Scanning option chains for volume/OI anomalies..."):
-                    if scan_scope == "Custom Watchlist":
-                        symbols_to_scan = st.session_state.watchlist
-                    else:
-                        symbols_to_scan = ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "AMZN", "MSFT", "META"]
+            scan_col1, scan_col2, scan_col3 = st.columns([2, 1, 1])
+            with scan_col1:
+                scan_scope = st.radio("Scan Universe", options=["Custom Watchlist", "S&P 500 Universe"], horizontal=True)
+            with scan_col2:
+                min_vol_filter = st.slider("Min Daily Volume", min_value=50, max_value=2000, value=200, step=50)
+            with scan_col3:
+                max_results = st.slider("Top Results Limit", min_value=10, max_value=100, value=25, step=5)
 
-                    uoa_results = []
-                    for sym in symbols_to_scan:
-                        try:
-                            tk = yf.Ticker(sym, session=get_yf_session())
-                            exp_dates = tk.options
-                            if not exp_dates:
-                                continue
-                            opt_chain = tk.option_chain(exp_dates[0])
-                            
+            if st.button("Run S&P 500 UOA Scan", type="primary", use_container_width=True):
+                @st.cache_data(ttl=86400)
+                def get_sp500_symbols():
+                    try:
+                        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+                        tables = pd.read_html(url)
+                        df = tables[0]
+                        symbols = df["Symbol"].tolist()
+                        return [str(s).replace(".", "-") for s in symbols]
+                    except Exception:
+                        return ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "AMZN", "MSFT", "META", "GOOGL", "AMD"]
+
+                if scan_scope == "Custom Watchlist":
+                    symbols_to_scan = st.session_state.get("watchlist", ["SPY", "QQQ"])
+                else:
+                    symbols_to_scan = get_sp500_symbols()
+
+                uoa_results = []
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                total_symbols = len(symbols_to_scan)
+
+                for idx, sym in enumerate(symbols_to_scan):
+                    status_text.text(f"Scanning ({idx+1}/{total_symbols}): {sym}...")
+                    progress_bar.progress((idx + 1) / total_symbols)
+                    try:
+                        tk = yf.Ticker(sym, session=get_yf_session())
+                        exp_dates = tk.options
+                        if not exp_dates:
+                            continue
+                        
+                        for exp in exp_dates[:1]:
+                            opt_chain = tk.option_chain(exp)
                             for opt_type, df in [("CALL", opt_chain.calls), ("PUT", opt_chain.puts)]:
                                 if df.empty:
                                     continue
-                                active = df[(df["volume"] > df["openInterest"]) & (df["volume"] > 300)]
+                                active = df[(df["volume"] > df["openInterest"]) & (df["volume"] > min_vol_filter)]
                                 for _, row in active.iterrows():
                                     vol = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
                                     oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 1.0
@@ -910,19 +933,24 @@ else:
                                         "Ticker": sym,
                                         "Type": opt_type,
                                         "Strike": float(row["strike"]),
-                                        "Expiry": exp_dates[0],
+                                        "Expiry": exp,
                                         "Volume": int(vol),
                                         "Open Interest": int(oi),
                                         "Vol/OI Ratio": ratio,
                                         "Last Price": float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0,
                                         "IV": f"{iv*100:.1f}%"
                                     })
-                        except Exception:
-                            continue
+                    except Exception:
+                        continue
 
-                    if not uoa_results:
-                        st.info("No unusual options activity detected matching criteria for the selected symbols right now.")
-                    else:
-                        df_uoa = pd.DataFrame(uoa_results)
-                        df_uoa = df_uoa.sort_values(by="Vol/OI Ratio", ascending=False)
-                        st.dataframe(df_uoa, use_container_width=True, hide_index=True)
+                progress_bar.empty()
+                status_text.empty()
+
+                if not uoa_results:
+                    st.info("No unusual options activity detected matching criteria across the selected universe.")
+                else:
+                    df_uoa = pd.DataFrame(uoa_results)
+                    df_uoa = df_uoa.sort_values(by="Vol/OI Ratio", ascending=False).drop_duplicates(subset=["Ticker", "Type", "Strike", "Expiry"])
+                    df_uoa = df_uoa.head(max_results)
+                    st.success(f"Scan complete! Showing top {len(df_uoa)} most unusual options contracts.")
+                    st.dataframe(df_uoa, use_container_width=True, hide_index=True)
