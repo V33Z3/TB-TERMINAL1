@@ -344,7 +344,7 @@ else:
 
   render_live_header(target_symbol)
 
-  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), Optimal Contract Finder, and Sector Rotation
+  # TOP-LEVEL TABS
   main_tab_chart, main_tab_gex, main_tab_finder, main_tab_sectors = st.tabs([
       "📈 Terminal Chart & Watchlist",
       "⚛️ Gamma Exposure (GEX) Analysis",
@@ -533,7 +533,7 @@ else:
 
               all_options_data = []
               now = datetime.datetime.now()
-              r = 0.045  # Risk-free rate assumption
+              r = 0.045
 
               for exp in selected_exp_dates:
                 try:
@@ -698,7 +698,6 @@ else:
                   if vol < 5 and oi < 20:
                     continue
 
-                  # Black-Scholes Delta
                   try:
                     d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
                     call_d = norm_cdf(d1)
@@ -706,11 +705,8 @@ else:
                   except Exception:
                     delta = 0.5 if opt_type == "Call" else -0.5
 
-                  # Penalty for deviation from optimal directional swing delta (~0.40)
                   delta_penalty = abs(abs(delta) - 0.40)
                   spread = max(ask - bid, 0.01)
-
-                  # Algorithmic institutional score
                   score = (vol * 2.0 + oi * 1.0) / ((spread * 100.0 + 1.0) * (delta_penalty + 0.5))
 
                   scored_contracts.append({
@@ -788,7 +784,7 @@ else:
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Matrix</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Tracks performance across the 11 GICS sector SPDR ETFs to monitor institutional capital flows and risk-on/risk-off rotations.</p>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Tracks performance across the 11 GICS sector SPDR ETFs. Click on any sector row below to drill down into its top constituent stocks.</p>
             </div>
         """,
         unsafe_allow_html=True,
@@ -811,6 +807,20 @@ else:
               "Real Estate": "XLRE",
               "Materials": "XLB",
               "Communication Services": "XLC",
+          }
+
+          sector_constituents = {
+              "XLK": ["AAPL", "MSFT", "NVDA", "AVGO", "ADBE", "CRM", "AMD", "QCOM"],
+              "XLE": ["XOM", "CVX", "COP", "SLB", "EOG", "OXY", "MPC", "PSX"],
+              "XLF": ["JPM", "V", "MA", "BAC", "WFC", "MS", "GS", "SPGI"],
+              "XLV": ["UNH", "JNJ", "LLY", "ABBV", "MRK", "TMO", "PFE", "ABT"],
+              "XLY": ["AMZN", "TSLA", "HD", "MCD", "NKE", "SBUX", "BKNG", "LOW"],
+              "XLP": ["PG", "COST", "WMT", "PM", "KO", "PEP", "MO", "CL"],
+              "XLI": ["GE", "CAT", "RTX", "UNP", "HON", "DE", "LMT", "ETN"],
+              "XLU": ["NEE", "SO", "DUK", "SRE", "AEP", "PCG", "EXC", "ED"],
+              "XLRE": ["PLD", "AMT", "EQIX", "SPG", "OFC", "PSA", "CCI", "WY"],
+              "XLB": ["LIN", "SHW", "FCX", "NEM", "ECL", "APD", "DOW", "PPG"],
+              "XLC": ["GOOGL", "META", "NFLX", "DIS", "CMCSA", "TMUS", "VZ", "T"]
           }
 
           sector_rows = []
@@ -846,19 +856,64 @@ else:
               color = "#0ecb81" if val >= 0 else "#f6465d"
               return f"color: {color}; font-weight: bold;"
 
-            # Version-safe Pandas Styler check (.map replaces applymap in newer versions)
             styler_obj = df_sectors.style
             if hasattr(styler_obj, "map"):
               styled_df = styler_obj.map(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"])
             else:
               styled_df = styler_obj.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"])
 
-            st.dataframe(styled_df, use_container_width=True, height=450)
+            # Interactive DataFrame selection for drill-down
+            event = st.dataframe(
+                styled_df,
+                use_container_width=True,
+                height=450,
+                on_select="rerun",
+                selection_mode="single-row",
+                key="sector_table"
+            )
+
+            # Handle Drill-Down Selection
+            selected_rows = event.selection.rows
+            if selected_rows:
+              row_idx = selected_rows[0]
+              chosen_sector_name = df_sectors.iloc[row_idx]["Sector"]
+              chosen_ticker = df_sectors.iloc[row_idx]["Ticker"]
+
+              st.markdown(f"<br><h4 style='color: #eaecef; font-size: 15px;'>🔍 Drill-Down: Constituent Stocks in {chosen_sector_name} ({chosen_ticker})</h4>", unsafe_allow_html=True)
+              
+              stocks_to_check = sector_constituents.get(chosen_ticker, [])
+              stock_rows = []
+              for sym in stocks_to_check:
+                try:
+                  t_stock = yf.Ticker(sym, session=session)
+                  hist_s = t_stock.history(period="5d")
+                  if not hist_s.empty:
+                    s_price = float(hist_s["Close"].iloc[-1])
+                    s_p1d = float(hist_s["Close"].iloc[-2]) if len(hist_s) > 1 else s_price
+                    s_p5d = float(hist_s["Close"].iloc[-5]) if len(hist_s) >= 5 else float(hist_s["Close"].iloc[0])
+                    s_chg_1d = ((s_price - s_p1d) / s_p1d) * 100
+                    s_chg_5d = ((s_price - s_p5d) / s_p5d) * 100
+                    stock_rows.append({
+                        "Stock": sym,
+                        "Price ($)": round(s_price, 2),
+                        "1D Return (%)": round(s_chg_1d, 2),
+                        "5D Return (%)": round(s_chg_5d, 2),
+                    })
+                except Exception:
+                  pass
+
+              if stock_rows:
+                df_stocks = pd.DataFrame(stock_rows).sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
+                
+                styled_stocks = df_stocks.style.map(color_returns, subset=["1D Return (%)", "5D Return (%)"]) if hasattr(df_stocks.style, "map") else df_stocks.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)"])
+                st.dataframe(styled_stocks, use_container_width=True, height=300)
+              else:
+                st.warning(f"Could not load constituent stocks for {chosen_sector_name}.")
 
             st.markdown(
                 """
                 <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
-                    <b>Rotation Insights:</b> Use this matrix to spot institutional momentum. Leading 5D and 1M returns in Cyclical/Discretionary sectors indicate risk-on behavior, while outperformance in Staples and Utilities signals a defensive flight to safety.
+                    <b>Rotation Insights:</b> Use this matrix to spot institutional momentum. Leading 5D and 1M returns in Cyclical/Discretionary sectors indicate risk-on behavior, while outperformance in Staples and Utilities signals a defensive flight to safety. Click any sector above to examine its leading individual equities.
                 </div>
                 """,
                 unsafe_allow_html=True,
