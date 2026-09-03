@@ -59,7 +59,7 @@ st.markdown(
     }
     
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1rem;
         padding-bottom: 0rem;
         padding-left: 0.8rem;
         padding-right: 0.8rem;
@@ -242,15 +242,10 @@ else:
             st.session_state.user = None
             st.rerun()
 
-    header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
-
-    with header_col1:
-        st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
-
-    with header_col2:
-        def on_ticker_change():
-            st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
-        st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
+    # Ticker Search Input Row
+    def on_ticker_change():
+        st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
+    st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
 
     target_symbol = st.session_state.active_ticker
 
@@ -284,7 +279,7 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    # Header display ticker badges
+    # Header display ticker badges & TB TERMINAL TITLE moved to top green bar line
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -302,6 +297,7 @@ else:
     
     st.markdown(f"""
         <div class="exchange-header">
+            <div style="color: #f0b90b; font-weight: bold; font-size: 13px; margin-right: 10px;">⚡ TB TERMINAL // RESEARCH</div>
             {format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d")}
             {format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b")}
             {format_badge(f"{target_symbol} (Live)", active_price, active_pct, "#150c1f", "#9c27b0")}
