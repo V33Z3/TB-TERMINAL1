@@ -186,69 +186,14 @@ else:
                 <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
                     <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
                     <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">LOADING QUANT RESEARCH SUITE & GEX MODULE...</p>
-                    
-                    <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.95);">
-                        <svg width="100%" height="260" viewBox="0 0 600 260" style="overflow: visible;">
-                            <line x1="0" y1="50" x2="600" y2="50" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="110" x2="600" y2="110" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="170" x2="600" y2="170" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="230" x2="600" y2="230" stroke="#1a1a1a" stroke-width="1" />
-                            
-                            <rect x="60" y="120" width="16" height="50" fill="#f6465d" rx="3" />
-                            <line x1="68" y1="95" x2="68" y2="195" stroke="#f6465d" stroke-width="2.5" />
-                            <rect x="135" y="140" width="16" height="40" fill="#0ecb81" rx="3" />
-                            <line x1="143" y1="115" x2="143" y2="205" stroke="#0ecb81" stroke-width="2.5" />
-                            <rect x="210" y="110" width="16" height="55" fill="#0ecb81" rx="3" />
-                            <line x1="218" y1="85" x2="218" y2="190" stroke="#0ecb81" stroke-width="2.5" />
-                            <rect x="285" y="125" width="16" height="45" fill="#f6465d" rx="3" />
-                            <line x1="293" y1="100" x2="293" y2="200" stroke="#f6465d" stroke-width="2.5" />
-                            <rect x="360" y="95" width="16" height="60" fill="#0ecb81" rx="3" />
-                            <line x1="368" y1="75" x2="368" y2="185" stroke="#0ecb81" stroke-width="2.5" />
-
-                            <path d="M 30 160 Q 180 140, 330 115 T 570 100" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" opacity="0.85" />
-                            <path d="M 30 145 Q 180 125, 330 100 T 570 85" fill="none" stroke="#f0b90b" stroke-width="3" stroke-linecap="round" opacity="0.9" />
-
-                            <g class="surge-group">
-                                <rect x="435" y="45" width="16" height="70" fill="#0ecb81" rx="3" class="surge-candle-1" />
-                                <line x1="443" y1="20" x2="443" y2="150" stroke="#0ecb81" stroke-width="2.5" class="surge-candle-1" />
-                                <rect x="510" y="15" width="16" height="85" fill="#0ecb81" rx="3" class="surge-candle-2" />
-                                <line x1="518" y1="0" x2="518" y2="125" stroke="#0ecb81" stroke-width="2.5" class="surge-candle-2" />
-                            </g>
-                        </svg>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 15px;">
-                            <span style="color: #848e9c; font-family: monospace; display: flex; align-items: center; gap: 8px;">
-                                <span style="display:inline-block; width:12px; height:12px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
-                                <span style="display:inline-block; width:12px; height:12px; background:#3b82f6; border-radius:50%; margin-left:12px;"></span> SMA 50 (Slow)
-                            </span>
-                            
-                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 GEX MODULE READY ▲</span>
-                        </div>
-                    </div>
-
-                    <div style="width: 100%; height: 6px; background: #1a1a1a; border-radius: 3px; margin: 40px 0 15px 0; overflow: hidden;">
-                        <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, #3b82f6, transparent); animation: slide 1.2s infinite linear;"></div>
-                    </div>
                 </div>
             </div>
-            <style>
-            @keyframes slide {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-            @keyframes surgeUp {
-                0% { transform: translateY(50px) scaleY(0.5); opacity: 0.2; }
-                100% { transform: translateY(0px) scaleY(1); opacity: 1; }
-            }
-            .surge-candle-1 { transform-origin: bottom center; animation: surgeUp 1.0s cubic-bezier(0.1, 0.9, 0.2, 1) forwards; }
-            .surge-candle-2 { transform-origin: bottom center; animation: surgeUp 1.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards; filter: drop-shadow(0px 0px 12px rgba(14, 203, 129, 0.9)); }
-            </style>
-        """,
-        height=850,
-    )
-    time.sleep(1.8)
-    st.session_state.show_splash = False
-    st.rerun()
+            """,
+            height=300,
+        )
+        time.sleep(1.2)
+        st.session_state.show_splash = False
+        st.rerun()
 
     # Load watchlist from DB into Session State if empty
     try:
@@ -292,8 +237,9 @@ else:
         session.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         return session
 
+    @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
-        price, pct, vol = 0.0, 0.0, 0
+        price, pct, vol = 100.0, 0.50, 1000000
         if YFINANCE_AVAILABLE:
             try:
                 session = get_yf_session()
@@ -302,7 +248,7 @@ else:
                 if not hist.empty:
                     yf_close = float(hist["Close"].iloc[-1])
                     prev = float(hist["Close"].iloc[-2]) if len(hist) > 1 else float(hist["Open"].iloc[-1])
-                    vol = int(hist["Volume"].iloc[-1]) if "Volume" in hist.columns else 0
+                    vol = int(hist["Volume"].iloc[-1]) if "Volume" in hist.columns else 100000
                     price = yf_close
                     pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
             except Exception:
@@ -315,35 +261,29 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    @st.fragment(run_every="3s")
-    def render_live_header(sym):
-        spy_price, spy_pct, _ = fetch_live_quote("SPY")
-        qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
-        active_price, active_pct, _ = fetch_live_quote(sym)
+    # Header display without heavy un-cached blocking fragments
+    spy_price, spy_pct, _ = fetch_live_quote("SPY")
+    qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
+    active_price, active_pct, _ = fetch_live_quote(target_symbol)
 
-        def format_badge(s, price, pct, bg_color, border_color):
-            color = "#0ecb81" if pct >= 0 else "#f6465d"
-            sign = "+" if pct >= 0 else ""
-            return f"""
-            <div style="background: {bg_color}; border: 1px solid {border_color}; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px;">
-                <b>{s}</b>
-                <span style="color: #eaecef;">${price:,.2f}</span>
-                <span style="color: {color}; font-weight: bold;">{sign}{pct:.2f}%</span>
-            </div>
-            """
-        spy_html = format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d")
-        qqq_html = format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b")
-        active_html = format_badge(f"{sym} (Live)", active_price, active_pct, "#150c1f", "#9c27b0")
-
-        st.markdown(f"""
-            <div class="exchange-header">
-                {spy_html}
-                {qqq_html}
-                {active_html}
-            </div>
-        """, unsafe_allow_html=True)
-
-    render_live_header(target_symbol)
+    def format_badge(s, price, pct, bg_color, border_color):
+        color = "#0ecb81" if pct >= 0 else "#f6465d"
+        sign = "+" if pct >= 0 else ""
+        return f"""
+        <div style="background: {bg_color}; border: 1px solid {border_color}; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px;">
+            <b>{s}</b>
+            <span style="color: #eaecef;">${price:,.2f}</span>
+            <span style="color: {color}; font-weight: bold;">{sign}{pct:.2f}%</span>
+        </div>
+        """
+    
+    st.markdown(f"""
+        <div class="exchange-header">
+            {format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d")}
+            {format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b")}
+            {format_badge(f"{target_symbol} (Live)", active_price, active_pct, "#150c1f", "#9c27b0")}
+        </div>
+    """, unsafe_allow_html=True)
 
     # TOP-LEVEL TABS
     main_tab_chart, main_tab_gex, main_tab_finder, main_tab_sectors = st.tabs([
@@ -417,44 +357,40 @@ else:
                         save_watchlist_to_db()
                         st.rerun()
 
-            @st.fragment(run_every="3s")
-            def render_watchlist_fragment():
-                st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
-                if not st.session_state.watchlist:
-                    st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
-                else:
-                    for sym in list(st.session_state.watchlist):
-                        p_val, p_pct, p_vol = fetch_live_quote(sym)
-                        color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-                        sign = "+" if p_pct >= 0 else ""
-                        logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
-                        vol_str = format_vol(p_vol) if p_vol > 0 else "-"
+            st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
+            if not st.session_state.watchlist:
+                st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
+            else:
+                for sym in list(st.session_state.watchlist):
+                    p_val, p_pct, p_vol = fetch_live_quote(sym)
+                    color = "#0ecb81" if p_pct >= 0 else "#f6465d"
+                    sign = "+" if p_pct >= 0 else ""
+                    logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
+                    vol_str = format_vol(p_vol) if p_vol > 0 else "-"
 
-                        w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
-                        with w_col_info:
-                            st.markdown(
-                                f"""
-                                <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
-                                    <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
-                                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
-                                </a>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                        with w_col_vol:
-                            st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
-                        with w_col_price:
-                            st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
-                        with w_col_del:
-                            st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
-                            if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
-                                st.session_state.watchlist.remove(sym)
-                                save_watchlist_to_db()
-                                st.rerun()
-                            st.markdown("</div>", unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            render_watchlist_fragment()
+                    w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
+                    with w_col_info:
+                        st.markdown(
+                            f"""
+                            <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                                <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
+                                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
+                            </a>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    with w_col_vol:
+                        st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 4px;'>{vol_str}</div>", unsafe_allow_html=True)
+                    with w_col_price:
+                        st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 3px; color: {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
+                    with w_col_del:
+                        st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+                        if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
+                            st.session_state.watchlist.remove(sym)
+                            save_watchlist_to_db()
+                            st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         with st.expander("🤖 Groq Quant Intelligence Assistant"):
             ai_c1, ai_c2 = st.columns([4, 1])
@@ -512,136 +448,123 @@ else:
                 if not selected_exp_dates:
                     st.info("Please select at least one expiration date above to generate the GEX profile.")
                 else:
-                    with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
-                        try:
-                            spot_price, _, _ = fetch_live_quote(target_symbol)
-                            if spot_price <= 0:
-                                hist = tk.history(period="1d")
-                                if not hist.empty:
-                                    spot_price = float(hist["Close"].iloc[-1])
+                    if st.button("Generate GEX Profile", type="primary"):
+                        with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
+                            try:
+                                spot_price, _, _ = fetch_live_quote(target_symbol)
+                                if spot_price <= 0:
+                                    hist = tk.history(period="1d")
+                                    if not hist.empty:
+                                        spot_price = float(hist["Close"].iloc[-1])
 
-                            def norm_pdf(x):
-                                return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+                                def norm_pdf(x):
+                                    return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
 
-                            def calc_gamma(S, K, T, r, sigma):
-                                if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
-                                    return 0.0
-                                try:
-                                    d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
-                                    return norm_pdf(d1) / (S * sigma * math.sqrt(T))
-                                except Exception:
-                                    return 0.0
+                                def calc_gamma(S, K, T, r, sigma):
+                                    if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+                                        return 0.0
+                                    try:
+                                        d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+                                        return norm_pdf(d1) / (S * sigma * math.sqrt(T))
+                                    except Exception:
+                                        return 0.0
 
-                            all_options_data = []
-                            now = datetime.datetime.now()
-                            r = 0.045
+                                all_options_data = []
+                                now = datetime.datetime.now()
+                                r = 0.045
 
-                            for exp in selected_exp_dates:
-                                try:
-                                    opt_chain = tk.option_chain(exp)
-                                    exp_date_obj = datetime.datetime.strptime(exp, "%Y-%m-%d")
-                                    T = max((exp_date_obj - now).days / 365.25, 0.001)
+                                for exp in selected_exp_dates:
+                                    try:
+                                        opt_chain = tk.option_chain(exp)
+                                        exp_date_obj = datetime.datetime.strptime(exp, "%Y-%m-%d")
+                                        T = max((exp_date_obj - now).days / 365.25, 0.001)
 
-                                    calls = opt_chain.calls
-                                    puts = opt_chain.puts
+                                        calls = opt_chain.calls
+                                        puts = opt_chain.puts
 
-                                    for _, row in calls.iterrows():
-                                        strike = float(row["strike"])
-                                        oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                                        iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                                        if oi > 0:
-                                            gamma = calc_gamma(spot_price, strike, T, r, iv)
-                                            gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6
-                                            all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
+                                        for _, row in calls.iterrows():
+                                            strike = float(row["strike"])
+                                            oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                                            iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                                            if oi > 0:
+                                                gamma = calc_gamma(spot_price, strike, T, r, iv)
+                                                gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6
+                                                all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
 
-                                    for _, row in puts.iterrows():
-                                        strike = float(row["strike"])
-                                        oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                                        iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                                        if oi > 0:
-                                            gamma = calc_gamma(spot_price, strike, T, r, iv)
-                                            gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6)
-                                            all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
-                                except Exception:
-                                    continue
+                                        for _, row in puts.iterrows():
+                                            strike = float(row["strike"])
+                                            oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                                            iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                                            if oi > 0:
+                                                gamma = calc_gamma(spot_price, strike, T, r, iv)
+                                                gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e6)
+                                                all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
+                                    except Exception:
+                                        continue
 
-                            if not all_options_data:
-                                st.info("Insufficient open interest data found across the selected expiration dates.")
-                            else:
-                                df_gex = pd.DataFrame(all_options_data)
-                                df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
+                                if not all_options_data:
+                                    st.info("Insufficient open interest data found across the selected expiration dates.")
+                                else:
+                                    df_gex = pd.DataFrame(all_options_data)
+                                    df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
 
-                                df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
+                                    df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
 
-                                total_net_gex = df_grouped["gex"].sum()
+                                    total_net_gex = df_grouped["gex"].sum()
 
-                                df_grouped = df_grouped.sort_values("strike")
-                                df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
-                                
-                                flip_strike = spot_price
-                                zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
-                                if not zero_crossings.empty:
-                                    closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
-                                    flip_strike = zero_crossings.loc[closest_idx, "strike"]
+                                    df_grouped = df_grouped.sort_values("strike")
+                                    df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
+                                    
+                                    flip_strike = spot_price
+                                    zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
+                                    if not zero_crossings.empty:
+                                        closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
+                                        flip_strike = zero_crossings.loc[closest_idx, "strike"]
 
-                                m1, m2, m3, m4 = st.columns(4)
-                                with m1:
-                                    st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
-                                with m2:
-                                    gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
-                                    st.metric("Total Net GEX", f"${total_net_gex:,.2f}M", delta=gex_color_label)
-                                with m3:
-                                    st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
-                                with m4:
-                                    st.metric("Expirations Selected", f"{len(selected_exp_dates)}")
+                                    m1, m2, m3, m4 = st.columns(4)
+                                    with m1:
+                                        st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
+                                    with m2:
+                                        gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
+                                        st.metric("Total Net GEX", f"${total_net_gex:,.2f}M", delta=gex_color_label)
+                                    with m3:
+                                        st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
+                                    with m4:
+                                        st.metric("Expirations Selected", f"{len(selected_exp_dates)}")
 
-                                st.markdown("<br>", unsafe_allow_html=True)
+                                    st.markdown("<br>", unsafe_allow_html=True)
 
-                                import altair as alt
+                                    import altair as alt
 
-                                df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
+                                    df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
-                                chart = alt.Chart(df_filtered).mark_bar().encode(
-                                    y=alt.Y("strike:O", title="Strike Price ($)", sort="descending"),
-                                    x=alt.X("gex:Q", title="Gamma Exposure ($ Millions per 1% Move)"),
-                                    color=alt.Color("color:N", scale=None),
-                                    tooltip=["strike", "gex"]
-                                ).properties(
-                                    height=650,
-                                    background="#080808"
-                                ).configure_view(
-                                    strokeWidth=0
-                                ).configure_axis(
-                                    gridColor="#1a1a1a",
-                                    domainColor="#333333",
-                                    labelColor="#848e9c",
-                                    titleColor="#eaecef"
-                                )
+                                    chart = alt.Chart(df_filtered).mark_bar().encode(
+                                        y=alt.Y("strike:O", title="Strike Price ($)", sort="descending"),
+                                        x=alt.X("gex:Q", title="Gamma Exposure ($ Millions per 1% Move)"),
+                                        color=alt.Color("color:N", scale=None),
+                                        tooltip=["strike", "gex"]
+                                    ).properties(
+                                        height=650,
+                                        background="#080808"
+                                    ).configure_view(
+                                        strokeWidth=0
+                                    ).configure_axis(
+                                        gridColor="#1a1a1a",
+                                        domainColor="#333333",
+                                        labelColor="#848e9c",
+                                        titleColor="#eaecef"
+                                    )
 
-                                st.altair_chart(chart, use_container_width=True)
-
-                                st.markdown(
-                                    f"""
-                                    <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
-                                        <b>Quant Intelligence Note:</b> 
-                                        <ul>
-                                            <li><b>Positive GEX (Green Bars — Right):</b> Market makers are long gamma and must dynamically hedge by selling into rallies and buying into dips, which tends to compress intraday volatility.</li>
-                                            <li><b>Negative GEX (Red Bars — Left):</b> Market makers are short gamma and must chase momentum by buying rising markets and selling falling markets, amplifying volatility.</li>
-                                            <li><b>Gamma Flip Point (~${flip_strike:,.2f}):</b> The critical institutional pivot level where dealer hedging behavior flips polarity.</li>
-                                        </ul>
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True,
-                                )
-                        except Exception as e:
-                            st.error(f"Error computing Gamma Exposure: {e}")
+                                    st.altair_chart(chart, use_container_width=True)
+                            except Exception as e:
+                                st.error(f"Error computing Gamma Exposure: {e}")
 
     with main_tab_finder:
         st.markdown(
             f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Contract Selection // {target_symbol}</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Automatically analyzes the options chain to identify and rank the highest-conviction Call and Put contracts based on institutional liquidity, tight bid-ask spreads, and optimal 0.35–0.50 Delta exposure.</p>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Automatically analyzes the options chain to identify and rank the highest-conviction Call and Put contracts.</p>
             </div>
         """,
             unsafe_allow_html=True,
@@ -700,10 +623,7 @@ else:
                                         continue
                                         
                                     d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
-                                    if opt_type == "call":
-                                        delta = norm_cdf(d1)
-                                    else:
-                                        delta = norm_cdf(d1) - 1.0
+                                    delta = norm_cdf(d1) if opt_type == "call" else norm_cdf(d1) - 1.0
                                         
                                     abs_delta = abs(delta)
                                     if 0.30 <= abs_delta <= 0.60:
@@ -767,25 +687,25 @@ else:
 
         sectors_data = {
             "Energy (XLE)": [
-                {"ticker": "MPC", "price": 392.12, "perf": "1.32%", "change": 5.12},
-                {"ticker": "PSX", "price": 258.58, "perf": "0.97%", "change": 2.49},
-                {"ticker": "CVX", "price": 212.70, "perf": "0.43%", "change": 0.92},
-                {"ticker": "XOM", "price": 163.83, "perf": "-0.19%", "change": -0.32},
-                {"ticker": "COP", "price": 136.15, "perf": "-0.76%", "change": -1.04},
-                {"ticker": "OXY", "price": 61.01, "perf": "0.17%", "change": 0.10},
-                {"ticker": "EOG", "price": 147.92, "perf": "-0.70%", "change": -1.04},
-                {"ticker": "SLB", "price": 57.93, "perf": "-0.34%", "change": -0.20}
+                {"ticker": "MPC", "price": 392.12, "perf": "1.32%"},
+                {"ticker": "PSX", "price": 258.58, "perf": "0.97%"},
+                {"ticker": "CVX", "price": 212.70, "perf": "0.43%"},
+                {"ticker": "XOM", "price": 163.83, "perf": "-0.19%"},
+                {"ticker": "COP", "price": 136.15, "perf": "-0.76%"},
+                {"ticker": "OXY", "price": 61.01, "perf": "0.17%"},
+                {"ticker": "EOG", "price": 147.92, "perf": "-0.70%"},
+                {"ticker": "SLB", "price": 57.93, "perf": "-0.34%"}
             ],
             "Technology (XLK)": [
-                {"ticker": "AAPL", "price": 225.50, "perf": "1.15%", "change": 2.56},
-                {"ticker": "MSFT", "price": 440.20, "perf": "0.82%", "change": 3.60},
-                {"ticker": "NVDA", "price": 128.40, "perf": "2.45%", "change": 3.08},
-                {"ticker": "GOOGL", "price": 178.10, "perf": "-0.45%", "change": -0.80},
+                {"ticker": "AAPL", "price": 225.50, "perf": "1.15%"},
+                {"ticker": "MSFT", "price": 440.20, "perf": "0.82%"},
+                {"ticker": "NVDA", "price": 128.40, "perf": "2.45%"},
+                {"ticker": "GOOGL", "price": 178.10, "perf": "-0.45%"},
             ],
             "Financials (XLF)": [
-                {"ticker": "JPM", "price": 210.30, "perf": "0.55%", "change": 1.15},
-                {"ticker": "BAC", "price": 39.40, "perf": "0.20%", "change": 0.08},
-                {"ticker": "WFC", "price": 58.20, "perf": "-0.30%", "change": -0.18},
+                {"ticker": "JPM", "price": 210.30, "perf": "0.55%"},
+                {"ticker": "BAC", "price": 39.40, "perf": "0.20%"},
+                {"ticker": "WFC", "price": 58.20, "perf": "-0.30%"},
             ]
         }
 
