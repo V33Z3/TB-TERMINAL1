@@ -298,12 +298,12 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # TOP-LEVEL NAVIGATION USING STATE RADIO (Ensures programmatic switching works reliably)
+    # TOP-LEVEL NAVIGATION USING STATE RADIO
     nav_options = [
         "📈 Terminal Chart & Watchlist",
         "⚛️ Gamma Exposure (GEX) Analysis",
         "🎯 Optimal Contract Finder",
-        "🔄 Sector Rotation Grid"
+        "🔄 Sector Rotation Leaderboard"
     ]
     
     if st.session_state.active_main_tab not in nav_options:
@@ -700,103 +700,126 @@ else:
                         except Exception as e:
                             st.error(f"Error scanning options contracts: {e}")
 
-    elif selected_main_tab == "🔄 Sector Rotation Grid":
+    elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
         st.markdown(
             """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Grid & Capital Flow (All 11 GICS Sectors)</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Monitor sector momentum and top constituents. Click any ticker or button below to switch to the Terminal Chart view.</p>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 All 11 GICS Sectors Performance Leaderboard</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Ranked live from best to worst performing sector. Click any constituent stock to inspect it on the terminal chart.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        sectors_data = {
-            "Technology (XLK)": [
-                {"ticker": "AAPL", "price": 225.50},
-                {"ticker": "MSFT", "price": 440.20},
-                {"ticker": "NVDA", "price": 128.40},
-                {"ticker": "AVGO", "price": 165.20},
-                {"ticker": "CRM", "price": 265.40}
-            ],
-            "Financials (XLF)": [
-                {"ticker": "JPM", "price": 210.30},
-                {"ticker": "BAC", "price": 39.40},
-                {"ticker": "WFC", "price": 58.20},
-                {"ticker": "GS", "price": 475.10},
-                {"ticker": "MS", "price": 102.50}
-            ],
-            "Energy (XLE)": [
-                {"ticker": "XOM", "price": 116.80},
-                {"ticker": "CVX", "price": 152.70},
-                {"ticker": "COP", "price": 114.15},
-                {"ticker": "SLB", "price": 45.93},
-                {"ticker": "OXY", "price": 61.01}
-            ],
-            "Healthcare (XLV)": [
-                {"ticker": "LLY", "price": 950.20},
-                {"ticker": "UNH", "price": 560.10},
-                {"ticker": "JNJ", "price": 160.40},
-                {"ticker": "MRK", "price": 125.30},
-                {"ticker": "ABBV", "price": 185.60}
-            ],
-            "Consumer Discretionary (XLY)": [
-                {"ticker": "AMZN", "price": 185.20},
-                {"ticker": "TSLA", "price": 220.40},
-                {"ticker": "HD", "price": 385.10},
-                {"ticker": "NKE", "price": 85.30},
-                {"ticker": "MCD", "price": 290.10}
-            ],
-            "Consumer Staples (XLP)": [
-                {"ticker": "WMT", "price": 75.40},
-                {"ticker": "PG", "price": 170.20},
-                {"ticker": "COST", "price": 880.50},
-                {"ticker": "KO", "price": 68.40},
-                {"ticker": "PEP", "price": 175.20}
-            ],
-            "Industrials (XLI)": [
-                {"ticker": "GE", "price": 175.40},
-                {"ticker": "CAT", "price": 360.20},
-                {"ticker": "RTX", "price": 110.50},
-                {"ticker": "UNP", "price": 245.30},
-                {"ticker": "HON", "price": 210.10}
-            ],
-            "Utilities (XLU)": [
-                {"ticker": "NEE", "price": 80.40},
-                {"ticker": "SO", "price": 85.20},
-                {"ticker": "DUK", "price": 105.10},
-                {"ticker": "SRE", "price": 82.30},
-                {"ticker": "AEP", "price": 98.40}
-            ],
-            "Materials (XLB)": [
-                {"ticker": "LIN", "price": 460.20},
-                {"ticker": "SHW", "price": 350.40},
-                {"ticker": "FCX", "price": 48.20},
-                {"ticker": "APD", "price": 305.10},
-                {"ticker": "NEM", "price": 52.40}
-            ],
-            "Real Estate (XLRE)": [
-                {"ticker": "PLD", "price": 125.40},
-                {"ticker": "AMT", "price": 220.50},
-                {"ticker": "EQIX", "price": 890.10},
-                {"ticker": "CCI", "price": 115.20},
-                {"ticker": "PSA", "price": 330.40}
-            ],
-            "Communication Services (XLC)": [
-                {"ticker": "GOOGL", "price": 178.10},
-                {"ticker": "META", "price": 510.40},
-                {"ticker": "NFLX", "price": 680.20},
-                {"ticker": "DIS", "price": 95.40},
-                {"ticker": "CMCSA", "price": 41.20}
-            ]
+        sectors_master = {
+            "Technology (XLK)": {
+                "etf": "XLK",
+                "constituents": [{"ticker": "AAPL", "price": 225.50}, {"ticker": "MSFT", "price": 440.20}, {"ticker": "NVDA", "price": 128.40}, {"ticker": "AVGO", "price": 165.20}, {"ticker": "CRM", "price": 265.40}]
+            },
+            "Financials (XLF)": {
+                "etf": "XLF",
+                "constituents": [{"ticker": "JPM", "price": 210.30}, {"ticker": "BAC", "price": 39.40}, {"ticker": "WFC", "price": 58.20}, {"ticker": "GS", "price": 475.10}, {"ticker": "MS", "price": 102.50}]
+            },
+            "Energy (XLE)": {
+                "etf": "XLE",
+                "constituents": [{"ticker": "XOM", "price": 116.80}, {"ticker": "CVX", "price": 152.70}, {"ticker": "COP", "price": 114.15}, {"ticker": "SLB", "price": 45.93}, {"ticker": "OXY", "price": 61.01}]
+            },
+            "Healthcare (XLV)": {
+                "etf": "XLV",
+                "constituents": [{"ticker": "LLY", "price": 950.20}, {"ticker": "UNH", "price": 560.10}, {"ticker": "JNJ", "price": 160.40}, {"ticker": "MRK", "price": 125.30}, {"ticker": "ABBV", "price": 185.60}]
+            },
+            "Consumer Discretionary (XLY)": {
+                "etf": "XLY",
+                "constituents": [{"ticker": "AMZN", "price": 185.20}, {"ticker": "TSLA", "price": 220.40}, {"ticker": "HD", "price": 385.10}, {"ticker": "NKE", "price": 85.30}, {"ticker": "MCD", "price": 290.10}]
+            },
+            "Consumer Staples (XLP)": {
+                "etf": "XLP",
+                "constituents": [{"ticker": "WMT", "price": 75.40}, {"ticker": "PG", "price": 170.20}, {"ticker": "COST", "price": 880.50}, {"ticker": "KO", "price": 68.40}, {"ticker": "PEP", "price": 175.20}]
+            },
+            "Industrials (XLI)": {
+                "etf": "XLI",
+                "constituents": [{"ticker": "GE", "price": 175.40}, {"ticker": "CAT", "price": 360.20}, {"ticker": "RTX", "price": 110.50}, {"ticker": "UNP", "price": 245.30}, {"ticker": "HON", "price": 210.10}]
+            },
+            "Utilities (XLU)": {
+                "etf": "XLU",
+                "constituents": [{"ticker": "NEE", "price": 80.40}, {"ticker": "SO", "price": 85.20}, {"ticker": "DUK", "price": 105.10}, {"ticker": "SRE", "price": 82.30}, {"ticker": "AEP", "price": 98.40}]
+            },
+            "Materials (XLB)": {
+                "etf": "XLB",
+                "constituents": [{"ticker": "LIN", "price": 460.20}, {"ticker": "SHW", "price": 350.40}, {"ticker": "FCX", "price": 48.20}, {"ticker": "APD", "price": 305.10}, {"ticker": "NEM", "price": 52.40}]
+            },
+            "Real Estate (XLRE)": {
+                "etf": "XLRE",
+                "constituents": [{"ticker": "PLD", "price": 125.40}, {"ticker": "AMT", "price": 220.50}, {"ticker": "EQIX", "price": 890.10}, {"ticker": "CCI", "price": 115.20}, {"ticker": "PSA", "price": 330.40}]
+            },
+            "Communication Services (XLC)": {
+                "etf": "XLC",
+                "constituents": [{"ticker": "GOOGL", "price": 178.10}, {"ticker": "META", "price": 510.40}, {"ticker": "NFLX", "price": 680.20}, {"ticker": "DIS", "price": 95.40}, {"ticker": "CMCSA", "price": 41.20}]
+            }
         }
 
-        selected_sector = st.selectbox("Select Sector Rotation View", options=list(sectors_data.keys()), key="sector_select_box")
-        constituents_list = sectors_data[selected_sector]
+        # Calculate live performance for all 11 sectors
+        sector_performance_list = []
+        for sec_name, data in sectors_master.items():
+            etf_sym = data["etf"]
+            price, pct, _ = fetch_live_quote(etf_sym)
+            sector_performance_list.append({
+                "Sector": sec_name,
+                "ETF": etf_sym,
+                "Price": price,
+                "Change": pct,
+                "constituents": data["constituents"]
+            })
 
-        st.markdown(f"#### Top Constituents: {selected_sector}")
+        # Sort descending by performance so the best sector is at the top
+        sector_performance_list = sorted(sector_performance_list, key=lambda x: x["Change"], reverse=True)
+
+        st.markdown("#### 🏆 Sector Performance Ranking (Best to Worst)")
         
-        for item in constituents_list:
+        # Display Leaderboard Header
+        l_col1, l_col2, l_col3, l_col4 = st.columns([3, 1.5, 2, 2])
+        with l_col1:
+            st.markdown("<b>Sector Name</b>", unsafe_allow_html=True)
+        with l_col2:
+            st.markdown("<b>ETF Ticker</b>", unsafe_allow_html=True)
+        with l_col3:
+            st.markdown("<b>ETF Price</b>", unsafe_allow_html=True)
+        with l_col4:
+            st.markdown("<b>Performance</b>", unsafe_allow_html=True)
+        st.divider()
+
+        # Render each sector in the leaderboard ranking
+        selected_sector_to_inspect = st.selectbox(
+            "Select Sector to View Top Constituents & Stocks", 
+            options=[s["Sector"] for s in sector_performance_list],
+            key="sector_drilldown_select"
+        )
+
+        for s_item in sector_performance_list:
+            sec_name = s_item["Sector"]
+            etf_sym = s_item["ETF"]
+            price = s_item["Price"]
+            pct = s_item["Change"]
+            color = "#0ecb81" if pct >= 0 else "#f6465d"
+            sign = "+" if pct >= 0 else ""
+
+            r_col1, r_col2, r_col3, r_col4 = st.columns([3, 1.5, 2, 2])
+            with r_col1:
+                st.markdown(f"<b>{sec_name}</b>", unsafe_allow_html=True)
+            with r_col2:
+                st.markdown(f"<code>{etf_sym}</code>", unsafe_allow_html=True)
+            with r_col3:
+                st.markdown(f"${price:,.2f}", unsafe_allow_html=True)
+            with r_col4:
+                st.markdown(f"<span style='color: {color}; font-weight: bold;'>{sign}{pct:.2f}%</span>", unsafe_allow_html=True)
+
+        st.markdown("<br><hr>", unsafe_allow_html=True)
+
+        # Show constituents for the user's selected sector
+        active_sec_data = next((s for s in sector_performance_list if s["Sector"] == selected_sector_to_inspect), sector_performance_list[0])
+        st.markdown(f"#### Top Constituents: {active_sec_data['Sector']}")
+
+        for item in active_sec_data["constituents"]:
             sym = item["ticker"]
             p_val, p_pct, _ = fetch_live_quote(sym)
             if p_val <= 0:
