@@ -344,11 +344,12 @@ else:
 
   render_live_header(target_symbol)
 
-  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), and Optimal Contract Finder
-  main_tab_chart, main_tab_gex, main_tab_finder = st.tabs([
+  # TOP-LEVEL TABS: Research Chart / Watchlist, Gamma Exposure (GEX), Optimal Contract Finder, and Sector Rotation
+  main_tab_chart, main_tab_gex, main_tab_finder, main_tab_sectors = st.tabs([
       "📈 Terminal Chart & Watchlist",
       "⚛️ Gamma Exposure (GEX) Analysis",
-      "🎯 Optimal Contract Finder"
+      "🎯 Optimal Contract Finder",
+      "🔄 Sector Rotation Matrix"
   ])
 
   with main_tab_chart:
@@ -782,3 +783,85 @@ else:
 
             except Exception as e:
               st.error(f"Error selecting optimal contracts: {e}")
+
+  with main_tab_sectors:
+    st.markdown(
+        """
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 Sector Rotation Matrix</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Tracks performance across the 11 GICS sector SPDR ETFs to monitor institutional capital flows and risk-on/risk-off rotations.</p>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not YFINANCE_AVAILABLE:
+      st.error("`yfinance` is required to load sector performance data.")
+    else:
+      with st.spinner("Fetching institutional sector rotation matrix..."):
+        try:
+          sectors_dict = {
+              "Technology": "XLK",
+              "Financials": "XLF",
+              "Healthcare": "XLV",
+              "Consumer Discretionary": "XLY",
+              "Consumer Staples": "XLP",
+              "Energy": "XLE",
+              "Industrials": "XLI",
+              "Utilities": "XLU",
+              "Real Estate": "XLRE",
+              "Materials": "XLB",
+              "Communication Services": "XLC",
+          }
+
+          sector_rows = []
+          session = get_yf_session()
+
+          for sector_name, sym in sectors_dict.items():
+            t = yf.Ticker(sym, session=session)
+            hist = t.history(period="1mo")
+            if not hist.empty:
+              price = float(hist["Close"].iloc[-1])
+              p_1d = float(hist["Close"].iloc[-2]) if len(hist) > 1 else price
+              p_5d = float(hist["Close"].iloc[-5]) if len(hist) >= 5 else float(hist["Close"].iloc[0])
+              p_1m = float(hist["Close"].iloc[0])
+
+              chg_1d = ((price - p_1d) / p_1d) * 100
+              chg_5d = ((price - p_5d) / p_5d) * 100
+              chg_1m = ((price - p_1m) / p_1m) * 100
+
+              sector_rows.append({
+                  "Sector": sector_name,
+                  "Ticker": sym,
+                  "Price ($)": round(price, 2),
+                  "1D Return (%)": round(chg_1d, 2),
+                  "5D Return (%)": round(chg_5d, 2),
+                  "1M Return (%)": round(chg_1m, 2),
+              })
+
+          if sector_rows:
+            df_sectors = pd.DataFrame(sector_rows)
+            df_sectors = df_sectors.sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
+
+            def color_returns(val):
+              color = "#0ecb81" if val >= 0 else "#f6465d"
+              return f"color: {color}; font-weight: bold;"
+
+            st.dataframe(
+                df_sectors.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)", "1M Return (%)"]),
+                use_container_width=True,
+                height=450
+            )
+
+            st.markdown(
+                """
+                <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
+                    <b>Rotation Insights:</b> Use this matrix to spot institutional momentum. Leading 5D and 1M returns in Cyclical/Discretionary sectors indicate risk-on behavior, while outperformance in Staples and Utilities signals a defensive flight to safety.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+          else:
+            st.warning("Unable to fetch sector data at the moment.")
+        except Exception as e:
+          st.error(f"Error loading sector rotation matrix: {e}")
