@@ -818,25 +818,33 @@ else:
             s_price = float(hist_s["Close"].iloc[-1])
             s_p1d = float(hist_s["Close"].iloc[-2]) if len(hist_s) > 1 else s_price
             s_p5d = float(hist_s["Close"].iloc[-5]) if len(hist_s) >= 5 else float(hist_s["Close"].iloc[0])
+            
             s_chg_1d = ((s_price - s_p1d) / s_p1d) * 100
             s_chg_5d = ((s_price - s_p5d) / s_p5d) * 100
+            
+            s_diff_1d = s_price - s_p1d
+            s_diff_5d = s_price - s_p5d
+
             stock_rows.append({
                 "Stock": sym,
                 "Price ($)": round(s_price, 2),
-                "1D Return (%)": round(s_chg_1d, 2),
-                "5D Return (%)": round(s_chg_5d, 2),
+                "1D Performance (%)": round(s_chg_1d, 2),
+                "1D Change ($)": round(s_diff_1d, 2),
+                "5D Performance (%)": round(s_chg_5d, 2),
+                "5D Change ($)": round(s_diff_5d, 2),
             })
         except Exception:
           pass
 
       if stock_rows:
-        df_stocks = pd.DataFrame(stock_rows).sort_values(by="5D Return (%)", ascending=False).reset_index(drop=True)
+        df_stocks = pd.DataFrame(stock_rows).sort_values(by="5D Performance (%)", ascending=False).reset_index(drop=True)
         
-        def color_returns(val):
+        def color_performance(val):
           color = "#0ecb81" if val >= 0 else "#f6465d"
           return f"color: {color}; font-weight: bold;"
 
-        styled_stocks = df_stocks.style.map(color_returns, subset=["1D Return (%)", "5D Return (%)"]) if hasattr(df_stocks.style, "map") else df_stocks.style.applymap(color_returns, subset=["1D Return (%)", "5D Return (%)"])
+        perf_cols = ["1D Performance (%)", "1D Change ($)", "5D Performance (%)", "5D Change ($)"]
+        styled_stocks = df_stocks.style.map(color_performance, subset=perf_cols) if hasattr(df_stocks.style, "map") else df_stocks.style.applymap(color_performance, subset=perf_cols)
         st.dataframe(styled_stocks, use_container_width=True, height=350)
       else:
         st.warning("Could not load constituent stock details.")
