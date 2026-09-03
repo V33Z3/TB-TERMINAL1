@@ -646,7 +646,7 @@ else:
       except Exception as e:
         st.error(f"Connection error: {e}")
 
-    # Persistent Custom Interactive Watchlist with CDN Logos, Text-Only Tickers, Volume (matching ticker size/color), and Red Delete Buttons
+    # Persistent Custom Interactive Watchlist Header & Form
     st.markdown(
         """
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
@@ -674,66 +674,70 @@ else:
           save_watchlist_to_db()
           st.rerun()
 
-    # Render Watchlist items with Logo images, text-only clickable tickers, volume matching ticker style, and red delete buttons
-    st.markdown(
-        "<div style='background: #050505; border: 1px solid #1a1a1a;"
-        " border-radius: 4px; padding: 8px; max-height: 320px;"
-        " overflow-y: auto;'>",
-        unsafe_allow_html=True,
-    )
 
-    if not st.session_state.watchlist:
+    # Auto-updating Watchlist Fragment (refreshes every 3 seconds live)
+    @st.fragment(run_every="3s")
+    def render_watchlist_fragment(a_key, a_sec):
       st.markdown(
-          "<div style='color: #848e9c; font-size: 12px; text-align: center;"
-          " padding: 10px;'>Watchlist is empty. Add symbols above.</div>",
+          "<div style='background: #050505; border: 1px solid #1a1a1a;"
+          " border-radius: 4px; padding: 8px; max-height: 320px;"
+          " overflow-y: auto;'>",
           unsafe_allow_html=True,
       )
-    else:
-      for sym in list(st.session_state.watchlist):
-        p_val, p_pct, p_vol = fetch_live_quote(
-            sym, existing_key, existing_sec
+
+      if not st.session_state.watchlist:
+        st.markdown(
+            "<div style='color: #848e9c; font-size: 12px; text-align: center;"
+            " padding: 10px;'>Watchlist is empty. Add symbols above.</div>",
+            unsafe_allow_html=True,
         )
-        color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-        sign = "+" if p_pct >= 0 else ""
-        logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
-        vol_str = format_vol(p_vol) if p_vol > 0 else "-"
+      else:
+        for sym in list(st.session_state.watchlist):
+          p_val, p_pct, p_vol = fetch_live_quote(sym, a_key, a_sec)
+          color = "#0ecb81" if p_pct >= 0 else "#f6465d"
+          sign = "+" if p_pct >= 0 else ""
+          logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
+          vol_str = format_vol(p_vol) if p_vol > 0 else "-"
 
-        w_col_info, w_col_vol, w_col_price, w_col_del = st.columns(
-            [2.2, 1.4, 1.8, 1.0]
-        )
+          w_col_info, w_col_vol, w_col_price, w_col_del = st.columns(
+              [2.2, 1.4, 1.8, 1.0]
+          )
 
-        with w_col_info:
-          st.markdown(
-              f"""
-                <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
-                    <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
-                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
-                </a>
-                """,
-              unsafe_allow_html=True,
-          )
-        with w_col_vol:
-          st.markdown(
-              f"<div style='font-size: 13px; color: #eaecef; padding-top:"
-              f" 4px;'>{vol_str}</div>",
-              unsafe_allow_html=True,
-          )
-        with w_col_price:
-          st.markdown(
-              f"<div style='font-size: 11px; text-align: right;"
-              f" padding-top: 3px; color:"
-              f" {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>",
-              unsafe_allow_html=True,
-          )
-        with w_col_del:
-          st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
-          if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
-            st.session_state.watchlist.remove(sym)
-            save_watchlist_to_db()
-            st.rerun()
-          st.markdown("</div>", unsafe_allow_html=True)
+          with w_col_info:
+            st.markdown(
+                f"""
+                    <a href="?ticker={sym}" target="_self" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+                        <img src="{logo_url}" width="24" height="24" style="border-radius:50%; object-fit:contain; background:#222;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={sym}&background=333333&color=ffffff&size=64';">
+                        <span style="font-weight: bold; font-size: 13px; color: #eaecef;">{sym}</span>
+                    </a>
+                    """,
+                unsafe_allow_html=True,
+            )
+          with w_col_vol:
+            st.markdown(
+                f"<div style='font-size: 13px; color: #eaecef; padding-top:"
+                f" 4px;'>{vol_str}</div>",
+                unsafe_allow_html=True,
+            )
+          with w_col_price:
+            st.markdown(
+                f"<div style='font-size: 11px; text-align: right;"
+                f" padding-top: 3px; color:"
+                f" {color};'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>",
+                unsafe_allow_html=True,
+            )
+          with w_col_del:
+            st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+            if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
+              st.session_state.watchlist.remove(sym)
+              save_watchlist_to_db()
+              st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+      st.markdown("</div>", unsafe_allow_html=True)
+
+
+    render_watchlist_fragment(existing_key, existing_sec)
 
   # AI Assistant drawer
   with st.expander("🤖 Groq Quant Intelligence Assistant"):
