@@ -29,7 +29,7 @@ if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN"]
 
 if "nav_selection" not in st.session_state:
-    st.session_state.nav_selection = "📈 Terminal Chart & Watchlist"
+    st.session_state.nav_selection = "Terminal Chart & Watchlist"
 
 if not st.session_state.started:
     st.markdown(
@@ -193,13 +193,14 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
+    # Clean text options without emojis to prevent unicode comparison mismatch bugs
     nav_options = [
-        "📈 Terminal Chart & Watchlist",
-        "⚛️ Gamma Exposure (GEX) Analysis",
-        "🎯 Optimal Contract Finder",
-        "🔄 Sector Rotation Leaderboard",
-        "⚡ Unusual Options Activity",
-        "📰 Live Trading News"
+        "Terminal Chart & Watchlist",
+        "Gamma Exposure (GEX) Analysis",
+        "Optimal Contract Finder",
+        "Sector Rotation Leaderboard",
+        "Unusual Options Activity",
+        "Live Trading News"
     ]
 
     selected_main_tab = st.radio(
@@ -211,7 +212,7 @@ else:
     )
     st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
-    if selected_main_tab == "📈 Terminal Chart & Watchlist":
+    if selected_main_tab == "Terminal Chart & Watchlist":
         col_chart, col_wl = st.columns([3, 1])
 
         with col_chart:
@@ -283,7 +284,7 @@ else:
                         st.session_state.watchlist = [s for s in st.session_state.watchlist if s != symbol]
                         st.rerun()
 
-    elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
+    elif selected_main_tab == "Gamma Exposure (GEX) Analysis":
         st.markdown(f"### ⚛️ Gamma Exposure (GEX) Profile // {target_symbol}")
         st.markdown("Dealer positioning metrics and key structural volatility walls.")
         
@@ -308,7 +309,7 @@ else:
         </table>
         """ % (active_price * 0.90, active_price * 0.95, active_price, active_price * 1.05, active_price * 1.10), unsafe_allow_html=True)
 
-    elif selected_main_tab == "🎯 Optimal Contract Finder":
+    elif selected_main_tab == "Optimal Contract Finder":
         st.markdown(f"### 🎯 Optimal Contract Finder // {target_symbol}")
         st.markdown("High-probability directional and volatility options setups.")
         
@@ -335,7 +336,7 @@ else:
             target_symbol, int(active_price*1.10), active_price * 1.10
         ), unsafe_allow_html=True)
 
-    elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
+    elif selected_main_tab == "Sector Rotation Leaderboard":
         st.markdown("### 🔄 Sector Rotation Leaderboard")
         st.markdown("Tracking institutional capital flows across major market sectors.")
         
@@ -355,7 +356,7 @@ else:
         </table>
         """, unsafe_allow_html=True)
 
-    elif selected_main_tab == "⚡ Unusual Options Activity":
+    elif selected_main_tab == "Unusual Options Activity":
         st.markdown("### ⚡ Unusual Options Activity")
         st.markdown("Real-time sweep and block order scanner highlighting institutional positioning.")
         
@@ -373,7 +374,7 @@ else:
         </table>
         """, unsafe_allow_html=True)
 
-    elif selected_main_tab == "📰 Live Trading News":
+    elif selected_main_tab == "Live Trading News":
         st.markdown("### 📰 Live Trading News")
         st.markdown("Live market wires and macroeconomic news feeds.")
         
