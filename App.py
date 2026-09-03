@@ -25,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Map tabs to short query param codes (including Live Trading News with Trump feed option)
+# Map tabs to short query param codes
 tab_to_param = {
     "📈 Terminal Chart & Watchlist": "chart",
     "⚛️ Gamma Exposure (GEX) Analysis": "gex",
@@ -1007,26 +1007,29 @@ else:
                     except Exception:
                         pass
             
-            if not articles or mode.startswith("General") or mode.startswith("Trump"):
+            if mode.startswith("General") or mode.startswith("Trump") or not articles:
                 try:
-                    rss_url = "https://finance.yahoo.com/news/rss"
+                    if mode.startswith("Trump"):
+                        rss_url = "https://news.google.com/rss/search?q=Donald+Trump+market+tariff+policy&hl=en-US&gl=US&ceid=US:en"
+                    else:
+                        rss_url = "https://finance.yahoo.com/news/rss"
+
                     resp = requests.get(rss_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
                     if resp.status_code == 200:
                         root = ET.fromstring(resp.content)
                         for item in root.findall(".//item"):
                             title = item.find("title").text if item.find("title") is not None else ""
-                            pub = item.find("source").text if item.find("source") is not None else "Yahoo Finance"
+                            pub = item.find("source").text if item.find("source") is not None else ("Google News" if mode.startswith("Trump") else "Yahoo Finance")
                             link = item.find("link").text if item.find("link") is not None else "#"
                             pub_date = item.find("pubDate").text if item.find("pubDate") is not None else ""
                             
                             if mode.startswith("Trump"):
-                                if any(kw in title.lower() for kw in ["trump", "tariff", "white house", "executive order", "duty", "trade"]):
-                                    articles.append({
-                                        "title": title,
-                                        "publisher": f"Macro / {pub}",
-                                        "link": link,
-                                        "time": pub_date[:16]
-                                    })
+                                articles.append({
+                                    "title": title,
+                                    "publisher": f"Trump Feed / {pub}",
+                                    "link": link,
+                                    "time": pub_date[:16]
+                                })
                             elif mode.startswith("General"):
                                 articles.append({
                                     "title": title,
@@ -1034,22 +1037,6 @@ else:
                                     "link": link,
                                     "time": pub_date[:16]
                                 })
-                except Exception:
-                    pass
-
-            if mode.startswith("Trump") and len(articles) <= 1:
-                try:
-                    from truthbrush import Api
-                    api = Api(require_auth=False)
-                    statuses = api.user(username="realDonaldTrump")
-                    for status in list(statuses)[:15]:
-                        text_content = getattr(status, "content", str(status))
-                        articles.append({
-                            "title": text_content[:180] + "...",
-                            "publisher": "Truth Social (@realDonaldTrump)",
-                            "link": "https://truthsocial.com/@realDonaldTrump",
-                            "time": "Live Feed"
-                        })
                 except Exception:
                     pass
 
