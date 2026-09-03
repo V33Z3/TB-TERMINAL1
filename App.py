@@ -177,7 +177,7 @@ if not st.session_state.terminal_opened:
         st.markdown("<h1 style='text-align: center; color: #f0b90b; letter-spacing: 3px; margin-bottom: 5px;'>⚡ TB TERMINAL</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #848e9c; font-size: 14px; font-family: monospace; letter-spacing: 1px; margin-bottom: 30px;'>INSTITUTIONAL QUANT RESEARCH & GEX ANALYTICS</p>", unsafe_allow_html=True)
         
-        if st.button("OPEN TERMINAL", use_container_width=True, type="primary"):
+        if st.button("Start Trading", use_container_width=True, type="primary"):
             st.session_state.show_splash = True
             st.session_state.terminal_opened = True
             st.rerun()
