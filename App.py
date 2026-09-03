@@ -8,14 +8,12 @@ import requests
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Try importing yfinance for market quotes and options data
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
 
-# Page configuration - Wide mode with expanded sidebar by default
 st.set_page_config(
     page_title="TB TERMINAL // Institutional Market Research & GEX",
     layout="wide",
@@ -23,7 +21,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Handle Ticker and Tab Selection via Query Parameters
 if "ticker" in st.query_params:
     st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
 
@@ -38,7 +35,6 @@ if "tab" in st.query_params:
     elif tab_param == "sectors":
         st.session_state.active_main_tab = "🔄 Sector Rotation Leaderboard"
 
-# Pro Exchange True Black Theme Styling & Red Delete Button Override
 st.markdown(
     """
     <style>
@@ -104,7 +100,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Session state initializations
 if "started" not in st.session_state:
     st.session_state.started = False
 if "active_ticker" not in st.session_state:
@@ -114,7 +109,6 @@ if "watchlist" not in st.session_state:
 if "active_main_tab" not in st.session_state:
     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
 
-# Main Landing Page / Entry Gate with Start Back-Testing Button
 if not st.session_state.started:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_l1, col_l2, col_l3 = st.columns([1, 1.5, 1])
