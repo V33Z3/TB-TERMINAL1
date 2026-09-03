@@ -99,6 +99,33 @@ else:
             font-size: 13px !important;
             min-height: 30px !important;
         }
+
+        .terminal-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #080808;
+            color: #eaecef;
+            font-size: 13px;
+            border: 1px solid #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .terminal-table th {
+            background-color: #12161c;
+            color: #f0b90b;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #1a1a1a;
+            font-weight: 600;
+        }
+        .terminal-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #141414;
+        }
+        .terminal-table tr:hover {
+            background-color: #10141a;
+        }
         </style>
     """,
         unsafe_allow_html=True,
@@ -266,14 +293,20 @@ else:
         g3.metric("Put Wall", f"${active_price * 0.95:,.2f}", "Dealer Support")
         g4.metric("Zero Gamma Level", f"${active_price * 0.98:,.2f}", "Volatility Pivot")
         
-        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
-        gex_df = pd.DataFrame({
-            "Strike": [active_price * 0.90, active_price * 0.95, active_price, active_price * 1.05, active_price * 1.10],
-            "Call Gamma ($M)": [120, 340, 890, 1450, 620],
-            "Put Gamma ($M)": [980, 1150, 410, 150, 40],
-            "Net GEX ($M)": [-860, -810, 480, 1300, 580]
-        })
-        st.dataframe(gex_df, use_container_width=True)
+        st.markdown("""
+        <table class="terminal-table">
+            <thead>
+                <tr><th>Strike</th><th>Call Gamma ($M)</th><th>Put Gamma ($M)</th><th>Net GEX ($M)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>$%0.2f</td><td>$120M</td><td>$980M</td><td style="color: #f6465d;">-$860M</td></tr>
+                <tr><td>$%0.2f</td><td>$340M</td><td>$1,150M</td><td style="color: #f6465d;">-$810M</td></tr>
+                <tr><td>$%0.2f</td><td>$890M</td><td>$410M</td><td style="color: #0ecb81;">+$480M</td></tr>
+                <tr><td>$%0.2f</td><td>$1,450M</td><td>$150M</td><td style="color: #0ecb81;">+$1,300M</td></tr>
+                <tr><td>$%0.2f</td><td>$620M</td><td>$40M</td><td style="color: #0ecb81;">+$580M</td></tr>
+            </tbody>
+        </table>
+        """ % (active_price * 0.90, active_price * 0.95, active_price, active_price * 1.05, active_price * 1.10), unsafe_allow_html=True)
 
     elif selected_main_tab == "🎯 Optimal Contract Finder":
         st.markdown(f"### 🎯 Optimal Contract Finder // {target_symbol}")
@@ -285,41 +318,60 @@ else:
         with c_col2:
             st.selectbox("Target Expiration", ["Weekly (3 Days)", "Monthly (31 Days)", "LEAPS (180+ Days)"])
             
-        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-        opt_df = pd.DataFrame({
-            "Contract": [f"{target_symbol} 260320C{int(active_price*1.05)}", f"{target_symbol} 260320P{int(active_price*0.95)}", f"{target_symbol} 260417C{int(active_price*1.10)}"],
-            "Type": ["CALL", "PUT", "CALL"],
-            "Strike": [active_price * 1.05, active_price * 0.95, active_price * 1.10],
-            "IV": ["28.4%", "32.1%", "26.9%"],
-            "Delta": [0.34, -0.28, 0.41],
-            "Expected ROI": ["+145%", "+112%", "+210%"]
-        })
-        st.dataframe(opt_df, use_container_width=True)
+        st.markdown("""
+        <table class="terminal-table">
+            <thead>
+                <tr><th>Contract</th><th>Type</th><th>Strike</th><th>IV</th><th>Delta</th><th>Expected ROI</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>%s 260320C%d</td><td>CALL</td><td>$%0.2f</td><td>28.4%%</td><td>0.34</td><td style="color: #0ecb81; font-weight: bold;">+145%%</td></tr>
+                <tr><td>%s 260320P%d</td><td>PUT</td><td>$%0.2f</td><td>32.1%%</td><td>-0.28</td><td style="color: #0ecb81; font-weight: bold;">+112%%</td></tr>
+                <tr><td>%s 260417C%d</td><td>CALL</td><td>$%0.2f</td><td>26.9%%</td><td>0.41</td><td style="color: #0ecb81; font-weight: bold;">+210%%</td></tr>
+            </tbody>
+        </table>
+        """ % (
+            target_symbol, int(active_price*1.05), active_price * 1.05,
+            target_symbol, int(active_price*0.95), active_price * 0.95,
+            target_symbol, int(active_price*1.10), active_price * 1.10
+        ), unsafe_allow_html=True)
 
     elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
         st.markdown("### 🔄 Sector Rotation Leaderboard")
         st.markdown("Tracking institutional capital flows across major market sectors.")
         
-        sec_df = pd.DataFrame({
-            "Sector": ["Technology (XLK)", "Communication Services (XLC)", "Financials (XLF)", "Healthcare (XLV)", "Energy (XLE)", "Utilities (XLU)"],
-            "1D Flow ($B)": ["+$4.2B", "+$1.8B", "+$0.9B", "-$0.4B", "-$1.2B", "+$0.2B"],
-            "Relative Strength": ["Leader", "Leader", "Neutral", "Lagging", "Lagging", "Defensive"],
-            "Trend": ["Bullish", "Bullish", "Neutral", "Bearish", "Bearish", "Accumulation"]
-        })
-        st.dataframe(sec_df, use_container_width=True)
+        st.markdown("""
+        <table class="terminal-table">
+            <thead>
+                <tr><th>Sector</th><th>1D Flow ($B)</th><th>Relative Strength</th><th>Trend</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Technology (XLK)</td><td style="color: #0ecb81;">+$4.2B</td><td>Leader</td><td>Bullish</td></tr>
+                <tr><td>Communication Services (XLC)</td><td style="color: #0ecb81;">+$1.8B</td><td>Leader</td><td>Bullish</td></tr>
+                <tr><td>Financials (XLF)</td><td style="color: #0ecb81;">+$0.9B</td><td>Neutral</td><td>Neutral</td></tr>
+                <tr><td>Healthcare (XLV)</td><td style="color: #f6465d;">-$0.4B</td><td>Lagging</td><td>Bearish</td></tr>
+                <tr><td>Energy (XLE)</td><td style="color: #f6465d;">-$1.2B</td><td>Lagging</td><td>Bearish</td></tr>
+                <tr><td>Utilities (XLU)</td><td style="color: #0ecb81;">+$0.2B</td><td>Defensive</td><td>Accumulation</td></tr>
+            </tbody>
+        </table>
+        """, unsafe_allow_html=True)
 
     elif selected_main_tab == "⚡ Unusual Options Activity":
         st.markdown("### ⚡ Unusual Options Activity")
         st.markdown("Real-time sweep and block order scanner highlighting institutional positioning.")
         
-        uom_df = pd.DataFrame({
-            "Time": ["17:31:02", "17:28:45", "17:15:11", "17:02:30"],
-            "Ticker": ["NVDA", "TSLA", "AAPL", "AMZN"],
-            "Order Type": ["SWEEP", "BLOCK", "SWEEP", "BLOCK"],
-            "Details": ["$1.4M Call Ask", "$3.2M Put Bid", "$890K Call Ask", "$2.1M Call Ask"],
-            "Sentiment": ["Bullish", "Bearish", "Bullish", "Bullish"]
-        })
-        st.dataframe(uom_df, use_container_width=True)
+        st.markdown("""
+        <table class="terminal-table">
+            <thead>
+                <tr><th>Time</th><th>Ticker</th><th>Order Type</th><th>Details</th><th>Sentiment</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>17:31:02</td><td><b>NVDA</b></td><td>SWEEP</td><td>$1.4M Call Ask</td><td style="color: #0ecb81;">Bullish</td></tr>
+                <tr><td>17:28:45</td><td><b>TSLA</b></td><td>BLOCK</td><td>$3.2M Put Bid</td><td style="color: #f6465d;">Bearish</td></tr>
+                <tr><td>17:15:11</td><td><b>AAPL</b></td><td>SWEEP</td><td>$890K Call Ask</td><td style="color: #0ecb81;">Bullish</td></tr>
+                <tr><td>17:02:30</td><td><b>AMZN</b></td><td>BLOCK</td><td>$2.1M Call Ask</td><td style="color: #0ecb81;">Bullish</td></tr>
+            </tbody>
+        </table>
+        """, unsafe_allow_html=True)
 
     elif selected_main_tab == "📰 Live Trading News":
         st.markdown("### 📰 Live Trading News")
