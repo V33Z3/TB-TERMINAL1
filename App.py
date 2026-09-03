@@ -348,7 +348,7 @@ else:
   main_tab_chart, main_tab_gex, main_tab_finder = st.tabs([
       "📈 Terminal Chart & Watchlist",
       "⚛️ Gamma Exposure (GEX) Analysis",
-      "🎯 Optimal Option Contract Finder"
+      "🎯 Optimal Contract Finder"
   ])
 
   with main_tab_chart:
@@ -384,7 +384,8 @@ else:
               "allow_symbol_change": true,
               "calendar": false,
               "support_host": "https://www.tradingview.com",
-              "isTransparent": true
+              "isTransparent": true,
+              "hide_side_toolbar": false
             }}
             </script>
           </div>
@@ -638,7 +639,7 @@ else:
     st.markdown(
         f"""
             <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Optimal Option Contract Finder // {target_symbol}</h3>
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Contract Selection // {target_symbol}</h3>
                 <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Automatically analyzes the options chain to identify and rank the highest-conviction Call and Put contracts based on institutional liquidity, tight bid-ask spreads, and optimal 0.35–0.50 Delta exposure.</p>
             </div>
         """,
