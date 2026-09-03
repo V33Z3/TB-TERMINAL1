@@ -487,146 +487,148 @@ else:
     if not YFINANCE_AVAILABLE:
       st.error("`yfinance` is required for options chain data.")
     else:
-      with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
-        try:
-          session = get_yf_session()
-          tk = yf.Ticker(target_symbol, session=session)
-          exp_dates = tk.options
+      try:
+        tk = yf.Ticker(target_symbol)
+        exp_dates = tk.options
+      except Exception as e:
+        exp_dates = []
 
-          if not exp_dates:
-            st.warning(f"No options chain expiration dates found for {target_symbol}.")
-          else:
-            spot_price, _, _ = fetch_live_quote(target_symbol)
-            if spot_price <= 0:
-              hist = tk.history(period="1d")
-              if not hist.empty:
-                spot_price = float(hist["Close"].iloc[-1])
+      if not exp_dates:
+        st.warning(f"No options chain expiration dates found for {target_symbol}. Ensure the ticker has listed options (e.g. SPY, AAPL, NVDA).")
+      else:
+        # Expiration Picker Multiselect
+        default_selections = list(exp_dates[:min(3, len(exp_dates))])
+        selected_exp_dates = st.multiselect(
+            "Select Option Expiration Dates for GEX Calculation:",
+            options=list(exp_dates),
+            default=default_selections
+        )
 
-            # Helper functions for Black-Scholes gamma calculation
-            def norm_pdf(x):
-              return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+        if not selected_exp_dates:
+          st.info("Please select at least one expiration date above to generate the GEX profile.")
+        else:
+          with st.spinner(f"Computing Gamma Exposure profile for {target_symbol}..."):
+            try:
+              spot_price, _, _ = fetch_live_quote(target_symbol)
+              if spot_price <= 0:
+                hist = tk.history(period="1d")
+                if not hist.empty:
+                  spot_price = float(hist["Close"].iloc[-1])
 
-            def calc_gamma(S, K, T, r, sigma):
-              if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
-                return 0.0
-              try:
-                d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
-                return norm_pdf(d1) / (S * sigma * math.sqrt(T))
-              except Exception:
-                return 0.0
+              def norm_pdf(x):
+                return (1.0 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
 
-            # Aggregate options across nearest 4 expiration dates
-            all_options_data = []
-            now = datetime.datetime.now()
-            r = 0.045  # Risk-free rate assumption
+              def calc_gamma(S, K, T, r, sigma):
+                if T <= 0 or sigma <= 0 or S <= 0 or K <= 0:
+                  return 0.0
+                try:
+                  d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+                  return norm_pdf(d1) / (S * sigma * math.sqrt(T))
+                except Exception:
+                  return 0.0
 
-            selected_exp_dates = exp_dates[:4] # Take nearest 4 expirations
-            for exp in selected_exp_dates:
-              try:
-                opt_chain = tk.option_chain(exp)
-                exp_date_obj = datetime.datetime.strptime(exp, "%Y-%m-%d")
-                T = max((exp_date_obj - now).days / 365.25, 0.001)
+              all_options_data = []
+              now = datetime.datetime.now()
+              r = 0.045  # Risk-free rate assumption
 
-                calls = opt_chain.calls
-                puts = opt_chain.puts
+              for exp in selected_exp_dates:
+                try:
+                  opt_chain = tk.option_chain(exp)
+                  exp_date_obj = datetime.datetime.strptime(exp, "%Y-%m-%d")
+                  T = max((exp_date_obj - now).days / 365.25, 0.001)
 
-                for _, row in calls.iterrows():
-                  strike = float(row["strike"])
-                  oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                  iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                  if oi > 0:
-                    gamma = calc_gamma(spot_price, strike, T, r, iv)
-                    # GEX in millions: Gamma * OI * 100 * Spot^2 * 0.01 / 1e9
-                    gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9
-                    all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
+                  calls = opt_chain.calls
+                  puts = opt_chain.puts
 
-                for _, row in puts.iterrows():
-                  strike = float(row["strike"])
-                  oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                  iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                  if oi > 0:
-                    gamma = calc_gamma(spot_price, strike, T, r, iv)
-                    # Put GEX is negative contribution for dealers short puts
-                    gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9)
-                    all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
-              except Exception:
-                continue
+                  for _, row in calls.iterrows():
+                    strike = float(row["strike"])
+                    oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                    iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                    if oi > 0:
+                      gamma = calc_gamma(spot_price, strike, T, r, iv)
+                      gex_val = gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9
+                      all_options_data.append({"strike": strike, "gex": gex_val, "type": "call"})
 
-            if not all_options_data:
-              st.info("Insufficient open interest data found across near-term options chains.")
-            else:
-              df_gex = pd.DataFrame(all_options_data)
-              df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
+                  for _, row in puts.iterrows():
+                    strike = float(row["strike"])
+                    oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
+                    iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
+                    if oi > 0:
+                      gamma = calc_gamma(spot_price, strike, T, r, iv)
+                      gex_val = - (gamma * oi * 100.0 * (spot_price ** 2) * 0.01 / 1e9)
+                      all_options_data.append({"strike": strike, "gex": gex_val, "type": "put"})
+                except Exception:
+                  continue
 
-              # Filter strikes within +/- 25% of spot price for clean charting
-              df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
+              if not all_options_data:
+                st.info("Insufficient open interest data found across the selected expiration dates.")
+              else:
+                df_gex = pd.DataFrame(all_options_data)
+                df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
 
-              total_net_gex = df_grouped["gex"].sum()
+                df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
 
-              # Estimate Gamma Flip Point (strike where cumulative GEX transitions from negative to positive)
-              df_grouped = df_grouped.sort_values("strike")
-              df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
-              
-              flip_strike = spot_price
-              # Find zero crossing closest to spot price
-              zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
-              if not zero_crossings.empty:
-                # Find closest strike to spot price among crossings
-                closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
-                flip_strike = zero_crossings.loc[closest_idx, "strike"]
+                total_net_gex = df_grouped["gex"].sum()
 
-              # Metrics summary row
-              m1, m2, m3, m4 = st.columns(4)
-              with m1:
-                st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
-              with m2:
-                gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
-                st.metric("Total Net GEX", f"${total_net_gex:,.2f}B", delta=gex_color_label)
-              with m3:
-                st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
-              with m4:
-                st.metric("Expirations Analyzed", f"{len(selected_exp_dates)} Near-Term")
+                df_grouped = df_grouped.sort_values("strike")
+                df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
+                
+                flip_strike = spot_price
+                zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
+                if not zero_crossings.empty:
+                  closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
+                  flip_strike = zero_crossings.loc[closest_idx, "strike"]
 
-              st.markdown("<br>", unsafe_allow_html=True)
+                m1, m2, m3, m4 = st.columns(4)
+                with m1:
+                  st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
+                with m2:
+                  gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
+                  st.metric("Total Net GEX", f"${total_net_gex:,.2f}B", delta=gex_color_label)
+                with m3:
+                  st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
+                with m4:
+                  st.metric("Expirations Selected", f"{len(selected_exp_dates)}")
 
-              # Charting GEX by strike using Altair
-              import altair as alt
+                st.markdown("<br>", unsafe_allow_html=True)
 
-              df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
+                import altair as alt
 
-              chart = alt.Chart(df_filtered).mark_bar().encode(
-                  x=alt.X("strike:Q", title="Strike Price ($)", scale=alt.Scale(zero=False)),
-                  y=alt.Y("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
-                  color=alt.Color("color:N", scale=None),
-                  tooltip=["strike", "gex"]
-              ).properties(
-                  height=420,
-                  background="#080808"
-              ).configure_view(
-                  strokeWidth=0
-              ).configure_axis(
-                  gridColor="#1a1a1a",
-                  domainColor="#333333",
-                  labelColor="#848e9c",
-                  titleColor="#eaecef"
-              ).configure_background(
-                  fill="#080808"
-              )
+                df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
-              st.altair_chart(chart, use_container_width=True)
+                chart = alt.Chart(df_filtered).mark_bar().encode(
+                    x=alt.X("strike:Q", title="Strike Price ($)", scale=alt.Scale(zero=False)),
+                    y=alt.Y("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
+                    color=alt.Color("color:N", scale=None),
+                    tooltip=["strike", "gex"]
+                ).properties(
+                    height=420,
+                    background="#080808"
+                ).configure_view(
+                    strokeWidth=0
+                ).configure_axis(
+                    gridColor="#1a1a1a",
+                    domainColor="#333333",
+                    labelColor="#848e9c",
+                    titleColor="#eaecef"
+                ).configure_background(
+                    fill="#080808"
+                )
 
-              st.markdown(
-                  f"""
-                  <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
-                      <b>Quant Intelligence Note:</b> 
-                      <ul>
-                          <li><b>Positive GEX (Green Bars):</b> Market makers are long gamma and must dynamically hedge by selling into rallies and buying into dips, which tends to compress intraday volatility.</li>
-                          <li><b>Negative GEX (Red Bars):</b> Market makers are short gamma and must chase momentum by buying rising markets and selling falling markets, amplifying volatility.</li>
-                          <li><b>Gamma Flip Point (~${flip_strike:,.2f}):</b> The critical institutional pivot level where dealer hedging behavior flips polarity.</li>
-                      </ul>
-                  </div>
-                  """,
-                  unsafe_allow_html=True,
-              )
-        except Exception as e:
-          st.error(f"Error computing Gamma Exposure: {e}")
+                st.altair_chart(chart, use_container_width=True)
+
+                st.markdown(
+                    f"""
+                    <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
+                        <b>Quant Intelligence Note:</b> 
+                        <ul>
+                            <li><b>Positive GEX (Green Bars):</b> Market makers are long gamma and must dynamically hedge by selling into rallies and buying into dips, which tends to compress intraday volatility.</li>
+                            <li><b>Negative GEX (Red Bars):</b> Market makers are short gamma and must chase momentum by buying rising markets and selling falling markets, amplifying volatility.</li>
+                            <li><b>Gamma Flip Point (~${flip_strike:,.2f}):</b> The critical institutional pivot level where dealer hedging behavior flips polarity.</li>
+                        </ul>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            except Exception as e:
+              st.error(f"Error computing Gamma Exposure: {e}")
