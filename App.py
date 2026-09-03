@@ -36,13 +36,18 @@ tab_to_param = {
 }
 param_to_tab = {v: k for k, v in tab_to_param.items()}
 
-# Session state initializations (Must be at the top)
+# Session state initializations with URL state preservation
 if "terminal_opened" not in st.session_state:
-    st.session_state.terminal_opened = False
+    # Auto-unlock terminal if query params are present in the URL
+    if "ticker" in st.query_params or "tab" in st.query_params:
+        st.session_state.terminal_opened = True
+    else:
+        st.session_state.terminal_opened = False
+
 if "show_splash" not in st.session_state:
     st.session_state.show_splash = False
+
 if "active_ticker" not in st.session_state:
-    # Initialize from query params ONLY ONCE on first load to prevent override loops
     if "ticker" in st.query_params:
         st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
     else:
@@ -50,8 +55,10 @@ if "active_ticker" not in st.session_state:
 
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
+
 if "active_main_tab" not in st.session_state:
     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
@@ -186,7 +193,6 @@ else:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden; position: relative;">
-                <!-- Win Flash Overlay -->
                 <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.05s ease-in-out; z-index: 9999;"></div>
 
                 <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
@@ -194,7 +200,6 @@ else:
                     <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
                     
                     <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
-                        <!-- Grid Lines -->
                         <line x1="0" y1="40" x2="700" y2="40" stroke="#151515" stroke-width="1" />
                         <line x1="0" y1="85" x2="700" y2="85" stroke="#151515" stroke-width="1" />
                         <line x1="0" y1="130" x2="700" y2="130" stroke="#151515" stroke-width="1" />
@@ -204,7 +209,6 @@ else:
                         <line x1="350" y1="0" x2="350" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
                         <line x1="560" y1="0" x2="560" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
 
-                        <!-- Volume Histogram Bars at Bottom -->
                         <g opacity="0.65">
                             <rect x="30" y="195" width="12" height="25" fill="#f6465d" rx="1"/>
                             <rect x="55" y="190" width="12" height="30" fill="#0ecb81" rx="1"/>
@@ -234,11 +238,9 @@ else:
                             <rect x="655" y="140" width="12" height="80" fill="#0ecb81" rx="1"/>
                         </g>
 
-                        <!-- Moving Average Curves -->
                         <path d="M 30 140 Q 180 130 350 115 T 670 75" fill="none" stroke="#f0b90b" stroke-width="1.8" opacity="0.9"/>
                         <path d="M 30 155 Q 180 145 350 130 T 670 95" fill="none" stroke="#0ecb81" stroke-width="1.8" opacity="0.9"/>
 
-                        <!-- Candlesticks Container -->
                         <g id="candlestick-container">
                             <g class="candle" data-y1="125" data-y2="155" data-ry="132" data-rh="16"><line x1="36" y1="140" x2="36" y2="140" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="140" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
                             <g class="candle" data-y1="130" data-y2="160" data-ry="138" data-rh="14"><line x1="61" y1="145" x2="61" y2="145" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="145" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
@@ -278,23 +280,18 @@ else:
             function animateNextCandle() {
                 if (currentIndex >= candles.length) {
                     const flash = document.getElementById('winFlash');
-                    if (flash) {
-                        flash.style.opacity = '0.95';
-                    }
+                    if (flash) { flash.style.opacity = '0.95'; }
                     return;
                 }
 
                 if (currentIndex >= candles.length - 2) {
                     const flash = document.getElementById('winFlash');
-                    if (flash) {
-                        flash.style.opacity = '0.75';
-                    }
+                    if (flash) { flash.style.opacity = '0.75'; }
                 }
 
                 const candle = candles[currentIndex];
                 const rect = candle.querySelector('rect');
                 const line = candle.querySelector('line');
-                
                 rect.setAttribute('opacity', '1');
 
                 const targetY1 = parseFloat(candle.getAttribute('data-y1'));
@@ -338,10 +335,8 @@ else:
                         setTimeout(animateNextCandle, 1);
                     }
                 }
-
                 requestAnimationFrame(frame);
             }
-
             animateNextCandle();
             </script>
             """,
@@ -375,9 +370,10 @@ else:
         if st.button("Lock Terminal", use_container_width=True):
             st.session_state.terminal_opened = False
             st.session_state.show_splash = False
+            st.query_params.clear()
             st.rerun()
 
-    # Ticker Search Input Row
+    # Ticker Search Input Row (Removed manual st.rerun() since query_params assignment auto-reruns)
     def on_ticker_change():
         sym = st.session_state.ticker_search_input.upper().strip()
         st.session_state.active_ticker = sym
@@ -417,7 +413,6 @@ else:
         elif v >= 1e3: return f"{v/1e3:.1f}K"
         return str(v)
 
-    # Header display ticker badges & TB TERMINAL TITLE on the top green bar line
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
     active_price, active_pct, _ = fetch_live_quote(target_symbol)
@@ -442,7 +437,6 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # NAVIGATION CALLBACK TO SYNC STATE AND URL QUERY PARAMS
     def on_nav_change():
         selected = st.session_state.main_nav_radio
         st.session_state.active_main_tab = selected
@@ -542,10 +536,10 @@ else:
 
                     w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
                     with w_col_info:
+                        # Watchlist button updates query_params directly (Streamlit auto-reruns)
                         if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
                             st.session_state.active_ticker = sym
                             st.query_params["ticker"] = sym
-                            st.rerun()
                     with w_col_vol:
                         st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
                     with w_col_price:
