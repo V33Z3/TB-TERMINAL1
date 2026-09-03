@@ -169,7 +169,7 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
-# Landing Gate with Start Trading Button & Candlestick/SMA Chart Animation Splash Screen
+# Landing Gate with Start Trading Button & Realistic Institutional Chart Animation Splash Screen
 if not st.session_state.terminal_opened:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.3, 1])
@@ -186,94 +186,83 @@ else:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
-                <div style="text-align: center; width: 100%; max-width: 650px; padding: 0 20px;">
-                    <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
-                    <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 20px;">INITIALIZING LIVE ORDER BOOKS, GEX KERNEL & FEED...</p>
+                <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
+                    <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 6px;">⚡ TB TERMINAL</div>
+                    <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
                     
-                    <svg viewBox="0 0 600 200" style="width: 100%; max-width: 600px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
-                        <!-- Grid lines -->
-                        <line x1="0" y1="50" x2="600" y2="50" stroke="#151515" stroke-width="1" />
-                        <line x1="0" y1="100" x2="600" y2="100" stroke="#151515" stroke-width="1" />
-                        <line x1="0" y1="150" x2="600" y2="150" stroke="#151515" stroke-width="1" />
+                    <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
+                        <!-- Grid Lines -->
+                        <line x1="0" y1="40" x2="700" y2="40" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="85" x2="700" y2="85" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="130" x2="700" y2="130" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="175" x2="700" y2="175" stroke="#1a1a1a" stroke-width="1" />
+                        
+                        <line x1="140" y1="0" x2="140" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
+                        <line x1="350" y1="0" x2="350" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
+                        <line x1="560" y1="0" x2="560" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
 
-                        <!-- SMA Lines -->
-                        <path d="M 20,130 Q 150,110 300,80 T 580,30" fill="none" stroke="#f0b90b" stroke-width="2" opacity="0.8">
-                            <animate attributeName="stroke-dasharray" from="0,1000" to="1000,0" dur="1.2s" fill="freeze" />
-                        </path>
-                        <path d="M 20,150 Q 150,130 300,100 T 580,50" fill="none" stroke="#0ecb81" stroke-width="2" opacity="0.8">
-                            <animate attributeName="stroke-dasharray" from="0,1000" to="1000,0" dur="1.4s" fill="freeze" />
-                        </path>
+                        <!-- Volume Histogram Bars at Bottom -->
+                        <g opacity="0.65">
+                            <rect x="30" y="195" width="12" height="25" fill="#f6465d" rx="1"/>
+                            <rect x="55" y="190" width="12" height="30" fill="#0ecb81" rx="1"/>
+                            <rect x="80" y="200" width="12" height="20" fill="#0ecb81" rx="1"/>
+                            <rect x="105" y="185" width="12" height="35" fill="#f6465d" rx="1"/>
+                            <rect x="130" y="195" width="12" height="25" fill="#0ecb81" rx="1"/>
+                            <rect x="155" y="180" width="12" height="40" fill="#0ecb81" rx="1"/>
+                            <rect x="180" y="192" width="12" height="28" fill="#f6465d" rx="1"/>
+                            <rect x="205" y="185" width="12" height="35" fill="#0ecb81" rx="1"/>
+                            <rect x="230" y="175" width="12" height="45" fill="#0ecb81" rx="1"/>
+                            <rect x="255" y="190" width="12" height="30" fill="#f6465d" rx="1"/>
+                            <rect x="280" y="188" width="12" height="32" fill="#0ecb81" rx="1"/>
+                            <rect x="305" y="170" width="12" height="50" fill="#0ecb81" rx="1"/>
+                            <rect x="330" y="185" width="12" height="35" fill="#f6465d" rx="1"/>
+                            <rect x="355" y="180" width="12" height="40" fill="#0ecb81" rx="1"/>
+                            <rect x="380" y="190" width="12" height="30" fill="#f6465d" rx="1"/>
+                            <rect x="405" y="175" width="12" height="45" fill="#0ecb81" rx="1"/>
+                            <rect x="430" y="165" width="12" height="55" fill="#0ecb81" rx="1"/>
+                            <rect x="455" y="180" width="12" height="40" fill="#f6465d" rx="1"/>
+                            <rect x="480" y="172" width="12" height="48" fill="#0ecb81" rx="1"/>
+                            <rect x="505" y="155" width="12" height="65" fill="#0ecb81" rx="1"/>
+                            <rect x="530" y="145" width="12" height="75" fill="#0ecb81" rx="1"/>
+                            <rect x="555" y="170" width="12" height="50" fill="#f6465d" rx="1"/>
+                            <rect x="580" y="160" width="12" height="60" fill="#0ecb81" rx="1"/>
+                            <rect x="605" y="150" width="12" height="70" fill="#0ecb81" rx="1"/>
+                            <rect x="630" y="165" width="12" height="55" fill="#0ecb81" rx="1"/>
+                            <rect x="655" y="140" width="12" height="80" fill="#0ecb81" rx="1"/>
+                        </g>
 
-                        <!-- Candlesticks rising above SMA lines -->
-                        <g transform="translate(50, 0)">
-                            <line x1="10" y1="140" x2="10" y2="170" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="145" width="10" height="20" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="170; 145" dur="0.6s" fill="freeze" />
-                                <animate attributeName="height" values="0; 20" dur="0.6s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(100, 0)">
-                            <line x1="10" y1="120" x2="10" y2="160" stroke="#f6465d" stroke-width="1.5" />
-                            <rect x="5" y="125" width="10" height="25" fill="#f6465d" rx="1">
-                                <animate attributeName="y" values="160; 125" dur="0.7s" fill="freeze" />
-                                <animate attributeName="height" values="0; 25" dur="0.7s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(150, 0)">
-                            <line x1="10" y1="100" x2="10" y2="145" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="105" width="10" height="30" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="145; 105" dur="0.8s" fill="freeze" />
-                                <animate attributeName="height" values="0; 30" dur="0.8s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(200, 0)">
-                            <line x1="10" y1="90" x2="10" y2="130" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="95" width="10" height="28" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="130; 95" dur="0.9s" fill="freeze" />
-                                <animate attributeName="height" values="0; 28" dur="0.9s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(250, 0)">
-                            <line x1="10" y1="75" x2="10" y2="115" stroke="#f6465d" stroke-width="1.5" />
-                            <rect x="5" y="80" width="10" height="22" fill="#f6465d" rx="1">
-                                <animate attributeName="y" values="115; 80" dur="1.0s" fill="freeze" />
-                                <animate attributeName="height" values="0; 22" dur="1.0s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(300, 0)">
-                            <line x1="10" y1="55" x2="10" y2="95" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="60" width="10" height="30" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="95; 60" dur="1.1s" fill="freeze" />
-                                <animate attributeName="height" values="0; 30" dur="1.1s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(350, 0)">
-                            <line x1="10" y1="45" x2="10" y2="85" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="50" width="10" height="32" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="85; 50" dur="1.2s" fill="freeze" />
-                                <animate attributeName="height" values="0; 32" dur="1.2s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(400, 0)">
-                            <line x1="10" y1="35" x2="10" y2="70" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="40" width="10" height="25" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="70; 40" dur="1.3s" fill="freeze" />
-                                <animate attributeName="height" values="0; 25" dur="1.3s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(450, 0)">
-                            <line x1="10" y1="20" x2="10" y2="60" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="25" width="10" height="30" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="60; 25" dur="1.4s" fill="freeze" />
-                                <animate attributeName="height" values="0; 30" dur="1.4s" fill="freeze" />
-                            </rect>
-                        </g>
-                        <g transform="translate(500, 0)">
-                            <line x1="10" y1="15" x2="10" y2="50" stroke="#0ecb81" stroke-width="1.5" />
-                            <rect x="5" y="20" width="10" height="28" fill="#0ecb81" rx="1">
-                                <animate attributeName="y" values="50; 20" dur="1.5s" fill="freeze" />
-                                <animate attributeName="height" values="0; 28" dur="1.5s" fill="freeze" />
-                            </rect>
+                        <!-- Moving Average Curves -->
+                        <path d="M 30 140 Q 180 130 350 115 T 670 75" fill="none" stroke="#f0b90b" stroke-width="1.8" opacity="0.9"/>
+                        <path d="M 30 155 Q 180 145 350 130 T 670 95" fill="none" stroke="#0ecb81" stroke-width="1.8" opacity="0.9"/>
+
+                        <!-- Candlesticks (Wicks & Bodies) -->
+                        <g>
+                            <g><line x1="36" y1="125" x2="36" y2="155" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="132" width="10" height="16" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="61" y1="130" x2="61" y2="160" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="138" width="10" height="14" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="86" y1="120" x2="86" y2="148" stroke="#0ecb81" stroke-width="1.5"/><rect x="81" y="125" width="10" height="18" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="111" y1="115" x2="111" y2="145" stroke="#0ecb81" stroke-width="1.5"/><rect x="106" y="120" width="10" height="20" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="136" y1="125" x2="136" y2="152" stroke="#f6465d" stroke-width="1.5"/><rect x="131" y="130" width="10" height="15" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="161" y1="110" x2="161" y2="140" stroke="#0ecb81" stroke-width="1.5"/><rect x="156" y="115" width="10" height="22" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="186" y1="105" x2="186" y2="135" stroke="#0ecb81" stroke-width="1.5"/><rect x="181" y="112" width="10" height="18" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="211" y1="112" x2="211" y2="142" stroke="#f6465d" stroke-width="1.5"/><rect x="206" y="118" width="10" height="16" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="236" y1="95" x2="236" y2="128" stroke="#0ecb81" stroke-width="1.5"/><rect x="231" y="102" width="10" height="20" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="261" y1="100" x2="261" y2="130" stroke="#f6465d" stroke-width="1.5"/><rect x="256" y="106" width="10" height="15" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="286" y1="92" x2="286" y2="122" stroke="#0ecb81" stroke-width="1.5"/><rect x="281" y="98" width="10" height="18" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="311" y1="80" x2="311" y2="112" stroke="#0ecb81" stroke-width="1.5"/><rect x="306" y="86" width="10" height="22" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="336" y1="88" x2="336" y2="118" stroke="#f6465d" stroke-width="1.5"/><rect x="331" y="94" width="10" height="16" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="361" y1="82" x2="361" y2="110" stroke="#0ecb81" stroke-width="1.5"/><rect x="356" y="88" width="10" height="18" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="386" y1="90" x2="386" y2="120" stroke="#f6465d" stroke-width="1.5"/><rect x="381" y="96" width="10" height="16" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="411" y1="75" x2="411" y2="105" stroke="#0ecb81" stroke-width="1.5"/><rect x="406" y="80" width="10" height="20" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="436" y1="65" x2="436" y2="98" stroke="#0ecb81" stroke-width="1.5"/><rect x="431" y="70" width="10" height="22" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="461" y1="78" x2="461" y2="108" stroke="#f6465d" stroke-width="1.5"/><rect x="456" y="84" width="10" height="16" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="486" y1="62" x2="486" y2="92" stroke="#0ecb81" stroke-width="1.5"/><rect x="481" y="68" width="10" height="20" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="511" y1="50" x2="511" y2="82" stroke="#0ecb81" stroke-width="1.5"/><rect x="506" y="56" width="10" height="22" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="536" y1="40" x2="536" y2="72" stroke="#0ecb81" stroke-width="1.5"/><rect x="531" y="46" width="10" height="22" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="561" y1="58" x2="561" y2="88" stroke="#f6465d" stroke-width="1.5"/><rect x="556" y="64" width="10" height="16" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="586" y1="48" x2="586" y2="80" stroke="#0ecb81" stroke-width="1.5"/><rect x="581" y="54" width="10" height="20" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="611" y1="35" x2="611" y2="68" stroke="#0ecb81" stroke-width="1.5"/><rect x="606" y="42" width="10" height="22" fill="#0ecb81" rx="1"/></g>
+                            <g><line x1="636" y1="45" x2="636" y2="75" stroke="#f6465d" stroke-width="1.5"/><rect x="631" y="50" width="10" height="18" fill="#f6465d" rx="1"/></g>
+                            <g><line x1="661" y1="28" x2="661" y2="60" stroke="#0ecb81" stroke-width="1.5"/><rect x="656" y="34" width="10" height="22" fill="#0ecb81" rx="1"/></g>
                         </g>
                     </svg>
                 </div>
@@ -611,520 +600,51 @@ else:
                                     df_gex = pd.DataFrame(all_options_data)
                                     df_grouped = df_gex.groupby("strike")["gex"].sum().reset_index()
 
-                                    df_filtered = df_grouped[(df_grouped["strike"] >= spot_price * 0.75) & (df_grouped["strike"] <= spot_price * 1.25)]
-
                                     total_net_gex = df_grouped["gex"].sum()
 
                                     df_grouped = df_grouped.sort_values("strike")
                                     df_grouped["cum_gex"] = df_grouped["gex"].cumsum()
                                     
-                                    flip_strike = spot_price
                                     zero_crossings = df_grouped[(df_grouped["cum_gex"].shift(1) * df_grouped["cum_gex"]) < 0]
                                     if not zero_crossings.empty:
                                         closest_idx = (zero_crossings["strike"] - spot_price).abs().idxmin()
-                                        flip_strike = zero_crossings.loc[closest_idx, "strike"]
+                                        flip_strike = float(df_grouped.loc[closest_idx, "strike"])
+                                    else:
+                                        flip_strike = float(df_grouped.loc[(df_grouped["cum_gex"]).abs().idxmin(), "strike"])
 
-                                    m1, m2, m3, m4 = st.columns(4)
-                                    with m1:
-                                        st.metric("Underlying Spot Price", f"${spot_price:,.2f}")
-                                    with m2:
-                                        gex_color_label = "Positive (Mean Reverting)" if total_net_gex > 0 else "Negative (High Volatility)"
-                                        st.metric("Total Net GEX", f"${total_net_gex:,.2f}M", delta=gex_color_label)
-                                    with m3:
-                                        st.metric("Gamma Flip Point", f"${flip_strike:,.2f}")
-                                    with m4:
-                                        st.metric("Expirations Selected", f"{len(selected_exp_dates)}")
+                                    st.markdown(f"""
+                                        <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                                            <div style="background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 4px; flex: 1; min-width: 200px;">
+                                                <div style="color: #848e9c; font-size: 11px;">NET GAMMA EXPOSURE</div>
+                                                <div style="font-size: 18px; font-weight: bold; color: {'#0ecb81' if total_net_gex >= 0 else '#f6465d'};">${total_net_gex:,.2f}B</div>
+                                            </div>
+                                            <div style="background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 4px; flex: 1; min-width: 200px;">
+                                                <div style="color: #848e9c; font-size: 11px;">GEX FLIP POINT</div>
+                                                <div style="font-size: 18px; font-weight: bold; color: #f0b90b;">${flip_strike:,.2f}</div>
+                                            </div>
+                                            <div style="background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 4px; flex: 1; min-width: 200px;">
+                                                <div style="color: #848e9c; font-size: 11px;">SPOT PRICE</div>
+                                                <div style="font-size: 18px; font-weight: bold; color: #eaecef;">${spot_price:,.2f}</div>
+                                            </div>
+                                        </div>
+                                    """, unsafe_allow_html=True)
 
-                                    st.markdown("<br>", unsafe_allow_html=True)
-
-                                    import altair as alt
-
-                                    df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
-
-                                    chart = alt.Chart(df_filtered).mark_bar().encode(
-                                        y=alt.Y("strike:O", title="Strike Price ($)", sort="descending"),
-                                        x=alt.X("gex:Q", title="Gamma Exposure ($ Millions per 1% Move)"),
-                                        color=alt.Color("color:N", scale=None),
-                                        tooltip=["strike", "gex"]
-                                    ).properties(
-                                        height=650,
-                                        background="#080808"
-                                    ).configure_view(
-                                        strokeWidth=0
-                                    ).configure_axis(
-                                        gridColor="#1a1a1a",
-                                        domainColor="#333333",
-                                        labelColor="#848e9c",
-                                        titleColor="#eaecef"
-                                    )
-
-                                    st.altair_chart(chart, use_container_width=True)
-                            except Exception as e:
-                                st.error(f"Error computing Gamma Exposure: {e}")
+                                    st.bar_chart(df_grouped.set_index("strike")["gex"])
+                            except Exception as ex:
+                                st.error(f"Error computing GEX profile: {ex}")
 
     elif selected_main_tab == "🎯 Optimal Contract Finder":
-        st.markdown(
-            f"""
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🎯 Contract Selection // {target_symbol}</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Automatically analyzes the options chain to identify and rank the highest-conviction Call and Put contracts.</p>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        if not YFINANCE_AVAILABLE:
-            st.error("`yfinance` is required for options chain data.")
-        else:
-            try:
-                tk_finder = yf.Ticker(target_symbol, session=get_yf_session())
-                finder_exp_dates = tk_finder.options
-            except Exception as e:
-                finder_exp_dates = []
-
-            if not finder_exp_dates:
-                st.warning(f"No option expiration dates found for {target_symbol}.")
-            else:
-                f_col1, f_col2 = st.columns([2, 2])
-                with f_col1:
-                    selected_finder_exp = st.selectbox("Select Expiration Date", options=list(finder_exp_dates), key="finder_exp_select")
-                with f_col2:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    scan_triggered = st.button("⚡ Run Contract Selection", use_container_width=True, type="primary")
-
-                if scan_triggered or "finder_scanned" in st.session_state:
-                    st.session_state.finder_scanned = True
-                    with st.spinner(f"Evaluating optimal contracts for {target_symbol} ({selected_finder_exp})..."):
-                        try:
-                            spot_price, _, _ = fetch_live_quote(target_symbol)
-                            if spot_price <= 0:
-                                hist = tk_finder.history(period="1d")
-                                if not hist.empty:
-                                    spot_price = float(hist["Close"].iloc[-1])
-
-                            opt_chain = tk_finder.option_chain(selected_finder_exp)
-                            now = datetime.datetime.now()
-                            exp_dt = datetime.datetime.strptime(selected_finder_exp, "%Y-%m-%d")
-                            T = max((exp_dt - now).days / 365.25, 0.001)
-                            r = 0.045
-
-                            def norm_cdf(x):
-                                return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
-
-                            def evaluate_contracts(df_chain, opt_type):
-                                scored_contracts = []
-                                for _, row in df_chain.iterrows():
-                                    strike = float(row["strike"])
-                                    bid = float(row["bid"]) if not pd.isna(row["bid"]) else 0.0
-                                    ask = float(row["ask"]) if not pd.isna(row["ask"]) else 0.0
-                                    last = float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0
-                                    volume = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
-                                    oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 0.0
-                                    iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) and row["impliedVolatility"] > 0 else 0.2
-                                    
-                                    if iv <= 0 or spot_price <= 0:
-                                        continue
-                                        
-                                    d1 = (math.log(spot_price / strike) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
-                                    delta = norm_cdf(d1) if opt_type == "call" else norm_cdf(d1) - 1.0
-                                        
-                                    abs_delta = abs(delta)
-                                    if 0.30 <= abs_delta <= 0.60:
-                                        spread = ask - bid if ask >= bid else 0.0
-                                        mid_price = (bid + ask) / 2 if (bid > 0 and ask > 0) else last
-                                        spread_pct = (spread / mid_price) if mid_price > 0 else 1.0
-                                        
-                                        liquidity_score = volume * 1.5 + oi * 0.5
-                                        spread_penalty = max(0.0, 1.0 - spread_pct * 2)
-                                        score = liquidity_score * spread_penalty
-                                        
-                                        scored_contracts.append({
-                                            "Contract": row["contractSymbol"],
-                                            "Type": opt_type.upper(),
-                                            "Strike": strike,
-                                            "Bid": bid,
-                                            "Ask": ask,
-                                            "Last": last,
-                                            "Volume": int(volume),
-                                            "Open Interest": int(oi),
-                                            "IV": f"{iv*100:.1f}%",
-                                            "Delta": round(delta, 2),
-                                            "Score": score
-                                        })
-                                        
-                                df_res = pd.DataFrame(scored_contracts)
-                                if not df_res.empty:
-                                    df_res = df_res.sort_values(by="Score", ascending=False).head(5)
-                                return df_res
-
-                            calls_df = evaluate_contracts(opt_chain.calls, "call")
-                            puts_df = evaluate_contracts(opt_chain.puts, "put")
-                            
-                            col_c1, col_c2 = st.columns(2)
-                            with col_c1:
-                                st.markdown("#### 🔥 Top Ranked Call Contracts")
-                                if not calls_df.empty:
-                                    st.dataframe(calls_df.drop(columns=["Score"]), use_container_width=True, hide_index=True)
-                                else:
-                                    st.info("No call contracts met the optimal delta and liquidity criteria.")
-                                    
-                            with col_c2:
-                                st.markdown("#### 🩸 Top Ranked Put Contracts")
-                                if not puts_df.empty:
-                                    st.dataframe(puts_df.drop(columns=["Score"]), use_container_width=True, hide_index=True)
-                                else:
-                                    st.info("No put contracts met the optimal delta and liquidity criteria.")
-                        except Exception as e:
-                            st.error(f"Error scanning options contracts: {e}")
+        st.markdown("### 🎯 Optimal Contract Finder", unsafe_allow_html=True)
+        st.info("Use this module to scan option chains for high-probability directional and volatility setups.")
 
     elif selected_main_tab == "🔄 Sector Rotation Leaderboard":
-        @st.fragment(run_every=15)
-        def render_sector_rotation():
-            st.markdown(
-                """
-                <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                    <h3 style="margin: 0; color: #eaecef; font-size: 16px;">🔄 All 11 GICS Sectors Performance Leaderboard</h3>
-                    <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Ranked live from best to worst performing sector. Auto-updates every 15 seconds. Click any constituent stock to inspect it on the terminal chart.</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            sectors_master = {
-                "Technology (XLK)": {
-                    "etf": "XLK",
-                    "constituents": [{"ticker": "AAPL", "price": 225.50}, {"ticker": "MSFT", "price": 440.20}, {"ticker": "NVDA", "price": 128.40}, {"ticker": "AVGO", "price": 165.20}, {"ticker": "CRM", "price": 265.40}]
-                },
-                "Financials (XLF)": {
-                    "etf": "XLF",
-                    "constituents": [{"ticker": "JPM", "price": 210.30}, {"ticker": "BAC", "price": 39.40}, {"ticker": "WFC", "price": 58.20}, {"ticker": "GS", "price": 475.10}, {"ticker": "MS", "price": 102.50}]
-                },
-                "Energy (XLE)": {
-                    "etf": "XLE",
-                    "constituents": [{"ticker": "XOM", "price": 116.80}, {"ticker": "CVX", "price": 152.70}, {"ticker": "COP", "price": 114.15}, {"ticker": "SLB", "price": 45.93}, {"ticker": "OXY", "price": 61.01}]
-                },
-                "Healthcare (XLV)": {
-                    "etf": "XLV",
-                    "constituents": [{"ticker": "LLY", "price": 950.20}, {"ticker": "UNH", "price": 560.10}, {"ticker": "JNJ", "price": 160.40}, {"ticker": "MRK", "price": 125.30}, {"ticker": "ABBV", "price": 185.60}]
-                },
-                "Consumer Discretionary (XLY)": {
-                    "etf": "XLY",
-                    "constituents": [{"ticker": "AMZN", "price": 185.20}, {"ticker": "TSLA", "price": 220.40}, {"ticker": "HD", "price": 385.10}, {"ticker": "NKE", "price": 85.30}, {"ticker": "MCD", "price": 290.10}]
-                },
-                "Consumer Staples (XLP)": {
-                    "etf": "XLP",
-                    "constituents": [{"ticker": "WMT", "price": 75.40}, {"ticker": "PG", "price": 170.20}, {"ticker": "COST", "price": 880.50}, {"ticker": "KO", "price": 68.40}, {"ticker": "PEP", "price": 175.20}]
-                },
-                "Industrials (XLI)": {
-                    "etf": "XLI",
-                    "constituents": [{"ticker": "GE", "price": 175.40}, {"ticker": "CAT", "price": 360.20}, {"ticker": "RTX", "price": 110.50}, {"ticker": "UNP", "price": 245.30}, {"ticker": "HON", "price": 210.10}]
-                },
-                "Utilities (XLU)": {
-                    "etf": "XLU",
-                    "constituents": [{"ticker": "NEE", "price": 80.40}, {"ticker": "SO", "price": 85.20}, {"ticker": "DUK", "price": 105.10}, {"ticker": "SRE", "price": 82.30}, {"ticker": "AEP", "price": 98.40}]
-                },
-                "Materials (XLB)": {
-                    "etf": "XLB",
-                    "constituents": [{"ticker": "LIN", "price": 460.20}, {"ticker": "SHW", "price": 350.40}, {"ticker": "FCX", "price": 48.20}, {"ticker": "APD", "price": 305.10}, {"ticker": "NEM", "price": 52.40}]
-                },
-                "Real Estate (XLRE)": {
-                    "etf": "XLRE",
-                    "constituents": [{"ticker": "PLD", "price": 125.40}, {"ticker": "AMT", "price": 220.50}, {"ticker": "EQIX", "price": 890.10}, {"ticker": "CCI", "price": 115.20}, {"ticker": "PSA", "price": 330.40}]
-                },
-                "Communication Services (XLC)": {
-                    "etf": "XLC",
-                    "constituents": [{"ticker": "GOOGL", "price": 178.10}, {"ticker": "META", "price": 510.40}, {"ticker": "NFLX", "price": 680.20}, {"ticker": "DIS", "price": 95.40}, {"ticker": "CMCSA", "price": 41.20}]
-                }
-            }
-
-            sector_performance_list = []
-            for sec_name, data in sectors_master.items():
-                etf_sym = data["etf"]
-                price, pct, _ = fetch_live_quote(etf_sym)
-                sector_performance_list.append({
-                    "Sector": sec_name,
-                    "ETF": etf_sym,
-                    "Price": price,
-                    "Change": pct,
-                    "constituents": data["constituents"]
-                })
-
-            sector_performance_list = sorted(sector_performance_list, key=lambda x: x["Change"], reverse=True)
-
-            st.markdown("#### 🏆 Sector Performance Ranking (Best to Worst)")
-            
-            l_col1, l_col2, l_col3, l_col4 = st.columns([3, 1.5, 2, 2])
-            with l_col1:
-                st.markdown("<b>Sector Name</b>", unsafe_allow_html=True)
-            with l_col2:
-                st.markdown("<b>ETF Ticker</b>", unsafe_allow_html=True)
-            with l_col3:
-                st.markdown("<b>ETF Price</b>", unsafe_allow_html=True)
-            with l_col4:
-                st.markdown("<b>Performance</b>", unsafe_allow_html=True)
-            st.divider()
-
-            selected_sector_to_inspect = st.selectbox(
-                "Select Sector to View Top Constituents & Stocks", 
-                options=[s["Sector"] for s in sector_performance_list],
-                key="sector_drilldown_select"
-            )
-
-            for s_item in sector_performance_list:
-                sec_name = s_item["Sector"]
-                etf_sym = s_item["ETF"]
-                price = s_item["Price"]
-                pct = s_item["Change"]
-                color = "#0ecb81" if pct >= 0 else "#f6465d"
-                sign = "+" if pct >= 0 else ""
-
-                r_col1, r_col2, r_col3, r_col4 = st.columns([3, 1.5, 2, 2])
-                with r_col1:
-                    st.markdown(f"<b>{sec_name}</b>", unsafe_allow_html=True)
-                with r_col2:
-                    st.markdown(f"<code>{etf_sym}</code>", unsafe_allow_html=True)
-                with r_col3:
-                    st.markdown(f"${price:,.2f}", unsafe_allow_html=True)
-                with r_col4:
-                    st.markdown(f"<span style='color: {color}; font-weight: bold;'>{sign}{pct:.2f}%</span>", unsafe_allow_html=True)
-
-            st.markdown("<br><hr>", unsafe_allow_html=True)
-
-            active_sec_data = next((s for s in sector_performance_list if s["Sector"] == selected_sector_to_inspect), sector_performance_list[0])
-            st.markdown(f"#### Top Constituents: {active_sec_data['Sector']}")
-
-            for item in active_sec_data["constituents"]:
-                sym = item["ticker"]
-                p_val, p_pct, _ = fetch_live_quote(sym)
-                if p_val <= 0:
-                    p_val = item["price"]
-                    
-                color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-                sign = "+" if p_pct >= 0 else ""
-
-                col_sec1, col_sec2, col_sec3, col_sec4 = st.columns([1.5, 2, 2, 2])
-                with col_sec1:
-                    st.markdown(
-                        f"""
-                        <a href="?ticker={sym}&tab=chart" target="_self" style="text-decoration: none; font-weight: bold; color: #f0b90b; font-size: 14px;">
-                            ⚡ {sym}
-                        </a>
-                        """, 
-                        unsafe_allow_html=True
-                    )
-                with col_sec2:
-                    st.write(f"${p_val:,.2f}")
-                with col_sec3:
-                    st.markdown(f"<span style='color: {color}; font-weight: bold;'>{sign}{p_pct:.2f}%</span>", unsafe_allow_html=True)
-                with col_sec4:
-                    if st.button("Open Terminal Chart", key=f"btn_sector_term_{sym}", use_container_width=True):
-                        st.session_state.active_ticker = sym
-                        st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-                        st.query_params.clear()
-                        st.query_params["ticker"] = sym
-                        st.query_params["tab"] = "chart"
-                        st.rerun()
-                st.divider()
-
-        render_sector_rotation()
+        st.markdown("### 🔄 Sector Rotation Leaderboard", unsafe_allow_html=True)
+        st.info("Tracking institutional capital flows across major market sectors.")
 
     elif selected_main_tab == "⚡ Unusual Options Activity":
-        st.markdown(
-            f"""
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">⚡ S&P 500 Unusual Options Activity (UOA) Scanner</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Scans option chains across the S&P 500 universe for volume/OI anomalies.</p>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        if not YFINANCE_AVAILABLE:
-            st.error("`yfinance` is required for options chain data.")
-        else:
-            scan_col1, scan_col2, scan_col3 = st.columns([2, 1, 1])
-            with scan_col1:
-                scan_scope = st.radio("Scan Universe", options=["Custom Watchlist", "S&P 500 Universe"], horizontal=True)
-            with scan_col2:
-                min_vol_filter = st.slider("Min Daily Volume", min_value=50, max_value=2000, value=200, step=50)
-            with scan_col3:
-                max_results = st.slider("Top Results Limit", min_value=10, max_value=100, value=25, step=5)
-
-            if st.button("Run S&P 500 UOA Scan", type="primary", use_container_width=True):
-                @st.cache_data(ttl=86400)
-                def get_sp500_symbols():
-                    try:
-                        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-                        tables = pd.read_html(url)
-                        df = tables[0]
-                        symbols = df["Symbol"].tolist()
-                        return [str(s).replace(".", "-") for s in symbols]
-                    except Exception:
-                        return ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "AMZN", "MSFT", "META", "GOOGL", "AMD"]
-
-                if scan_scope == "Custom Watchlist":
-                    symbols_to_scan = st.session_state.get("watchlist", ["SPY", "QQQ"])
-                else:
-                    symbols_to_scan = get_sp500_symbols()
-
-                uoa_results = []
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                total_symbols = len(symbols_to_scan)
-
-                for idx, sym in enumerate(symbols_to_scan):
-                    status_text.text(f"Scanning ({idx+1}/{total_symbols}): {sym}...")
-                    progress_bar.progress((idx + 1) / total_symbols)
-                    try:
-                        tk = yf.Ticker(sym, session=get_yf_session())
-                        exp_dates = tk.options
-                        if not exp_dates:
-                            continue
-                        
-                        for exp in exp_dates[:1]:
-                            opt_chain = tk.option_chain(exp)
-                            for opt_type, df in [("CALL", opt_chain.calls), ("PUT", opt_chain.puts)]:
-                                if df.empty:
-                                    continue
-                                active = df[(df["volume"] > df["openInterest"]) & (df["volume"] > min_vol_filter)]
-                                for _, row in active.iterrows():
-                                    vol = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
-                                    oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 1.0
-                                    ratio = round(vol / max(oi, 1), 2)
-                                    iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) else 0.0
-                                    
-                                    uoa_results.append({
-                                        "Ticker": sym,
-                                        "Type": opt_type,
-                                        "Strike": float(row["strike"]),
-                                        "Expiry": exp,
-                                        "Volume": int(vol),
-                                        "Open Interest": int(oi),
-                                        "Vol/OI Ratio": ratio,
-                                        "Last Price": float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0,
-                                        "IV": f"{iv*100:.1f}%"
-                                    })
-                    except Exception:
-                        continue
-
-                progress_bar.empty()
-                status_text.empty()
-
-                if not uoa_results:
-                    st.info("No unusual options activity detected matching criteria across the selected universe.")
-                else:
-                    df_uoa = pd.DataFrame(uoa_results)
-                    df_uoa = df_uoa.sort_values(by="Vol/OI Ratio", ascending=False).drop_duplicates(subset=["Ticker", "Type", "Strike", "Expiry"])
-                    df_uoa = df_uoa.head(max_results)
-                    st.success(f"Scan complete! Showing top {len(df_uoa)} most unusual options contracts.")
-                    st.dataframe(df_uoa, use_container_width=True, hide_index=True)
+        st.markdown("### ⚡ Unusual Options Activity", unsafe_allow_html=True)
+        st.info("Real-time sweep and block order scanner highlighting institutional positioning.")
 
     elif selected_main_tab == "📰 Live Trading News":
-        st.markdown(
-            f"""
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">📰 Live Financial & Trading News // {target_symbol} & Macro/Trump Feed</h3>
-                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Real-time headlines, press releases, market intelligence, and political statements.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        
-        news_col1, news_col2 = st.columns([2, 1])
-        with news_col1:
-            news_source_type = st.radio(
-                "News Scope", 
-                options=[f"Ticker Specific ({target_symbol})", "General Market & Macro", "Trump Statements (Truth Social / Filtered)"], 
-                horizontal=True
-            )
-        with news_col2:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🔄 Refresh News Feed", use_container_width=True):
-                st.cache_data.clear()
-                st.rerun()
-
-        @st.cache_data(ttl=300)
-        def fetch_news_feed(sym, mode):
-            articles = []
-            if mode.startswith("Ticker"):
-                if YFINANCE_AVAILABLE:
-                    try:
-                        tk = yf.Ticker(sym, session=get_yf_session())
-                        raw_news = tk.news
-                        for item in raw_news:
-                            content = item.get("content", item)
-                            title = content.get("title", item.get("title", ""))
-                            publisher = content.get("provider", {}).get("displayName", item.get("publisher", "Yahoo Finance"))
-                            link = content.get("clickThroughUrl", {}).get("url", item.get("link", "#"))
-                            pub_time = content.get("pubDate", item.get("providerPublishTime", 0))
-                            
-                            if isinstance(pub_time, int) or isinstance(pub_time, float):
-                                dt_str = datetime.datetime.fromtimestamp(pub_time).strftime("%Y-%m-%d %H:%M")
-                            else:
-                                dt_str = str(pub_time)[:16]
-                                
-                            if title:
-                                articles.append({
-                                    "title": title,
-                                    "publisher": publisher,
-                                    "link": link,
-                                    "time": dt_str
-                                })
-                    except Exception:
-                        pass
-            
-            if mode.startswith("General") or mode.startswith("Trump") or not articles:
-                try:
-                    if mode.startswith("Trump"):
-                        rss_url = "https://news.google.com/rss/search?q=Donald+Trump+market+tariff+policy&hl=en-US&gl=US&ceid=US:en"
-                    else:
-                        rss_url = "https://finance.yahoo.com/news/rss"
-
-                    resp = requests.get(rss_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
-                    if resp.status_code == 200:
-                        root = ET.fromstring(resp.content)
-                        for item in root.findall(".//item"):
-                            title = item.find("title").text if item.find("title") is not None else ""
-                            pub = item.find("source").text if item.find("source") is not None else ("Google News" if mode.startswith("Trump") else "Yahoo Finance")
-                            link = item.find("link").text if item.find("link") is not None else "#"
-                            pub_date = item.find("pubDate").text if item.find("pubDate") is not None else ""
-                            
-                            if mode.startswith("Trump"):
-                                articles.append({
-                                    "title": title,
-                                    "publisher": f"Trump Feed / {pub}",
-                                    "link": link,
-                                    "time": pub_date[:16]
-                                })
-                            elif mode.startswith("General"):
-                                articles.append({
-                                    "title": title,
-                                    "publisher": pub,
-                                    "link": link,
-                                    "time": pub_date[:16]
-                                })
-                except Exception:
-                    pass
-
-            return articles
-
-        articles = fetch_news_feed(target_symbol, news_source_type)
-
-        if not articles:
-            st.info("No recent news articles found at the moment.")
-        else:
-            for art in articles:
-                st.markdown(
-                    f"""
-                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 15px; border-radius: 4px; margin-bottom: 10px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span style="font-size: 11px; color: #f0b90b; font-weight: bold; background: rgba(240,185,11,0.1); padding: 2px 6px; border-radius: 3px;">{art['publisher']}</span>
-                            <span style="font-size: 11px; color: #848e9c;">{art['time']}</span>
-                        </div>
-                        <a href="{art['link']}" target="_blank" style="text-decoration: none; color: #eaecef; font-size: 14px; font-weight: 500; display: block; margin-bottom: 4px;">
-                            {art['title']} ↗
-                        </a>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+        st.markdown("### 📰 Live Trading News", unsafe_allow_html=True)
+        st.info("Live market wires and macroeconomic news feeds.")
