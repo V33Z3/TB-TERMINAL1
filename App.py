@@ -31,6 +31,9 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN"]
+
 st.markdown(
     """
     <style>
@@ -176,41 +179,78 @@ st.session_state.active_main_tab = selected_main_tab
 st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
 if selected_main_tab == "📈 Terminal Chart":
-    st.markdown(
-        f"""
-        <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-            <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
+    col_chart, col_wl = st.columns([3, 1])
 
-    tv_html = f"""
-    <div class="tradingview-widget-container" style="height:680px;width:100%">
-      <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-      {{
-        "autosize": false,
-        "width": "100%",
-        "height": "680",
-        "symbol": "{target_symbol}",
-        "interval": "D",
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "enable_publishing": false,
-        "allow_symbol_change": true,
-        "calendar": false,
-        "support_host": "https://www.tradingview.com",
-        "isTransparent": true,
-        "hide_side_toolbar": false
-      }}
-      </script>
-    </div>
-    """
-    components.html(tv_html, height=690)
+    with col_chart:
+        st.markdown(
+            f"""
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
+                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        tv_html = f"""
+        <div class="tradingview-widget-container" style="height:680px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {{
+            "autosize": false,
+            "width": "100%",
+            "height": "680",
+            "symbol": "{target_symbol}",
+            "interval": "D",
+            "timezone": "Etc/UTC",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "enable_publishing": false,
+            "allow_symbol_change": true,
+            "calendar": false,
+            "support_host": "https://www.tradingview.com",
+            "isTransparent": true,
+            "hide_side_toolbar": false
+          }}
+          </script>
+        </div>
+        """
+        components.html(tv_html, height=690)
+
+    with col_wl:
+        @st.fragment
+        def render_persistent_watchlist():
+            st.markdown("### Persistent Custom Watchlist")
+            
+            new_ticker = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", key="add_watchlist_input", label_visibility="collapsed")
+            if st.button("+ Add", use_container_width=True, key="add_watchlist_btn"):
+                if new_ticker:
+                    syms = [s.strip().upper() for s in new_ticker.split(",") if s.strip()]
+                    for s in syms:
+                        if s not in st.session_state.watchlist:
+                            st.session_state.watchlist.append(s)
+                    st.rerun()
+
+            st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+
+            for symbol in st.session_state.watchlist:
+                p, pct, vol = fetch_live_quote(symbol)
+                color = "#0ecb81" if pct >= 0 else "#f6465d"
+                sign = "+" if pct >= 0 else ""
+                
+                w_col1, w_col2, w_col3 = st.columns([2, 2, 1])
+                with w_col1:
+                    if st.button(symbol, key=f"wl_btn_{symbol}", use_container_width=True):
+                        st.session_state.active_ticker = symbol
+                with w_col2:
+                    st.markdown(f"<div style='font-size: 11px; text-align: right; color: #eaecef;'>${p:,.2f}<br><span style='color: {color};'>{sign}{pct:.2f}%</span></div>", unsafe_allow_html=True)
+                with w_col3:
+                    if st.button("🗑️", key=f"wl_del_{symbol}"):
+                        st.session_state.watchlist = [s for s in st.session_state.watchlist if s != symbol]
+                        st.rerun()
+
+        render_persistent_watchlist()
 
 elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
     st.markdown("### ⚛️ Gamma Exposure (GEX) Analysis", unsafe_allow_html=True)
