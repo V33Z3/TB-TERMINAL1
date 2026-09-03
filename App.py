@@ -29,7 +29,8 @@ tab_to_param = {
     "📈 Terminal Chart & Watchlist": "chart",
     "⚛️ Gamma Exposure (GEX) Analysis": "gex",
     "🎯 Optimal Contract Finder": "finder",
-    "🔄 Sector Rotation Leaderboard": "sectors"
+    "🔄 Sector Rotation Leaderboard": "sectors",
+    "⚡ Unusual Options Activity": "uoa"
 }
 param_to_tab = {v: k for k, v in tab_to_param.items()}
 
@@ -862,3 +863,66 @@ else:
                 st.divider()
 
         render_sector_rotation()
+
+    elif selected_main_tab == "⚡ Unusual Options Activity":
+        st.markdown(
+            f"""
+            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 12px 18px; border-radius: 4px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #eaecef; font-size: 16px;">⚡ Free Unusual Options Activity (UOA) Scanner</h3>
+                <p style="margin: 4px 0 0 0; color: #848e9c; font-size: 12px;">Scans option chains for your watchlist where daily volume exceeds open interest, signaling fresh institutional positioning.</p>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        if not YFINANCE_AVAILABLE:
+            st.error("`yfinance` is required for options chain data.")
+        else:
+            scan_scope = st.radio("Scan Universe", options=["Custom Watchlist", "Major Tech & Indices (SPY, QQQ, AAPL, NVDA, TSLA, AMZN, MSFT, META)"], horizontal=True)
+            
+            if st.button("Run UOA Scan", type="primary", use_container_width=True):
+                with st.spinner("Scanning option chains for volume/OI anomalies..."):
+                    if scan_scope == "Custom Watchlist":
+                        symbols_to_scan = st.session_state.watchlist
+                    else:
+                        symbols_to_scan = ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "AMZN", "MSFT", "META"]
+
+                    uoa_results = []
+                    for sym in symbols_to_scan:
+                        try:
+                            tk = yf.Ticker(sym, session=get_yf_session())
+                            exp_dates = tk.options
+                            if not exp_dates:
+                                continue
+                            opt_chain = tk.option_chain(exp_dates[0])
+                            
+                            for opt_type, df in [("CALL", opt_chain.calls), ("PUT", opt_chain.puts)]:
+                                if df.empty:
+                                    continue
+                                active = df[(df["volume"] > df["openInterest"]) & (df["volume"] > 300)]
+                                for _, row in active.iterrows():
+                                    vol = float(row["volume"]) if not pd.isna(row["volume"]) else 0.0
+                                    oi = float(row["openInterest"]) if not pd.isna(row["openInterest"]) else 1.0
+                                    ratio = round(vol / max(oi, 1), 2)
+                                    iv = float(row["impliedVolatility"]) if not pd.isna(row["impliedVolatility"]) else 0.0
+                                    
+                                    uoa_results.append({
+                                        "Ticker": sym,
+                                        "Type": opt_type,
+                                        "Strike": float(row["strike"]),
+                                        "Expiry": exp_dates[0],
+                                        "Volume": int(vol),
+                                        "Open Interest": int(oi),
+                                        "Vol/OI Ratio": ratio,
+                                        "Last Price": float(row["lastPrice"]) if not pd.isna(row["lastPrice"]) else 0.0,
+                                        "IV": f"{iv*100:.1f}%"
+                                    })
+                        except Exception:
+                            continue
+
+                    if not uoa_results:
+                        st.info("No unusual options activity detected matching criteria for the selected symbols right now.")
+                    else:
+                        df_uoa = pd.DataFrame(uoa_results)
+                        df_uoa = df_uoa.sort_values(by="Vol/OI Ratio", ascending=False)
+                        st.dataframe(df_uoa, use_container_width=True, hide_index=True)
