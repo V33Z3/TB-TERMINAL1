@@ -381,11 +381,7 @@ else:
                 pass
         return price, pct, vol
 
-    def format_vol(v):
-        if v >= 1e9: return f"{v/1e9:.2f}B"
-        elif v >= 1e6: return f"{v/1e6:.2f}M"
-        elif v >= 1e3: return f"{v/1e3:.1f}K"
-        return str(v)
+    fn_format_vol = lambda v: f"{v/1e9:.2f}B" if v >= 1e9 else (f"{v/1e6:.2f}M" if v >= 1e6 else (f"{v/1e3:.1f}K" if v >= 1e3 else str(v)))
 
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
     qqq_price, qqq_pct, _ = fetch_live_quote("QQQ")
@@ -510,15 +506,11 @@ else:
                     p_val, p_pct, p_vol = fetch_live_quote(sym)
                     color = "#0ecb81" if p_pct >= 0 else "#f6465d"
                     sign = "+" if p_pct >= 0 else ""
-                    vol_str = format_vol(p_vol) if p_vol > 0 else "-"
+                    vol_str = fn_format_vol(p_vol) if p_vol > 0 else "-"
 
                     w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
                     with w_col_info:
-                        # Fully sync active_ticker and text_input session state to prevent widget conflict crashes
-                        if st.button(sym, key=f"btn_ticker_{sym}", use_container_width=True):
-                            st.session_state.active_ticker = sym
-                            st.session_state.ticker_search_input = sym
-                            st.rerun()
+                        st.markdown(f"<div style='font-size: 13px; font-weight: bold; color: #eaecef; padding-top: 8px;'>{sym}</div>", unsafe_allow_html=True)
                     with w_col_vol:
                         st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px;'>{vol_str}</div>", unsafe_allow_html=True)
                     with w_col_price:
