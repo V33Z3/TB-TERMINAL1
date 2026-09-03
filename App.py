@@ -185,10 +185,7 @@ else:
     if st.session_state.show_splash:
         components.html(
             """
-            <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden; position: relative;">
-                <!-- Win Flash Overlay -->
-                <div id="winFlash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(14, 203, 129, 0.45); opacity: 0; pointer-events: none; transition: opacity 0.08s ease-in-out; z-index: 9999;"></div>
-
+            <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
                 <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
                     <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 6px;">⚡ TB TERMINAL</div>
                     <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
@@ -272,27 +269,12 @@ else:
             </div>
 
             <script>
-            // Ultra-accelerated Sequential Animation with Green Win Flash right before finish.
+            // Strict Sequential Animation: One candle spawns, bounces up and down, locks into a random resting spot, then the next candle spawns.
             const candles = document.querySelectorAll('.candle');
             let currentIndex = 0;
 
             function animateNextCandle() {
-                if (currentIndex >= candles.length) {
-                    // Flash green screen right before finishing
-                    const flash = document.getElementById('winFlash');
-                    if (flash) {
-                        flash.style.opacity = '1';
-                    }
-                    return;
-                }
-
-                // Flash green screen right when the very last candle starts animating
-                if (currentIndex === candles.length - 1) {
-                    const flash = document.getElementById('winFlash');
-                    if (flash) {
-                        flash.style.opacity = '0.9';
-                    }
-                }
+                if (currentIndex >= candles.length) return;
 
                 const candle = candles[currentIndex];
                 const rect = candle.querySelector('rect');
@@ -305,6 +287,7 @@ else:
                 const targetRy = parseFloat(candle.getAttribute('data-ry'));
                 const targetRh = parseFloat(candle.getAttribute('data-rh'));
 
+                // Pick a unique random resting spot relative to the template
                 const randomOffset = (Math.random() - 0.5) * 12;
                 const finalY1 = targetY1 + randomOffset;
                 const finalY2 = targetY2 + randomOffset;
@@ -312,16 +295,17 @@ else:
                 const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
 
                 let startTime = performance.now();
-                let bounceDuration = 30 + Math.random() * 20; // Even faster active bouncing
+                let bounceDuration = 700 + Math.random() * 500; // Duration of active bouncing up and down
 
                 function frame(now) {
                     let elapsed = now - startTime;
                     let progress = Math.min(1, elapsed / bounceDuration);
 
                     if (progress < 1) {
+                        // Up and down oscillation motion while bouncing into place
                         let bounceAmplitude = 12 * (1 - progress); 
-                        let currentRy = finalRy + Math.sin(elapsed / 30) * bounceAmplitude;
-                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 20) * 3);
+                        let currentRy = finalRy + Math.sin(elapsed / 70) * bounceAmplitude;
+                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 50) * 3);
                         let currentY1 = currentRy - (finalRy - finalY1);
                         let currentY2 = currentRy + (finalY2 - finalRy);
 
@@ -332,25 +316,28 @@ else:
 
                         requestAnimationFrame(frame);
                     } else {
+                        // Lock completely into its final random spot and stop moving
                         rect.setAttribute('y', finalRy);
                         rect.setAttribute('height', finalRh);
                         line.setAttribute('y1', finalY1);
                         line.setAttribute('y2', finalY2);
 
+                        // Move on to spawn and animate the next candle
                         currentIndex++;
-                        setTimeout(animateNextCandle, 2); // Instantaneous interval between candles
+                        setTimeout(animateNextCandle, 40);
                     }
                 }
 
                 requestAnimationFrame(frame);
             }
 
+            // Start sequence
             animateNextCandle();
             </script>
             """,
             height=320,
         )
-        time.sleep(0.4) # Slightly faster total transition time
+        time.sleep(5.0)
         st.session_state.show_splash = False
         st.rerun()
 
