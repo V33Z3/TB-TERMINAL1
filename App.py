@@ -228,63 +228,64 @@ if not st.session_state.user:
             except Exception as e:
               st.error(f"Error: {e}")
 else:
-  # Splash Animation with Bigger Size & SMA Trading Theme
+  # Splash Animation with Larger Screen Footprint & SMA Breakout Theme
   if st.session_state.show_splash:
     components.html(
         """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
-                <div style="text-align: center; width: 100%; max-width: 640px;">
-                    <div style="font-size: 36px; font-weight: bold; color: #f0b90b; letter-spacing: 2px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
-                    <p style="color: #848e9c; font-size: 13px; font-family: monospace; letter-spacing: 1.5px; margin-bottom: 25px;">INITIALIZING SMA ALGO STRATEGIES & LIQUIDITY FEED...</p>
+                <div style="text-align: center; width: 100%; max-width: 950px; padding: 0 20px;">
+                    <div style="font-size: 48px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 12px;">⚡ TB TERMINAL</div>
+                    <p style="color: #848e9c; font-size: 16px; font-family: monospace; letter-spacing: 2px; margin-bottom: 35px;">INITIALIZING SMA ALGO STRATEGIES & BULLISH BREAKOUT FEED...</p>
                     
-                    <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.9);">
-                        <svg width="100%" height="160" viewBox="0 0 400 160" style="overflow: visible;">
-                            <line x1="0" y1="30" x2="400" y2="30" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="70" x2="400" y2="70" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="110" x2="400" y2="110" stroke="#1a1a1a" stroke-width="1" />
-                            <line x1="0" y1="150" x2="400" y2="150" stroke="#1a1a1a" stroke-width="1" />
+                    <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.95);">
+                        <svg width="100%" height="260" viewBox="0 0 600 260" style="overflow: visible;">
+                            <line x1="0" y1="50" x2="600" y2="50" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="110" x2="600" y2="110" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="170" x2="600" y2="170" stroke="#1a1a1a" stroke-width="1" />
+                            <line x1="0" y1="230" x2="600" y2="230" stroke="#1a1a1a" stroke-width="1" />
                             
-                            <rect x="45" y="60" width="10" height="40" fill="#f6465d" rx="2" />
-                            <line x1="50" y1="45" x2="50" y2="120" stroke="#f6465d" stroke-width="2" />
+                            <!-- Candlesticks scaled up -->
+                            <rect x="60" y="100" width="16" height="60" fill="#f6465d" rx="3" />
+                            <line x1="68" y1="75" x2="68" y2="190" stroke="#f6465d" stroke-width="2.5" />
                             
-                            <rect x="95" y="80" width="10" height="30" fill="#0ecb81" rx="2" />
-                            <line x1="100" y1="65" x2="100" y2="130" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="135" y="130" width="16" height="50" fill="#0ecb81" rx="3" />
+                            <line x1="143" y1="105" x2="143" y2="205" stroke="#0ecb81" stroke-width="2.5" />
                             
-                            <rect x="145" y="50" width="10" height="50" fill="#0ecb81" rx="2" />
-                            <line x1="150" y1="35" x2="150" y2="120" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="210" y="80" width="16" height="80" fill="#0ecb81" rx="3" />
+                            <line x1="218" y1="55" x2="218" y2="195" stroke="#0ecb81" stroke-width="2.5" />
                             
-                            <rect x="195" y="65" width="10" height="35" fill="#f6465d" rx="2" />
-                            <line x1="200" y1="50" x2="200" y2="115" stroke="#f6465d" stroke-width="2" />
+                            <rect x="285" y="105" width="16" height="60" fill="#f6465d" rx="3" />
+                            <line x1="293" y1="80" x2="293" y2="185" stroke="#f6465d" stroke-width="2.5" />
                             
-                            <rect x="245" y="40" width="10" height="60" fill="#0ecb81" rx="2" />
-                            <line x1="250" y1="20" x2="250" y2="110" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="360" y="65" width="16" height="95" fill="#0ecb81" rx="3" />
+                            <line x1="368" y1="35" x2="368" y2="180" stroke="#0ecb81" stroke-width="2.5" />
 
-                            <rect x="295" y="25" width="10" height="70" fill="#0ecb81" rx="2" />
-                            <line x1="300" y1="10" x2="300" y2="105" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="435" y="45" width="16" height="110" fill="#0ecb81" rx="3" />
+                            <line x1="443" y1="20" x2="443" y2="170" stroke="#0ecb81" stroke-width="2.5" />
 
-                            <rect x="345" y="15" width="10" height="75" fill="#0ecb81" rx="2" />
-                            <line x1="350" y1="5" x2="350" y2="95" stroke="#0ecb81" stroke-width="2" />
+                            <rect x="510" y="20" width="16" height="120" fill="#0ecb81" rx="3" />
+                            <line x1="518" y1="5" x2="518" y2="150" stroke="#0ecb81" stroke-width="2.5" />
 
-                            <!-- SMA 50 (Blue Slow Moving Average) -->
-                            <path d="M 20 120 Q 110 110, 200 85 T 380 40" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" opacity="0.85" />
+                            <!-- SMA 50 (Slow Moving Average - Blue) -->
+                            <path d="M 30 190 Q 180 170, 330 130 T 570 90" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" opacity="0.85" />
 
-                            <!-- SMA 20 (Yellow Fast Moving Average) -->
-                            <path d="M 20 110 Q 110 95, 200 65 T 380 25" fill="none" stroke="#f0b90b" stroke-width="2.5" stroke-linecap="round" opacity="0.9" />
+                            <!-- SMA 20 (Fast Moving Average - Yellow) -->
+                            <path d="M 30 175 Q 180 150, 330 100 T 570 65" fill="none" stroke="#f0b90b" stroke-width="3" stroke-linecap="round" opacity="0.9" />
 
-                            <!-- Main Glowing Price Line -->
-                            <path d="M 20 100 Q 70 115, 120 75 T 220 55 T 320 20 T 380 15" fill="none" stroke="#0ecb81" stroke-width="3.5" stroke-linecap="round" class="glow-line" />
+                            <!-- Main Glowing Price Line breaking decisively above SMAs -->
+                            <path d="M 30 160 Q 100 180, 180 120 T 300 90 T 420 70 T 500 35 T 570 15" fill="none" stroke="#0ecb81" stroke-width="5" stroke-linecap="round" class="glow-line" />
                         </svg>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px;">
-                            <span style="color: #848e9c; font-family: monospace; display: flex; align-items: center; gap: 6px;">
-                                <span style="display:inline-block; width:10px; height:10px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
-                                <span style="display:inline-block; width:10px; height:10px; background:#3b82f6; border-radius:50%; margin-left:8px;"></span> SMA 50 (Slow)
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 15px;">
+                            <span style="color: #848e9c; font-family: monospace; display: flex; align-items: center; gap: 8px;">
+                                <span style="display:inline-block; width:12px; height:12px; background:#f0b90b; border-radius:50%;"></span> SMA 20 (Fast)
+                                <span style="display:inline-block; width:12px; height:12px; background:#3b82f6; border-radius:50%; margin-left:12px;"></span> SMA 50 (Slow)
                             </span>
-                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.15); padding: 4px 10px; border-radius: 4px;">GOLDEN CROSS ▲</span>
+                            <span style="color: #0ecb81; font-weight: bold; background: rgba(14,203,129,0.2); padding: 6px 14px; border-radius: 6px; font-size: 14px;">🚀 BULLISH BREAKOUT ABOVE SMA ▲</span>
                         </div>
                     </div>
 
-                    <div style="width: 100%; height: 4px; background: #1a1a1a; border-radius: 2px; margin: 30px 0 10px 0; overflow: hidden;">
+                    <div style="width: 100%; height: 6px; background: #1a1a1a; border-radius: 3px; margin: 40px 0 15px 0; overflow: hidden;">
                         <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #0ecb81, #f0b90b, #3b82f6, transparent); animation: slide 1.2s infinite linear;"></div>
                     </div>
                 </div>
@@ -295,9 +296,9 @@ else:
                 100% { transform: translateX(100%); }
             }
             .glow-line {
-                filter: drop-shadow(0px 0px 10px rgba(14, 203, 129, 0.8));
-                stroke-dasharray: 500;
-                stroke-dashoffset: 500;
+                filter: drop-shadow(0px 0px 14px rgba(14, 203, 129, 0.9));
+                stroke-dasharray: 800;
+                stroke-dashoffset: 800;
                 animation: drawChart 1.5s ease-in-out forwards;
             }
             @keyframes drawChart {
@@ -305,7 +306,7 @@ else:
             }
             </style>
         """,
-        height=750,
+        height=850,
     )
     time.sleep(1.8)
     st.session_state.show_splash = False
