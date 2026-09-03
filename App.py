@@ -155,7 +155,7 @@ elif st.session_state.started and st.session_state.animating:
     const ctx = canvas.getContext('2d');
     
     let candles = [];
-    let maxCandles = 58; // Fully spans across the canvas width
+    let maxCandles = 50; 
     
     const fibLevels = [
         {val: 0.20, label: '0.236 (Retrace)', color: '#f6465d'},
@@ -186,12 +186,11 @@ elif st.session_state.started and st.session_state.animating:
         if (candles.length < maxCandles) {
             candles.push({...activeCandle});
             
-            let nextX = 30 + candles.length * 15.5; // Compact spacing to fit all candles before completion
+            let nextX = 30 + candles.length * 17.5; 
             let open = activeCandle.close; 
             
-            // Structured high-low-high-low oscillation using sine/cosine waves + volatility
             let index = candles.length;
-            let wave = Math.sin(index * 0.28) * 0.32; // Strong vertical swings
+            let wave = Math.sin(index * 0.28) * 0.32; 
             let trend = Math.cos(index * 0.1) * 0.12;
             let targetPrice = 0.5 + wave + trend;
             let close = Math.max(0.15, Math.min(0.85, targetPrice + (Math.random() - 0.5) * 0.08));
@@ -210,7 +209,7 @@ elif st.session_state.started and st.session_state.animating:
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Draw Fibonacci Grid Lines
+        # Draw Fibonacci Grid Lines
         fibLevels.forEach(fib => {
             let y = valToY(fib.val);
             ctx.strokeStyle = fib.color;
@@ -227,13 +226,12 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        // Fast spawn rate (every 7 frames) so candles populate quickly and finish before 10s
+        # Adjusted spawn rate slightly slower (every 9 frames instead of 7)
         spawnTimer++;
-        if (spawnTimer > 7 && candles.length < maxCandles) {
+        if (spawnTimer > 9 && candles.length < maxCandles) {
             spawnNewCandle();
             spawnTimer = 0;
         } else {
-            // Actively fluctuate live forming candle close and wicks
             let tickChange = (Math.random() - 0.5) * 0.006;
             activeCandle.close = Math.max(0.15, Math.min(0.85, activeCandle.close + tickChange));
             if (activeCandle.close > activeCandle.high) activeCandle.high = activeCandle.close;
@@ -245,7 +243,6 @@ elif st.session_state.started and st.session_state.animating:
         let remaining = Math.max(0, (10.0 - timeSec)).toFixed(1);
         document.getElementById('timerText').innerText = "Fibonacci Back-test in Progress... " + remaining + "s remaining";
 
-        // Draw all completed candles + active live candle
         let allCandles = [...candles, activeCandle];
         allCandles.forEach((c) => {
             let openY = valToY(c.open);
@@ -261,13 +258,11 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillStyle = c.isGreen ? 'rgba(14, 203, 129, 0.3)' : 'rgba(246, 70, 93, 0.3)';
             ctx.lineWidth = 1.5;
 
-            // Wick
             ctx.beginPath();
             ctx.moveTo(c.x, highY);
             ctx.lineTo(c.x, lowY);
             ctx.stroke();
 
-            // Body
             ctx.fillRect(c.x - 3.5, topY, 7, bodyHeight);
             ctx.strokeRect(c.x - 3.5, topY, 7, bodyHeight);
 
