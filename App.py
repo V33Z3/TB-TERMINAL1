@@ -19,23 +19,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Initialize Session State Variables
+# Initialize Session State Variables (using unique internal keys)
 if "started" not in st.session_state:
     st.session_state.started = False
 
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
 
-if "ticker_search_input" not in st.session_state:
-    st.session_state.ticker_search_input = st.session_state.active_ticker
-
-if "active_main_tab" not in st.session_state:
-    st.session_state.active_main_tab = "📈 Terminal Chart"
-
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN"]
 
-# Landing/Splash Screen Gate
+if "nav_selection" not in st.session_state:
+    st.session_state.nav_selection = "📈 Terminal Chart & Watchlist"
+
+# 1. Landing/Splash Screen Gate
 if not st.session_state.started:
     st.markdown(
         """
@@ -53,6 +50,7 @@ if not st.session_state.started:
             st.session_state.started = True
             st.rerun()
 
+# 2. Main Terminal App
 else:
     st.markdown(
         """
@@ -172,7 +170,7 @@ else:
     """, unsafe_allow_html=True)
 
     nav_options = [
-        "📈 Terminal Chart",
+        "📈 Terminal Chart & Watchlist",
         "⚛️ Gamma Exposure (GEX) Analysis",
         "🎯 Optimal Contract Finder",
         "🔄 Sector Rotation Leaderboard",
@@ -180,10 +178,16 @@ else:
         "📰 Live Trading News"
     ]
 
-    selected_main_tab = st.selectbox("Navigation", options=nav_options, key="active_main_tab", label_visibility="collapsed")
+    selected_main_tab = st.radio(
+        "Navigation", 
+        options=nav_options, 
+        key="nav_selection",
+        horizontal=True, 
+        label_visibility="collapsed"
+    )
     st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
-    if selected_main_tab == "📈 Terminal Chart":
+    if selected_main_tab == "📈 Terminal Chart & Watchlist":
         col_chart, col_wl = st.columns([3, 1])
 
         with col_chart:
