@@ -102,9 +102,13 @@ st.markdown(
     }
 
     [data-testid="stInfo"] {
-        background-color: #0b131a !important;
-        color: #38bdf8 !important;
-        border: 1px solid #0284c7 !important;
+        background-color: #080808 !important;
+        color: #eaecef !important;
+        border: 1px solid #1a1a1a !important;
+    }
+    
+    [data-testid="stInfo"] svg {
+        fill: #eaecef !important;
     }
 
     .delete-btn button {
