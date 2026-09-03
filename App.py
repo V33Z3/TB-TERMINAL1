@@ -596,13 +596,14 @@ else:
 
                 df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
+                # Horizontal Bar Chart (Strikes on Y-axis, GEX extending left/right on X-axis) matching Unusual Whales layout
                 chart = alt.Chart(df_filtered).mark_bar().encode(
-                    x=alt.X("strike:Q", title="Strike Price ($)", scale=alt.Scale(zero=False)),
-                    y=alt.Y("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
+                    y=alt.Y("strike:Q", title="Strike Price ($)", scale=alt.Scale(zero=False)),
+                    x=alt.X("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
                     color=alt.Color("color:N", scale=None),
                     tooltip=["strike", "gex"]
                 ).properties(
-                    height=420,
+                    height=600,
                     background="#080808"
                 ).configure_view(
                     strokeWidth=0
@@ -622,8 +623,8 @@ else:
                     <div style="background-color: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 4px; font-size: 13px; color: #b7bdc6; margin-top: 15px;">
                         <b>Quant Intelligence Note:</b> 
                         <ul>
-                            <li><b>Positive GEX (Green Bars):</b> Market makers are long gamma and must dynamically hedge by selling into rallies and buying into dips, which tends to compress intraday volatility.</li>
-                            <li><b>Negative GEX (Red Bars):</b> Market makers are short gamma and must chase momentum by buying rising markets and selling falling markets, amplifying volatility.</li>
+                            <li><b>Positive GEX (Green Bars — Right):</b> Market makers are long gamma and must dynamically hedge by selling into rallies and buying into dips, which tends to compress intraday volatility.</li>
+                            <li><b>Negative GEX (Red Bars — Left):</b> Market makers are short gamma and must chase momentum by buying rising markets and selling falling markets, amplifying volatility.</li>
                             <li><b>Gamma Flip Point (~${flip_strike:,.2f}):</b> The critical institutional pivot level where dealer hedging behavior flips polarity.</li>
                         </ul>
                     </div>
