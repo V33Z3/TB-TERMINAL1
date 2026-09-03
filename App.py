@@ -596,14 +596,14 @@ else:
 
                 df_filtered["color"] = np.where(df_filtered["gex"] >= 0, "#0ecb81", "#f6465d")
 
-                # Horizontal Bar Chart (Strikes on Y-axis, GEX extending left/right on X-axis) matching Unusual Whales layout
+                # Horizontal Bar Chart matching Unusual Whales layout (Strikes on Y-axis, GEX extending left/right on X-axis)
                 chart = alt.Chart(df_filtered).mark_bar().encode(
-                    y=alt.Y("strike:Q", title="Strike Price ($)", scale=alt.Scale(zero=False)),
+                    y=alt.Y("strike:O", title="Strike Price ($)", sort="descending"),
                     x=alt.X("gex:Q", title="Gamma Exposure ($ Billions per 1% Move)"),
                     color=alt.Color("color:N", scale=None),
                     tooltip=["strike", "gex"]
                 ).properties(
-                    height=600,
+                    height=650,
                     background="#080808"
                 ).configure_view(
                     strokeWidth=0
