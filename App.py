@@ -612,8 +612,6 @@ else:
                     domainColor="#333333",
                     labelColor="#848e9c",
                     titleColor="#eaecef"
-                ).configure_background(
-                    fill="#080808"
                 )
 
                 st.altair_chart(chart, use_container_width=True)
