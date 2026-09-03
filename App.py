@@ -5,7 +5,6 @@ import pandas as pd
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
-from supabase import Client, create_client
 
 try:
     import yfinance as yf
@@ -20,23 +19,18 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Initialize persistent session states (No splash screen, no home page redirection)
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
 
 if "ticker_search_input" not in st.session_state:
     st.session_state.ticker_search_input = st.session_state.active_ticker
 
-if "watchlist" not in st.session_state:
-    st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
-
 if "active_main_tab" not in st.session_state:
-    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+    st.session_state.active_main_tab = "📈 Terminal Chart"
 
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
-# Pro Exchange True Black Theme Styling
 st.markdown(
     """
     <style>
@@ -87,75 +81,15 @@ st.markdown(
         font-size: 13px !important;
         min-height: 30px !important;
     }
-
-    .delete-btn button {
-        background-color: rgba(246, 70, 93, 0.1) !important;
-        color: #f6465d !important;
-        border: 1px solid rgba(246, 70, 93, 0.3) !important;
-    }
-    .delete-btn button:hover {
-        background-color: rgba(246, 70, 93, 0.25) !important;
-        border-color: #f6465d !important;
-    }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Supabase Secret Loader
-@st.cache_resource
-def init_supabase():
-    url = ""
-    key = ""
-    try:
-        if "SUPABASE_URL" in st.secrets:
-            url = st.secrets["SUPABASE_URL"]
-        elif "supabase" in st.secrets and "SUPABASE_URL" in st.secrets["supabase"]:
-            url = st.secrets["supabase"]["SUPABASE_URL"]
-
-        if "SUPABASE_KEY" in st.secrets:
-            key = st.secrets["SUPABASE_KEY"]
-        elif "SUPABASE_SECRET_KEY" in st.secrets:
-            key = st.secrets["SUPABASE_SECRET_KEY"]
-        elif "supabase" in st.secrets and "SUPABASE_KEY" in st.secrets["supabase"]:
-            key = st.secrets["supabase"]["SUPABASE_KEY"]
-        elif "supabase" in st.secrets and "SUPABASE_SECRET_KEY" in st.secrets["supabase"]:
-            key = st.secrets["supabase"]["SUPABASE_SECRET_KEY"]
-    except Exception:
-        pass
-
-    if url and key:
-        try:
-            return create_client(url, key)
-        except Exception:
-            return None
-    return None
-
-supabase = init_supabase()
-
-# Load Watchlist from DB
-try:
-    if supabase:
-        wl_res = supabase.table("user_watchlists").select("symbols").eq("user_id", "guest_terminal_user").execute()
-        if wl_res.data and len(wl_res.data) > 0 and wl_res.data[0].get("symbols"):
-            st.session_state.watchlist = wl_res.data[0].get("symbols")
-except Exception:
-    pass
-
-def save_watchlist_to_db():
-    try:
-        if supabase:
-            supabase.table("user_watchlists").upsert(
-                {"user_id": "guest_terminal_user", "symbols": st.session_state.watchlist}
-            ).execute()
-    except Exception:
-        pass
-
 with st.sidebar:
     st.markdown("### ⚙️ Research Terminal")
     st.markdown("<p style='font-size: 12px; color: #848e9c;'>Mode: <b>Market Research & GEX Analytics</b></p>", unsafe_allow_html=True)
 
-# Ticker Search Input Row
 def on_ticker_change():
     st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
 
@@ -186,8 +120,6 @@ def fetch_live_quote(symbol):
         except Exception:
             pass
     return price, pct, vol
-
-fn_format_vol = lambda v: f"{v/1e9:.2f}B" if v >= 1e9 else (f"{v/1e6:.2f}M" if v >= 1e6 else (f"{v/1e3:.1f}K" if v >= 1e3 else str(v)))
 
 try:
     spy_price, spy_pct, _ = fetch_live_quote("SPY")
@@ -220,7 +152,7 @@ def on_nav_change():
     st.session_state.active_main_tab = st.session_state.main_nav_radio
 
 nav_options = [
-    "📈 Terminal Chart & Watchlist",
+    "📈 Terminal Chart",
     "⚛️ Gamma Exposure (GEX) Analysis",
     "🎯 Optimal Contract Finder",
     "🔄 Sector Rotation Leaderboard",
@@ -243,99 +175,42 @@ selected_main_tab = st.radio(
 st.session_state.active_main_tab = selected_main_tab
 st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
-if selected_main_tab == "📈 Terminal Chart & Watchlist":
-    col_chart, col_research = st.columns([3.4, 1.2])
-
-    with col_chart:
-        st.markdown(
-            f"""
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-                <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        tv_html = f"""
-        <div class="tradingview-widget-container" style="height:630px;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {{
-            "autosize": false,
-            "width": "100%",
-            "height": "630",
-            "symbol": "{target_symbol}",
-            "interval": "D",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "enable_publishing": false,
-            "allow_symbol_change": true,
-            "calendar": false,
-            "support_host": "https://www.tradingview.com",
-            "isTransparent": true,
-            "hide_side_toolbar": false
-          }}
-          </script>
+if selected_main_tab == "📈 Terminal Chart":
+    st.markdown(
+        f"""
+        <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
+            <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
         </div>
-        """
-        components.html(tv_html, height=640)
+    """,
+        unsafe_allow_html=True,
+    )
 
-    with col_research:
-        st.markdown(
-            """
-            <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
-                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Persistent Custom Watchlist</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        with st.form("add_watchlist_form", clear_on_submit=True):
-            col_w1, col_w2 = st.columns([3, 1])
-            with col_w1:
-                new_ticker_input = st.text_input("Add Ticker", placeholder="e.g. AAPL, BTCUSD", label_visibility="collapsed")
-            with col_w2:
-                add_btn = st.form_submit_button("＋ Add", use_container_width=True)
-
-            if add_btn and new_ticker_input.strip():
-                clean_sym = new_ticker_input.upper().strip()
-                if clean_sym not in st.session_state.watchlist:
-                    st.session_state.watchlist.append(clean_sym)
-                    save_watchlist_to_db()
-                    st.rerun()
-
-        st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
-        if not st.session_state.watchlist:
-            st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
-        else:
-            for sym in list(st.session_state.watchlist):
-                try:
-                    p_val, p_pct, p_vol = fetch_live_quote(sym)
-                except Exception:
-                    p_val, p_pct, p_vol = 0.0, 0.0, 0
-
-                color = "#0ecb81" if p_pct >= 0 else "#f6465d"
-                sign = "+" if p_pct >= 0 else ""
-                vol_str = fn_format_vol(p_vol) if p_vol > 0 else "-"
-
-                w_col_info, w_col_vol, w_col_price, w_col_del = st.columns([2.2, 1.4, 1.8, 1.0])
-                with w_col_info:
-                    st.markdown(f"<div style='font-size: 13px; font-weight: bold; color: #eaecef; padding-top: 8px; pointer-events: none; user-select: none;'>{sym}</div>", unsafe_allow_html=True)
-                with w_col_vol:
-                    st.markdown(f"<div style='font-size: 13px; color: #eaecef; padding-top: 8px; pointer-events: none; user-select: none;'>{vol_str}</div>", unsafe_allow_html=True)
-                with w_col_price:
-                    st.markdown(f"<div style='font-size: 11px; text-align: right; padding-top: 6px; color: {color}; pointer-events: none; user-select: none;'>${p_val:,.2f}<br><b>{sign}{p_pct:.2f}%</b></div>", unsafe_allow_html=True)
-                with w_col_del:
-                    st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
-                    if st.button("🗑️", key=f"btn_del_{sym}", use_container_width=True):
-                        st.session_state.watchlist.remove(sym)
-                        save_watchlist_to_db()
-                        st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    tv_html = f"""
+    <div class="tradingview-widget-container" style="height:680px;width:100%">
+      <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+      {{
+        "autosize": false,
+        "width": "100%",
+        "height": "680",
+        "symbol": "{target_symbol}",
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "enable_publishing": false,
+        "allow_symbol_change": true,
+        "calendar": false,
+        "support_host": "https://www.tradingview.com",
+        "isTransparent": true,
+        "hide_side_toolbar": false
+      }}
+      </script>
+    </div>
+    """
+    components.html(tv_html, height=690)
 
 elif selected_main_tab == "⚛️ Gamma Exposure (GEX) Analysis":
     st.markdown("### ⚛️ Gamma Exposure (GEX) Analysis", unsafe_allow_html=True)
