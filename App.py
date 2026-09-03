@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 from groq import Groq
 from supabase import create_client, Client
 
-# Try importing yfinance for market quotes (used for fallback/headers)
+# Try importing yfinance for market quotes (used for header badges)
 try:
     import yfinance as yf
     YFINANCE_AVAILABLE = True
@@ -369,7 +369,7 @@ else:
                     time.sleep(1)
                     st.rerun()
 
-    # Main Grid: TradingView Widget Chart on Left, Execution Desk & Watchlist on Right
+    # Main Grid: TradingView Advanced Chart on Left, Trading Desk & TradingView Watchlist on Right
     col_chart, col_trade = st.columns([3.4, 1.2])
 
     with col_chart:
@@ -459,33 +459,44 @@ else:
             except Exception as e:
                 st.error(f"Connection error: Ensure your Alpaca keys match the selected mode ({account_type}) and that your API keys are correct. Details: {e}")
 
-        # Watchlist
+        # TradingView Watchlist / Market Quotes Widget
         st.markdown("""
-            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 10px;">
-                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">Watchlist (Real-Time)</div>
+            <div style="background-color: #1e2329; border: 1px solid #2b313a; padding: 10px; border-radius: 4px; margin-top: 15px; margin-bottom: 5px;">
+                <div style="font-weight: bold; font-size: 13px; color: #eaecef;">TradingView Watchlist</div>
             </div>
         """, unsafe_allow_html=True)
 
-        watchlist_symbols = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "CVS", "SPY", "QQQ"]
-        
-        @st.fragment(run_every="4s")
-        def render_watchlist(symbols, a_key, a_sec):
-            for sym in symbols:
-                w_price, w_pct = fetch_live_quote(sym, a_key, a_sec)
-                color = "#0ecb81" if w_pct >= 0 else "#f6465d"
-                sign = "+" if w_pct >= 0 else ""
-                
-                col_w1, col_w2, col_w3 = st.columns([1.2, 1.5, 1.2])
-                with col_w1:
-                    if st.button(sym, key=f"wl_{sym}", use_container_width=True):
-                        st.session_state.active_ticker = sym
-                        st.rerun()
-                with col_w2:
-                    st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: #eaecef; text-align: right;'>${w_price:,.2f}</div>", unsafe_allow_html=True)
-                with col_w3:
-                    st.markdown(f"<div style='padding-top: 5px; font-size: 12px; color: {color}; font-weight: bold; text-align: right;'>{sign}{w_pct:.2f}%</div>", unsafe_allow_html=True)
-
-        render_watchlist(watchlist_symbols, existing_key, existing_sec)
+        tv_watchlist_html = """
+        <div class="tradingview-widget-container" style="height:350px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+          {
+            "width": "100%",
+            "height": "350",
+            "symbolsGroups": [
+              {
+                "name": "Watchlist",
+                "symbols": [
+                  {"name": "NASDAQ:AAPL", "title": "Apple"},
+                  {"name": "NASDAQ:TSLA", "title": "Tesla"},
+                  {"name": "NASDAQ:NVDA", "title": "NVIDIA"},
+                  {"name": "NASDAQ:AMZN", "title": "Amazon"},
+                  {"name": "NASDAQ:MSFT", "title": "Microsoft"},
+                  {"name": "NASDAQ:GOOGL", "title": "Google"},
+                  {"name": "AMEX:SPY", "title": "S&P 500 ETF"},
+                  {"name": "NASDAQ:QQQ", "title": "Nasdaq ETF"}
+                ]
+              }
+            ],
+            "showSymbolLogo": true,
+            "colorTheme": "dark",
+            "isTransparent": false,
+            "locale": "en"
+          }
+          </script>
+        </div>
+        """
+        components.html(tv_watchlist_html, height=360)
 
     # AI Assistant drawer
     with st.expander("🤖 Groq Quant Intelligence Assistant"):
