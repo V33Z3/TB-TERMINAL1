@@ -488,7 +488,7 @@ else:
       st.error("`yfinance` is required for options chain data.")
     else:
       try:
-        tk = yf.Ticker(target_symbol)
+        tk = yf.Ticker(target_symbol, session=get_yf_session())
         exp_dates = tk.options
       except Exception as e:
         exp_dates = []
