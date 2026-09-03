@@ -853,7 +853,7 @@ else:
                 if st.button("Open Terminal Chart", key=f"btn_sector_term_{sym}", use_container_width=True):
                     st.session_state.active_ticker = sym
                     st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-                    st.session_state.main_nav_radio = "📈 Terminal Chart & Watchlist"
+                    # Removed assignment to st.session_state.main_nav_radio to fix StreamlitWidgetAlreadyInstantiatedError
                     st.query_params.clear()
                     st.query_params["ticker"] = sym
                     st.query_params["tab"] = "chart"
