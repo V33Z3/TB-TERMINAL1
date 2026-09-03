@@ -155,7 +155,7 @@ elif st.session_state.started and st.session_state.animating:
     const ctx = canvas.getContext('2d');
     
     let candles = [];
-    let maxCandles = 52; // Increased count to span across the entire canvas width
+    let maxCandles = 58; // Fully spans across the canvas width
     
     const fibLevels = [
         {val: 0.20, label: '0.236 (Retrace)', color: '#f6465d'},
@@ -171,7 +171,7 @@ elif st.session_state.started and st.session_state.animating:
 
     let initialPrice = 0.5;
     let activeCandle = {
-        x: 35,
+        x: 30,
         open: initialPrice,
         close: initialPrice,
         high: initialPrice,
@@ -186,19 +186,22 @@ elif st.session_state.started and st.session_state.animating:
         if (candles.length < maxCandles) {
             candles.push({...activeCandle});
             
-            let nextX = 35 + candles.length * 17; // Tighter spacing to fit more candles across the width
+            let nextX = 30 + candles.length * 15.5; // Compact spacing to fit all candles before completion
             let open = activeCandle.close; 
             
-            // Increased step size and directional momentum for wider high/low swings across zones
-            let change = (Math.random() - 0.49) * 0.11;
-            let close = Math.max(0.15, Math.min(0.85, open + change));
+            // Structured high-low-high-low oscillation using sine/cosine waves + volatility
+            let index = candles.length;
+            let wave = Math.sin(index * 0.28) * 0.32; // Strong vertical swings
+            let trend = Math.cos(index * 0.1) * 0.12;
+            let targetPrice = 0.5 + wave + trend;
+            let close = Math.max(0.15, Math.min(0.85, targetPrice + (Math.random() - 0.5) * 0.08));
             
             activeCandle = {
                 x: nextX,
                 open: open,
                 close: close,
-                high: Math.max(open, close) + Math.random() * 0.05,
-                low: Math.min(open, close) - Math.random() * 0.05,
+                high: Math.max(open, close) + Math.random() * 0.06,
+                low: Math.min(open, close) - Math.random() * 0.06,
                 isGreen: close >= open
             };
         }
@@ -224,14 +227,14 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        // Faster spawn rate (every 11 frames instead of 20) to ensure completion before 10s
+        // Fast spawn rate (every 7 frames) so candles populate quickly and finish before 10s
         spawnTimer++;
-        if (spawnTimer > 11 && candles.length < maxCandles) {
+        if (spawnTimer > 7 && candles.length < maxCandles) {
             spawnNewCandle();
             spawnTimer = 0;
         } else {
-            // Actively fluctuate live forming candle close and wicks with dynamic volatility
-            let tickChange = (Math.random() - 0.5) * 0.005;
+            // Actively fluctuate live forming candle close and wicks
+            let tickChange = (Math.random() - 0.5) * 0.006;
             activeCandle.close = Math.max(0.15, Math.min(0.85, activeCandle.close + tickChange));
             if (activeCandle.close > activeCandle.high) activeCandle.high = activeCandle.close;
             if (activeCandle.close < activeCandle.low) activeCandle.low = activeCandle.close;
@@ -265,8 +268,8 @@ elif st.session_state.started and st.session_state.animating:
             ctx.stroke();
 
             // Body
-            ctx.fillRect(c.x - 4, topY, 8, bodyHeight);
-            ctx.strokeRect(c.x - 4, topY, 8, bodyHeight);
+            ctx.fillRect(c.x - 3.5, topY, 7, bodyHeight);
+            ctx.strokeRect(c.x - 3.5, topY, 7, bodyHeight);
 
             ctx.restore();
         });
