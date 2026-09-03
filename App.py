@@ -169,7 +169,7 @@ if "active_main_tab" not in st.session_state:
 if "main_nav_radio" not in st.session_state:
     st.session_state.main_nav_radio = st.session_state.active_main_tab
 
-# Landing Gate with Start Trading Button & Sequential Candlestick Printing Splash Screen Animation
+# Landing Gate with Start Trading Button & Updated Candlestick/SMA Chart Animation Splash Screen
 if not st.session_state.terminal_opened:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     col_auth1, col_auth2, col_auth3 = st.columns([1, 1.3, 1])
@@ -186,158 +186,98 @@ else:
         components.html(
             """
             <div style="background: #000000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #eaecef; font-family: -apple-system, sans-serif; overflow: hidden;">
-                <div style="text-align: center; width: 100%; max-width: 700px; padding: 0 20px;">
-                    <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 6px;">⚡ TB TERMINAL</div>
-                    <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 16px;">INITIALIZING INSTITUTIONAL FEED & GEX KERNEL...</p>
+                <div style="text-align: center; width: 100%; max-width: 650px; padding: 0 20px;">
+                    <div style="font-size: 32px; font-weight: bold; color: #f0b90b; letter-spacing: 3px; margin-bottom: 8px;">⚡ TB TERMINAL</div>
+                    <p style="color: #0ecb81; font-size: 13px; font-family: monospace; letter-spacing: 2px; margin-bottom: 20px;">INITIALIZING LIVE ORDER BOOKS, GEX KERNEL & FEED...</p>
                     
-                    <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
-                        <!-- Grid Lines -->
-                        <line x1="0" y1="40" x2="700" y2="40" stroke="#151515" stroke-width="1" />
-                        <line x1="0" y1="85" x2="700" y2="85" stroke="#151515" stroke-width="1" />
-                        <line x1="0" y1="130" x2="700" y2="130" stroke="#151515" stroke-width="1" />
-                        <line x1="0" y1="175" x2="700" y2="175" stroke="#1a1a1a" stroke-width="1" />
-                        
-                        <line x1="140" y1="0" x2="140" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
-                        <line x1="350" y1="0" x2="350" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
-                        <line x1="560" y1="0" x2="560" y2="220" stroke="#121212" stroke-width="1" stroke-dasharray="3,3" />
+                    <svg viewBox="0 0 600 200" style="width: 100%; max-width: 600px; background: #080808; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden;">
+                        <!-- Grid lines -->
+                        <line x1="0" y1="50" x2="600" y2="50" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="100" x2="600" y2="100" stroke="#151515" stroke-width="1" />
+                        <line x1="0" y1="150" x2="600" y2="150" stroke="#151515" stroke-width="1" />
 
-                        <!-- Volume Histogram Bars at Bottom -->
-                        <g opacity="0.65">
-                            <rect x="30" y="195" width="12" height="25" fill="#f6465d" rx="1"/>
-                            <rect x="55" y="190" width="12" height="30" fill="#0ecb81" rx="1"/>
-                            <rect x="80" y="200" width="12" height="20" fill="#0ecb81" rx="1"/>
-                            <rect x="105" y="185" width="12" height="35" fill="#f6465d" rx="1"/>
-                            <rect x="130" y="195" width="12" height="25" fill="#0ecb81" rx="1"/>
-                            <rect x="155" y="180" width="12" height="40" fill="#0ecb81" rx="1"/>
-                            <rect x="180" y="192" width="12" height="28" fill="#f6465d" rx="1"/>
-                            <rect x="205" y="185" width="12" height="35" fill="#0ecb81" rx="1"/>
-                            <rect x="230" y="175" width="12" height="45" fill="#0ecb81" rx="1"/>
-                            <rect x="255" y="190" width="12" height="30" fill="#f6465d" rx="1"/>
-                            <rect x="280" y="188" width="12" height="32" fill="#0ecb81" rx="1"/>
-                            <rect x="305" y="170" width="12" height="50" fill="#0ecb81" rx="1"/>
-                            <rect x="330" y="185" width="12" height="35" fill="#f6465d" rx="1"/>
-                            <rect x="355" y="180" width="12" height="40" fill="#0ecb81" rx="1"/>
-                            <rect x="380" y="190" width="12" height="30" fill="#f6465d" rx="1"/>
-                            <rect x="405" y="175" width="12" height="45" fill="#0ecb81" rx="1"/>
-                            <rect x="430" y="165" width="12" height="55" fill="#0ecb81" rx="1"/>
-                            <rect x="455" y="180" width="12" height="40" fill="#f6465d" rx="1"/>
-                            <rect x="480" y="172" width="12" height="48" fill="#0ecb81" rx="1"/>
-                            <rect x="505" y="155" width="12" height="65" fill="#0ecb81" rx="1"/>
-                            <rect x="530" y="145" width="12" height="75" fill="#0ecb81" rx="1"/>
-                            <rect x="555" y="170" width="12" height="50" fill="#f6465d" rx="1"/>
-                            <rect x="580" y="160" width="12" height="60" fill="#0ecb81" rx="1"/>
-                            <rect x="605" y="150" width="12" height="70" fill="#0ecb81" rx="1"/>
-                            <rect x="630" y="165" width="12" height="55" fill="#f6465d" rx="1"/>
-                            <rect x="655" y="140" width="12" height="80" fill="#0ecb81" rx="1"/>
+                        <!-- Static Horizontal SMA Lines (Fixed, non-moving) -->
+                        <line x1="20" y1="110" x2="580" y2="110" stroke="#f0b90b" stroke-width="2" opacity="0.9" />
+                        <line x1="20" y1="135" x2="580" y2="135" stroke="#0ecb81" stroke-width="2" opacity="0.9" />
+
+                        <!-- Candlesticks rising above the static lines -->
+                        <g transform="translate(50, 0)">
+                            <line x1="10" y1="90" x2="10" y2="140" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="100" width="10" height="30" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="140; 90" dur="0.6s" fill="freeze" />
+                                <animate attributeName="height" values="0; 50" dur="0.6s" fill="freeze" />
+                            </rect>
                         </g>
-
-                        <!-- Moving Average Curves -->
-                        <path d="M 30 140 Q 180 130 350 115 T 670 75" fill="none" stroke="#f0b90b" stroke-width="1.8" opacity="0.9"/>
-                        <path d="M 30 155 Q 180 145 350 130 T 670 95" fill="none" stroke="#0ecb81" stroke-width="1.8" opacity="0.9"/>
-
-                        <!-- Candlesticks Container -->
-                        <g id="candlestick-container">
-                            <g class="candle" data-y1="125" data-y2="155" data-ry="132" data-rh="16"><line x1="36" y1="140" x2="36" y2="140" stroke="#f6465d" stroke-width="1.5"/><rect x="31" y="140" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="130" data-y2="160" data-ry="138" data-rh="14"><line x1="61" y1="145" x2="61" y2="145" stroke="#f6465d" stroke-width="1.5"/><rect x="56" y="145" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="120" data-y2="148" data-ry="125" data-rh="18"><line x1="86" y1="134" x2="86" y2="134" stroke="#0ecb81" stroke-width="1.5"/><rect x="81" y="134" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="115" data-y2="145" data-ry="120" data-rh="20"><line x1="111" y1="130" x2="111" y2="130" stroke="#0ecb81" stroke-width="1.5"/><rect x="106" y="130" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="125" data-y2="152" data-ry="130" data-rh="15"><line x1="136" y1="138" x2="136" y2="138" stroke="#f6465d" stroke-width="1.5"/><rect x="131" y="138" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="110" data-y2="140" data-ry="115" data-rh="22"><line x1="161" y1="125" x2="161" y2="125" stroke="#0ecb81" stroke-width="1.5"/><rect x="156" y="125" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="105" data-y2="135" data-ry="112" data-rh="18"><line x1="186" y1="120" x2="186" y2="120" stroke="#0ecb81" stroke-width="1.5"/><rect x="181" y="120" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="112" data-y2="142" data-ry="118" data-rh="16"><line x1="211" y1="127" x2="211" y2="127" stroke="#f6465d" stroke-width="1.5"/><rect x="206" y="127" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="95" data-y2="128" data-ry="102" data-rh="20"><line x1="236" y1="112" x2="236" y2="112" stroke="#0ecb81" stroke-width="1.5"/><rect x="231" y="112" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="100" data-y2="130" data-ry="106" data-rh="15"><line x1="261" y1="115" x2="261" y2="115" stroke="#f6465d" stroke-width="1.5"/><rect x="256" y="115" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="92" data-y2="122" data-ry="98" data-rh="18"><line x1="286" y1="107" x2="286" y2="107" stroke="#0ecb81" stroke-width="1.5"/><rect x="281" y="107" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="80" data-y2="112" data-ry="86" data-rh="22"><line x1="311" y1="96" x2="311" y2="96" stroke="#0ecb81" stroke-width="1.5"/><rect x="306" y="96" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="88" data-y2="118" data-ry="94" data-rh="16"><line x1="336" y1="103" x2="336" y2="103" stroke="#f6465d" stroke-width="1.5"/><rect x="331" y="103" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="82" data-y2="110" data-ry="88" data-rh="18"><line x1="361" y1="96" x2="361" y2="96" stroke="#0ecb81" stroke-width="1.5"/><rect x="356" y="96" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="90" data-y2="120" data-ry="96" data-rh="16"><line x1="386" y1="105" x2="386" y2="105" stroke="#f6465d" stroke-width="1.5"/><rect x="381" y="105" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="75" data-y2="105" data-ry="80" data-rh="20"><line x1="411" y1="90" x2="411" y2="90" stroke="#0ecb81" stroke-width="1.5"/><rect x="406" y="90" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="65" data-y2="98" data-ry="70" data-rh="22"><line x1="436" y1="82" x2="436" y2="82" stroke="#0ecb81" stroke-width="1.5"/><rect x="431" y="82" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="78" data-y2="108" data-ry="84" data-rh="16"><line x1="461" y1="93" x2="461" y2="93" stroke="#f6465d" stroke-width="1.5"/><rect x="456" y="93" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="62" data-y2="92" data-ry="68" data-rh="20"><line x1="486" y1="77" x2="486" y2="77" stroke="#0ecb81" stroke-width="1.5"/><rect x="481" y="77" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="50" data-y2="82" data-ry="56" data-rh="22"><line x1="511" y1="66" x2="511" y2="66" stroke="#0ecb81" stroke-width="1.5"/><rect x="506" y="66" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="40" data-y2="72" data-ry="46" data-rh="22"><line x1="536" y1="56" x2="536" y2="56" stroke="#0ecb81" stroke-width="1.5"/><rect x="531" y="56" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="58" data-y2="88" data-ry="64" data-rh="16"><line x1="561" y1="73" x2="561" y2="73" stroke="#f6465d" stroke-width="1.5"/><rect x="556" y="73" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="48" data-y2="80" data-ry="54" data-rh="20"><line x1="586" y1="64" x2="586" y2="64" stroke="#0ecb81" stroke-width="1.5"/><rect x="581" y="64" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="35" data-y2="68" data-ry="42" data-rh="22"><line x1="611" y1="52" x2="611" y2="52" stroke="#0ecb81" stroke-width="1.5"/><rect x="606" y="52" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="45" data-y2="75" data-ry="50" data-rh="18"><line x1="636" y1="60" x2="636" y2="60" stroke="#f6465d" stroke-width="1.5"/><rect x="631" y="60" width="10" height="0" fill="#f6465d" rx="1" opacity="0"/></g>
-                            <g class="candle" data-y1="28" data-y2="60" data-ry="34" data-rh="22"><line x1="661" y1="44" x2="661" y2="44" stroke="#0ecb81" stroke-width="1.5"/><rect x="656" y="44" width="10" height="0" fill="#0ecb81" rx="1" opacity="0"/></g>
+                        <g transform="translate(100, 0)">
+                            <line x1="10" y1="80" x2="10" y2="130" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="90" width="10" height="35" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="130; 80" dur="0.7s" fill="freeze" />
+                                <animate attributeName="height" values="0; 50" dur="0.7s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(150, 0)">
+                            <line x1="10" y1="70" x2="10" y2="125" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="80" width="10" height="40" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="125; 70" dur="0.8s" fill="freeze" />
+                                <animate attributeName="height" values="0; 55" dur="0.8s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(200, 0)">
+                            <line x1="10" y1="85" x2="10" y2="135" stroke="#f6465d" stroke-width="1.5" />
+                            <rect x="5" y="95" width="10" height="30" fill="#f6465d" rx="1">
+                                <animate attributeName="y" values="135; 85" dur="0.9s" fill="freeze" />
+                                <animate attributeName="height" values="0; 40" dur="0.9s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(250, 0)">
+                            <line x1="10" y1="60" x2="10" y2="115" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="70" width="10" height="45" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="115; 60" dur="1.0s" fill="freeze" />
+                                <animate attributeName="height" values="0; 55" dur="1.0s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(300, 0)">
+                            <line x1="10" y1="50" x2="10" y2="105" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="60" width="10" height="45" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="105; 50" dur="1.1s" fill="freeze" />
+                                <animate attributeName="height" values="0; 55" dur="1.1s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(350, 0)">
+                            <line x1="10" y1="40" x2="10" y2="95" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="50" width="10" height="50" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="95; 40" dur="1.2s" fill="freeze" />
+                                <animate attributeName="height" values="0; 55" dur="1.2s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(400, 0)">
+                            <line x1="10" y1="55" x2="10" y2="110" stroke="#f6465d" stroke-width="1.5" />
+                            <rect x="5" y="65" width="10" height="35" fill="#f6465d" rx="1">
+                                <animate attributeName="y" values="110; 55" dur="1.3s" fill="freeze" />
+                                <animate attributeName="height" values="0; 45" dur="1.3s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(450, 0)">
+                            <line x1="10" y1="30" x2="10" y2="85" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="40" width="10" height="45" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="85; 30" dur="1.4s" fill="freeze" />
+                                <animate attributeName="height" values="0; 55" dur="1.4s" fill="freeze" />
+                            </rect>
+                        </g>
+                        <g transform="translate(500, 0)">
+                            <line x1="10" y1="20" x2="10" y2="75" stroke="#0ecb81" stroke-width="1.5" />
+                            <rect x="5" y="30" width="10" height="45" fill="#0ecb81" rx="1">
+                                <animate attributeName="y" values="75; 20" dur="1.5s" fill="freeze" />
+                                <animate attributeName="height" values="0; 55" dur="1.5s" fill="freeze" />
+                            </rect>
                         </g>
                     </svg>
                 </div>
             </div>
-
-            <script>
-            // Strict Sequential Animation: One candle spawns, bounces up and down, locks into a random resting spot, then the next candle spawns.
-            const candles = document.querySelectorAll('.candle');
-            let currentIndex = 0;
-
-            function animateNextCandle() {
-                if (currentIndex >= candles.length) return;
-
-                const candle = candles[currentIndex];
-                const rect = candle.querySelector('rect');
-                const line = candle.querySelector('line');
-                
-                rect.setAttribute('opacity', '1');
-
-                const targetY1 = parseFloat(candle.getAttribute('data-y1'));
-                const targetY2 = parseFloat(candle.getAttribute('data-y2'));
-                const targetRy = parseFloat(candle.getAttribute('data-ry'));
-                const targetRh = parseFloat(candle.getAttribute('data-rh'));
-
-                // Pick a unique random resting spot relative to the template
-                const randomOffset = (Math.random() - 0.5) * 12;
-                const finalY1 = targetY1 + randomOffset;
-                const finalY2 = targetY2 + randomOffset;
-                const finalRy = targetRy + randomOffset;
-                const finalRh = Math.max(4, targetRh + (Math.random() - 0.5) * 4);
-
-                let startTime = performance.now();
-                let bounceDuration = 700 + Math.random() * 500; // Duration of active bouncing up and down
-
-                function frame(now) {
-                    let elapsed = now - startTime;
-                    let progress = Math.min(1, elapsed / bounceDuration);
-
-                    if (progress < 1) {
-                        // Up and down oscillation motion while bouncing into place
-                        let bounceAmplitude = 12 * (1 - progress); 
-                        let currentRy = finalRy + Math.sin(elapsed / 70) * bounceAmplitude;
-                        let currentRh = Math.max(4, finalRh + Math.cos(elapsed / 50) * 3);
-                        let currentY1 = currentRy - (finalRy - finalY1);
-                        let currentY2 = currentRy + (finalY2 - finalRy);
-
-                        rect.setAttribute('y', currentRy);
-                        rect.setAttribute('height', currentRh);
-                        line.setAttribute('y1', currentY1);
-                        line.setAttribute('y2', currentY2);
-
-                        requestAnimationFrame(frame);
-                    } else {
-                        // Lock completely into its final random spot and stop moving
-                        rect.setAttribute('y', finalRy);
-                        rect.setAttribute('height', finalRh);
-                        line.setAttribute('y1', finalY1);
-                        line.setAttribute('y2', finalY2);
-
-                        // Move on to spawn and animate the next candle
-                        currentIndex++;
-                        setTimeout(animateNextCandle, 40);
-                    }
-                }
-
-                requestAnimationFrame(frame);
-            }
-
-            // Start sequence
-            animateNextCandle();
-            </script>
             """,
             height=320,
         )
-        time.sleep(5.0)
+        time.sleep(1.6)
         st.session_state.show_splash = False
         st.rerun()
 
