@@ -39,8 +39,8 @@ with st.sidebar:
     st.metric("Neural Weights", f"{sum(p.numel() for p in st.session_state.neural_brain.parameters()):,}")
     st.metric("Engine Status", "Cloud API Connected" if api_key else "Awaiting API Key")
 
-# Tabbed Layout
-tab_chat, tab_brain, tab_analytics = st.tabs(["💬 Prompt Interface", "🧠 AI's BRAIN (3D Model)", "📊 Training Analytics"])
+# Tabbed Layout (Consolidated into Chat, Brain Metrics, and Analytics)
+tab_chat, tab_analytics = st.tabs(["💬 Prompt Interface & Live Core", "📊 Training Analytics"])
 
 with tab_chat:
     st.subheader("Deep Language Inference Engine")
@@ -55,7 +55,6 @@ with tab_chat:
         if not api_key:
             st.error("Please provide a Groq API key in the sidebar or via Streamlit Secrets to run deep inference.")
         else:
-            # Generate assistant response first so we can insert both at the beginning of the list
             try:
                 client = Groq(api_key=api_key)
                 temp_messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
@@ -70,22 +69,13 @@ with tab_chat:
             except Exception as e:
                 ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
             
-            # Insert new messages at the very beginning (index 0) so newest appears right below the input box
             st.session_state.messages.insert(0, {"role": "assistant", "content": ai_response})
             st.session_state.messages.insert(0, {"role": "user", "content": user_prompt})
 
     st.markdown("---")
 
-    # 2. RENDER MESSAGES (Newest at the top below input, older history rolling downward)
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-with tab_brain:
-    st.subheader("Interactive 3D Neural Architecture Matrix")
-    st.markdown("This 3D web models the structural layers powering the interface framework.")
-
-    layer_node_counts = [24, 40, 40, 16]
+    # 2. EMBED COMPACT, SEMI-TRANSPARENT 3D NEURAL MATRIX BACKGROUND VISUALIZER
+    layer_node_counts = [18, 30, 30, 12]
     layer_names = ["Input Processing", "Hidden Cluster A", "Hidden Cluster B", "Output Action"]
     
     edge_x, edge_y, edge_z = [], [], []
@@ -98,7 +88,6 @@ with tab_brain:
             x = i * 3.0
             y = (j - count / 2.0) * 0.4
             z = np.sin(j * 0.4 + i) * 0.7
-            
             current_layer_coords.append((x, y, z))
             node_x.append(x)
             node_y.append(y)
@@ -117,7 +106,7 @@ with tab_brain:
     edge_trace = go.Scatter3d(
         x=edge_x, y=edge_y, z=edge_z,
         mode='lines',
-        line=dict(color='rgba(0, 220, 255, 0.25)', width=1.5),
+        line=dict(color='rgba(0, 220, 255, 0.15)', width=1),
         hoverinfo='none'
     )
 
@@ -125,11 +114,11 @@ with tab_brain:
         x=node_x, y=node_y, z=node_z,
         mode='markers',
         marker=dict(
-            size=7,
+            size=5,
             color=node_colors,
             colorscale='Bluered',
-            opacity=0.9,
-            line=dict(color='white', width=0.5)
+            opacity=0.7,
+            line=dict(color='white', width=0.3)
         ),
         text=node_text,
         hoverinfo='text'
@@ -137,20 +126,26 @@ with tab_brain:
 
     fig = go.Figure(data=[edge_trace, node_trace])
     fig.update_layout(
-        title="Live Neural Network Topology",
+        height=280,  # Compact size matching the chat UI flow
         showlegend=False,
         scene=dict(
-            xaxis=dict(title='Depth', backgroundcolor='rgba(10, 15, 30, 1)', gridcolor='rgba(40,40,40,0.5)' ),
-            yaxis=dict(title='Spread Y', backgroundcolor='rgba(10, 15, 30, 1)', gridcolor='rgba(40,40,40,0.5)' ),
-            zaxis=dict(title='Elevation Z', backgroundcolor='rgba(10, 15, 30, 1)', gridcolor='rgba(40,40,40,0.5)' ),
-            bgcolor='rgba(10, 15, 30, 1)'
+            xaxis=dict(visible=False, backgroundcolor='rgba(0,0,0,0)' ),
+            yaxis=dict(visible=False, backgroundcolor='rgba(0,0,0,0)' ),
+            zaxis=dict(visible=False, backgroundcolor='rgba(0,0,0,0)' ),
+            bgcolor='rgba(0,0,0,0)'
         ),
-        margin=dict(l=0, r=0, b=0, t=30),
+        margin=dict(l=0, r=0, b=0, t=0),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)'
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    st.markdown("---")
+
+    # 3. RENDER MESSAGES (Newest at top below the visualizer, older history rolling downward)
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 with tab_analytics:
     st.subheader("Model Convergence & Weight Analytics")
