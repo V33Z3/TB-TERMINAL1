@@ -1,9 +1,5 @@
 streamlit
-pandas
+torch
 numpy
-requests
 plotly
-yfinance
-alpaca-py
-groq
-supabase
+ollama
