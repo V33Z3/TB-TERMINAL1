@@ -46,7 +46,7 @@ st.markdown(
     }
     
     .block-container {
-        padding-top: 1rem;
+        padding-top: 4.5rem !important;
         padding-bottom: 0rem;
         padding-left: 0.8rem;
         padding-right: 0.8rem;
@@ -66,15 +66,14 @@ st.markdown(
     
     .exchange-header {
         background-color: #080808;
-        border-bottom: 1px solid #1a1a1a;
-        padding: 8px 15px;
+        border: 1px solid #1a1a1a;
+        padding: 10px 15px;
         display: flex;
         align-items: center;
         gap: 15px;
         font-size: 13px;
         border-radius: 4px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
+        margin-bottom: 12px;
     }
     
     .stTextInput input, .stSelectbox select, .stNumberInput input {
@@ -314,7 +313,6 @@ else:
 
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
-        """Fetch live quotes reliably using a custom session User-Agent to prevent Yahoo Finance 404 blocks."""
         if not YFINANCE_AVAILABLE:
             return 0.0, 0.0, 0
         try:
@@ -368,11 +366,12 @@ else:
         </div>
         """
     
-    # Unified Top Toolbar combining Logo, Ticker Search, and Market Badges
+    # Unified Top Toolbar wrapped in a visible exchange-header container below the Streamlit chrome
+    st.markdown('<div class="exchange-header">', unsafe_allow_html=True)
     t_col1, t_col2, t_col3, t_col4, t_col5 = st.columns([1.8, 1.8, 1.4, 1.4, 2.0])
     
     with t_col1:
-        st.markdown("<div style='padding-top: 6px; color: #f0b90b; font-weight: bold; font-size: 14px; display: flex; align-items: center; height: 35px; letter-spacing: 1px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #f0b90b; font-weight: bold; font-size: 14px; display: flex; align-items: center; height: 32px; letter-spacing: 1px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
         
     with t_col2:
         def on_ticker_change():
@@ -385,8 +384,7 @@ else:
         st.markdown(format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b"), unsafe_allow_html=True)
     with t_col5:
         st.markdown(format_badge(f"{target_symbol} (Live)", active_price, active_pct, "#150c1f", "#9c27b0"), unsafe_allow_html=True)
-
-    st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     nav_options = [
         "📈 Terminal Chart & Watchlist",
@@ -412,7 +410,6 @@ else:
         col_chart, col_research = st.columns([3.4, 1.2])
 
         with col_chart:
-            # TOP CHART
             st.markdown(
                 f"""
                 <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
@@ -451,7 +448,6 @@ else:
 
             st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
 
-            # BOTTOM CHART HEADER & INPUT
             col_b_lbl, col_b_inp = st.columns([2.5, 1.5])
             with col_b_lbl:
                 st.markdown(
