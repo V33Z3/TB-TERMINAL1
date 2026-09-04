@@ -311,7 +311,6 @@ else:
             st.rerun()
 
     target_symbol = st.session_state.active_ticker
-    # Keep chart 2 locked to the main active ticker so both charts update together
     st.session_state.active_ticker_2 = target_symbol
     target_symbol_2 = target_symbol
 
@@ -372,17 +371,28 @@ else:
     
     # Unified Top Toolbar wrapped in a visible exchange-header container below the Streamlit chrome
     st.markdown('<div class="exchange-header">', unsafe_allow_html=True)
-    t_col1, t_col2, t_col3, t_col4, t_col5 = st.columns([1.8, 1.8, 1.4, 1.4, 2.0])
+    t_col1, t_col2, t_col3, t_col4, t_col5 = st.columns([1.6, 2.2, 1.3, 1.3, 1.8])
     
     with t_col1:
-        st.markdown("<div style='color: #f0b90b; font-weight: bold; font-size: 14px; display: flex; align-items: center; height: 32px; letter-spacing: 1px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #f0b90b; font-weight: bold; font-size: 14px; display: flex; align-items: center; height: 32px; letter-spacing: 1px;'>⚡ TB TERMINAL</div>", unsafe_allow_html=True)
         
     with t_col2:
         def on_ticker_change():
             sym = st.session_state.ticker_search_input.upper().strip()
-            st.session_state.active_ticker = sym
-            st.session_state.active_ticker_2 = sym
-        st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
+            if sym:
+                st.session_state.active_ticker = sym
+                st.session_state.active_ticker_2 = sym
+
+        sc1, sc2 = st.columns([3.2, 1.2])
+        with sc1:
+            st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
+        with sc2:
+            if st.button("Go", key="search_go_btn", use_container_width=True):
+                sym = st.session_state.ticker_search_input.upper().strip()
+                if sym:
+                    st.session_state.active_ticker = sym
+                    st.session_state.active_ticker_2 = sym
+                    st.rerun()
 
     with t_col3:
         st.markdown(format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d"), unsafe_allow_html=True)
