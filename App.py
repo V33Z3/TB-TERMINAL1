@@ -47,7 +47,7 @@ def get_chat_messages(chat_id):
     row = cursor.fetchone()
     return json.loads(row[0]) if row else []
 
-# --- CUSTOM CSS FOR TRUE BACKGROUND LAYERING & SIDEBAR HISTORY ---
+# --- CUSTOM CSS FOR BACKGROUND LAYERING & PINNING CHAT INPUT TO THE TOP ---
 st.markdown("""
 <style>
     /* Pin the Plotly 3D brain canvas to the absolute background */
@@ -68,6 +68,15 @@ st.markdown("""
         z-index: 10;
         max-width: 900px;
         margin: 0 auto;
+    }
+
+    /* Force the chat input container to stay fixed near the top instead of the bottom */
+    div[data-testid="stChatInput"] {
+        position: relative !important;
+        bottom: auto !important;
+        top: 0px !important;
+        z-index: 999;
+        margin-bottom: 20px;
     }
 
     /* Style chat message boxes with high glassmorphism transparency */
@@ -223,6 +232,7 @@ with tab_chat:
     st.markdown("---")
     st.subheader("Deep Language Inference Engine")
 
+    # 1. RENDER CHAT INPUT AT THE TOP
     user_prompt = st.chat_input("Type complex input text here...")
 
     if user_prompt:
@@ -260,7 +270,7 @@ with tab_chat:
 
     st.markdown("---")
 
-    # Render chat message history stream
+    # 2. RENDER CHAT MESSAGES RIGHT BELOW INPUT
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
