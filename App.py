@@ -8,6 +8,20 @@ from groq import Groq
 # Page configuration
 st.set_page_config(page_title="Nexus AI: Advanced Deep Neural Studio", page_icon="⚡", layout="wide")
 
+# --- CUSTOM CSS FOR SEMI-TRANSPARENT CHAT BACKGROUNDS ---
+st.markdown("""
+<style>
+    /* Make chat message boxes slightly transparent and modern */
+    .stChatMessage {
+        background-color: rgba(20, 30, 50, 0.65) !important;
+        border: 1px solid rgba(0, 220, 255, 0.2);
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # --- 1. 3D BRAIN ARCHITECTURE (The Visual Model) ---
 class DeepNeuralCluster(nn.Module):
     def __init__(self):
@@ -33,13 +47,14 @@ with st.sidebar:
         api_key = st.text_input("Enter Groq API Key", type="password")
         st.markdown("[Get a free Groq API key here](https://console.groq.com)")
     
+    # Updated default model string
     selected_model = st.selectbox("Select Cloud Model", ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"], index=0)
     st.markdown("---")
     st.markdown("### System Diagnostics")
     st.metric("Neural Weights", f"{sum(p.numel() for p in st.session_state.neural_brain.parameters()):,}")
     st.metric("Engine Status", "Cloud API Connected" if api_key else "Awaiting API Key")
 
-# Tabbed Layout (Consolidated into Chat, Brain Metrics, and Analytics)
+# Tabbed Layout
 tab_chat, tab_analytics = st.tabs(["💬 Prompt Interface & Live Core", "📊 Training Analytics"])
 
 with tab_chat:
@@ -48,7 +63,7 @@ with tab_chat:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # 1. RENDER CHAT INPUT AT THE TOP FIRST
+    # 1. RENDER CHAT INPUT AT THE VERY TOP
     user_prompt = st.chat_input("Type complex input text here...")
 
     if user_prompt:
@@ -74,8 +89,16 @@ with tab_chat:
 
     st.markdown("---")
 
-    # 2. EMBED COMPACT, SEMI-TRANSPARENT 3D NEURAL MATRIX BACKGROUND VISUALIZER
-    layer_node_counts = [18, 30, 30, 12]
+    # 2. RENDER MESSAGES ON TOP (Newest right below input box, older history rolling down)
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    st.markdown("---")
+    st.markdown("### 🧠 Live Neural Background Visualizer Matrix")
+
+    # 3. RENDER TALLER 3D NEURAL BACKGROUND MATRIX EXTENDING DOWNWARD
+    layer_node_counts = [24, 38, 38, 16]
     layer_names = ["Input Processing", "Hidden Cluster A", "Hidden Cluster B", "Output Action"]
     
     edge_x, edge_y, edge_z = [], [], []
@@ -86,8 +109,8 @@ with tab_chat:
         current_layer_coords = []
         for j in range(count):
             x = i * 3.0
-            y = (j - count / 2.0) * 0.4
-            z = np.sin(j * 0.4 + i) * 0.7
+            y = (j - count / 2.0) * 0.45
+            z = np.sin(j * 0.35 + i) * 0.8
             current_layer_coords.append((x, y, z))
             node_x.append(x)
             node_y.append(y)
@@ -106,7 +129,7 @@ with tab_chat:
     edge_trace = go.Scatter3d(
         x=edge_x, y=edge_y, z=edge_z,
         mode='lines',
-        line=dict(color='rgba(0, 220, 255, 0.15)', width=1),
+        line=dict(color='rgba(0, 220, 255, 0.2)', width=1.2),
         hoverinfo='none'
     )
 
@@ -114,11 +137,11 @@ with tab_chat:
         x=node_x, y=node_y, z=node_z,
         mode='markers',
         marker=dict(
-            size=5,
+            size=6,
             color=node_colors,
             colorscale='Bluered',
-            opacity=0.7,
-            line=dict(color='white', width=0.3)
+            opacity=0.8,
+            line=dict(color='white', width=0.4)
         ),
         text=node_text,
         hoverinfo='text'
@@ -126,7 +149,7 @@ with tab_chat:
 
     fig = go.Figure(data=[edge_trace, node_trace])
     fig.update_layout(
-        height=280,  # Compact size matching the chat UI flow
+        height=500,  # Extended height to stretch further down the page
         showlegend=False,
         scene=dict(
             xaxis=dict(visible=False, backgroundcolor='rgba(0,0,0,0)' ),
@@ -140,12 +163,6 @@ with tab_chat:
     )
 
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    st.markdown("---")
-
-    # 3. RENDER MESSAGES (Newest at top below the visualizer, older history rolling downward)
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
 
 with tab_analytics:
     st.subheader("Model Convergence & Weight Analytics")
