@@ -2,4 +2,4 @@ streamlit
 torch
 numpy
 plotly
-ollama
+groq
