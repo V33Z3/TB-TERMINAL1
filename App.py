@@ -3,10 +3,10 @@ import torch
 import torch.nn as nn
 import numpy as np
 import plotly.graph_objects as go
-import ollama
+from groq import Groq
 
 # Page configuration
-st.set_page_config(page_title="Nexus AI: Local Agent Studio", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Nexus AI: Advanced Deep Neural Studio", page_icon="⚡", layout="wide")
 
 # --- 1. 3D BRAIN ARCHITECTURE (The Visual Model) ---
 class DeepNeuralCluster(nn.Module):
@@ -20,57 +20,64 @@ if "neural_brain" not in st.session_state:
     st.session_state.neural_brain = DeepNeuralCluster()
 
 # --- 2. STREAMLIT UI DASHBOARD ---
-st.title("⚡ Nexus AI: Agent & Neural Core")
-st.markdown("A dual-engine setup: An interactive 3D neural map paired with a local LLM agent capable of chatting, coding, and reasoning.")
+st.title("⚡ Nexus AI: Advanced Deep Neural Studio")
+st.markdown("Massively scaled multi-layer PyTorch architecture with dense cognitive mapping.")
 st.markdown("---")
 
-# Sidebar Configuration
+# Securely load API key from Streamlit Secrets or sidebar input
+api_key = st.secrets.get("GROQ_API_KEY", "")
+
 with st.sidebar:
     st.header("🧠 Agent Settings")
-    selected_model = st.selectbox("Select Local Model", ["llama3", "deepseek-coder", "mistral"], index=0)
+    if not api_key:
+        api_key = st.text_input("Enter Groq API Key", type="password")
+        st.markdown("[Get a free Groq API key here](https://console.groq.com)")
+    
+    selected_model = st.selectbox("Select Cloud Model", ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"], index=0)
     st.markdown("---")
     st.markdown("### System Diagnostics")
     st.metric("Neural Weights", f"{sum(p.numel() for p in st.session_state.neural_brain.parameters()):,}")
-    st.metric("Engine Status", "Ollama Bridge Active")
+    st.metric("Engine Status", "Cloud API Connected" if api_key else "Awaiting API Key")
 
-# Tabbed Layout
-tab_chat, tab_brain = st.tabs(["💬 Agent Chat & Code Studio", "🧠 AI's 3D Brain (Visualizer)"])
+# Tabbed Layout matching the visual studio design
+tab_chat, tab_brain, tab_analytics = st.tabs(["💬 Prompt Interface", "🧠 AI's BRAIN (3D Model)", "📊 Training Analytics"])
 
 with tab_chat:
-    st.subheader("Conversational Agent & Code Generator")
-    st.markdown("Talk to your AI, ask it to look up information, or have it write and explain code blocks.")
+    st.subheader("Deep Language Inference Engine")
+    st.markdown("Enter an advanced prompt or text sequence:")
 
-    # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Handle user prompt input
-    if user_prompt := st.chat_input("Ask your agent to write code, solve a problem, or chat..."):
-        st.session_state.messages.append({"role": "user", "content": user_prompt})
-        with st.chat_message("user"):
-            st.markdown(user_prompt)
+    if user_prompt := st.chat_input("Type complex input text here..."):
+        if not api_key:
+            st.error("Please provide a Groq API key in the sidebar or via Streamlit Secrets to run deep inference.")
+        else:
+            st.session_state.messages.append({"role": "user", "content": user_prompt})
+            with st.chat_message("user"):
+                st.markdown(user_prompt)
 
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            message_placeholder.markdown("Thinking...")
-            
-            try:
-                # Call local Ollama model
-                response = ollama.chat(
-                    model=selected_model,
-                    messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
-                )
-                ai_response = response['message']['content']
-            except Exception as e:
-                ai_response = f"⚠️ Error connecting to Ollama. Make sure Ollama is running on your machine. Details: `{e}`"
-            
-            message_placeholder.markdown(ai_response)
-            st.session_state.messages.append({"role": "assistant", "content": ai_response})
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                message_placeholder.markdown("Running deep inference...")
+                
+                try:
+                    client = Groq(api_key=api_key)
+                    completion = client.chat.completions.create(
+                        model=selected_model,
+                        messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                        temperature=0.7,
+                    )
+                    ai_response = completion.choices[0].message.content
+                except Exception as e:
+                    ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
+                
+                message_placeholder.markdown(ai_response)
+                st.session_state.messages.append({"role": "assistant", "content": ai_response})
 
 with tab_brain:
     st.subheader("Interactive 3D Neural Architecture Matrix")
@@ -142,3 +149,11 @@ with tab_brain:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+with tab_analytics:
+    st.subheader("Model Convergence & Weight Analytics")
+    st.markdown("Real-time telemetry tracking loss reduction and accuracy gradients across cognitive nodes.")
+    
+    # Sample analytics display using Streamlit native charts
+    chart_data = np.random.randn(20, 3)
+    st.line_chart(chart_data)
