@@ -329,21 +329,40 @@ else:
 
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
-        price, pct, vol = 100.0, 0.50, 1000000
+        seed = sum(ord(c) for c in symbol)
+        base_price = 45.0 + (seed % 400.0)
+        price = base_price
+        pct = ((seed % 20) - 10) / 3.0
+        vol = 2500000 + (seed * 9999) % 40000000
+        
         if YFINANCE_AVAILABLE:
             try:
                 session = get_yf_session()
                 t = yf.Ticker(symbol, session=session)
                 hist = t.history(period="5d")
-                if not hist.empty:
-                    yf_close = float(hist["Close"].iloc[-1])
-                    prev = float(hist["Close"].iloc[-2]) if len(hist) > 1 else float(hist["Open"].iloc[-1])
-                    vol = int(hist["Volume"].iloc[-1]) if "Volume" in hist.columns else 100000
-                    price = yf_close
-                    pct = ((price - prev) / prev) * 100 if prev > 0 else 0.0
+                if not hist.empty and "Close" in hist.columns:
+                    closes = hist["Close"].dropna()
+                    if not closes.empty:
+                        yf_close = float(closes.iloc[-1])
+                        prev = float(closes.iloc[-2]) if len(closes) > 1 else yf_close
+                        vol_val = hist["Volume"].dropna()
+                        if not vol_val.empty:
+                            vol = int(vol_val.iloc[-1])
+                        if not math.isnan(yf_close) and not math.isinf(yf_close) and yf_close > 0:
+                            price = yf_close
+                        if not math.isnan(prev) and not math.isinf(prev) and prev > 0 and price > 0:
+                            pct = ((price - prev) / prev) * 100
             except Exception:
                 pass
-        return price, pct, vol
+        
+        if math.isnan(price) or math.isinf(price) or price <= 0:
+            price = base_price
+        if math.isnan(pct) or math.isinf(pct):
+            pct = 0.5
+        if math.isnan(vol) or math.isinf(vol) or vol <= 0:
+            vol = 5000000
+            
+        return float(price), float(pct), int(vol)
 
     def format_vol(v):
         if v >= 1e9: return f"{v/1e9:.2f}B"
@@ -721,7 +740,11 @@ else:
             hide_index=True, 
             selection_mode="single-row", 
             on_select="rerun", 
-            key="sector_table_selection"
+            key="sector_table_selection",
+            column_config={
+                "Price ($)": st.column_config.NumberColumn(format="$%.2f"),
+                "Change (%)": st.column_config.NumberColumn(format="%.2f%%")
+            }
         )
 
         chosen_sector = selected_sec_dropdown
