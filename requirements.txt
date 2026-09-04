@@ -1,5 +1,2 @@
 streamlit
-torch
-numpy
-plotly
-groq
+pandas
