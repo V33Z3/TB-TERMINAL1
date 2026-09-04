@@ -22,7 +22,9 @@ st.set_page_config(
 )
 
 if "ticker" in st.query_params:
-    st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
+    ticker_param = st.query_params["ticker"].upper().strip()
+    st.session_state.active_ticker = ticker_param
+    st.session_state.active_ticker_2 = ticker_param
 
 if "tab" in st.query_params:
     tab_param = st.query_params["tab"].lower()
@@ -106,7 +108,7 @@ if "animating" not in st.session_state:
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
 if "active_ticker_2" not in st.session_state:
-    st.session_state.active_ticker_2 = "QQQ"
+    st.session_state.active_ticker_2 = "AAPL"
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
 if "active_main_tab" not in st.session_state:
@@ -309,7 +311,9 @@ else:
             st.rerun()
 
     target_symbol = st.session_state.active_ticker
-    target_symbol_2 = st.session_state.active_ticker_2
+    # Keep chart 2 locked to the main active ticker so both charts update together
+    st.session_state.active_ticker_2 = target_symbol
+    target_symbol_2 = target_symbol
 
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
@@ -375,7 +379,9 @@ else:
         
     with t_col2:
         def on_ticker_change():
-            st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
+            sym = st.session_state.ticker_search_input.upper().strip()
+            st.session_state.active_ticker = sym
+            st.session_state.active_ticker_2 = sym
         st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
 
     with t_col3:
@@ -448,20 +454,14 @@ else:
 
             st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
 
-            col_b_lbl, col_b_inp = st.columns([2.5, 1.5])
-            with col_b_lbl:
-                st.markdown(
-                    f"""
-                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; height: 35px;">
-                        <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Secondary Stacked Chart // {target_symbol_2}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-            with col_b_inp:
-                def on_ticker_2_change():
-                    st.session_state.active_ticker_2 = st.session_state.ticker_2_search_input.upper().strip()
-                st.text_input("Chart 2 Symbol", value=st.session_state.active_ticker_2, key="ticker_2_search_input", on_change=on_ticker_2_change, label_visibility="collapsed")
+            st.markdown(
+                f"""
+                <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; height: 35px; margin-bottom: 5px;">
+                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Secondary Stacked Chart // {target_symbol_2}</span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
             tv_html_2 = f"""
             <div class="tradingview-widget-container" style="height:350px;width:100%">
