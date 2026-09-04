@@ -312,7 +312,7 @@ else:
     header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
 
     with header_col1:
-        st.markdown("<div style='padding-top: 5px; color: #f0b90b; font-weight: bold; font-size: 13px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
+        st.markdown("<div style='padding-top: 8px; color: #f0b90b; font-weight: bold; font-size: 13px; display: flex; align-items: center; height: 35px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
 
     with header_col2:
         def on_ticker_change():
