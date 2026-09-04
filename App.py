@@ -319,56 +319,45 @@ else:
 
     target_symbol = st.session_state.active_ticker
 
-    @st.cache_resource
-    def get_yf_session():
-        session = requests.Session()
-        session.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        return session
-
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
-        session = get_yf_session()
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
+        """Fetch live quotes reliably using yfinance without relying on flaky direct chart endpoints or fake pseudorandom fallbacks."""
+        if not YFINANCE_AVAILABLE:
+            return 0.0, 0.0, 0
         try:
-            res = session.get(url, timeout=5)
-            data = res.json()
-            meta = data["chart"]["result"][0]["meta"]
-            price = float(meta["regularMarketPrice"])
-            prev_close = float(meta.get("chartPreviousClose", meta.get("previousClose", price)))
-            pct = ((price - prev_close) / prev_close) * 100 if prev_close > 0 else 0.0
-            vol = int(meta.get("regularMarketVolume", meta.get("volume", 0)))
-            if not math.isnan(price) and not math.isinf(price) and price > 0:
-                return price, pct, vol
-        except Exception:
-            pass
+            t = yf.Ticker(symbol)
+            # Use fast_info if available for quick retrieval
+            fi = getattr(t, "fast_info", None)
+            price = 0.0
+            prev_close = 0.0
+            vol = 0
 
-        # Fallback to yfinance if direct chart endpoint fails
-        seed = sum(ord(c) for c in symbol)
-        base_price = 45.0 + (seed % 400.0)
-        price = base_price
-        pct = ((seed % 20) - 10) / 3.0
-        vol = 2500000 + (seed * 9999) % 40000000
-        
-        if YFINANCE_AVAILABLE:
-            try:
-                t = yf.Ticker(symbol, session=session)
-                hist = t.history(period="5d")
+            if fi:
+                price = float(fi.get("last_price", 0.0) or 0.0)
+                prev_close = float(fi.get("previous_close", price) or price)
+                vol = int(fi.get("last_volume", 0) or 0)
+
+            if price <= 0 or math.isnan(price):
+                hist = t.history(period="2d")
                 if not hist.empty and "Close" in hist.columns:
                     closes = hist["Close"].dropna()
                     if not closes.empty:
-                        yf_close = float(closes.iloc[-1])
-                        prev = float(closes.iloc[-2]) if len(closes) > 1 else yf_close
-                        vol_val = hist["Volume"].dropna()
-                        if not vol_val.empty:
-                            vol = int(vol_val.iloc[-1])
-                        if not math.isnan(yf_close) and not math.isinf(yf_close) and yf_close > 0:
-                            price = yf_close
-                        if not math.isnan(prev) and not math.isinf(prev) and prev > 0 and price > 0:
-                            pct = ((price - prev) / prev) * 100
-            except Exception:
-                pass
-        
-        return float(price), float(pct), int(vol)
+                        price = float(closes.iloc[-1])
+                        prev_close = float(closes.iloc[-2]) if len(closes) > 1 else price
+                    if "Volume" in hist.columns:
+                        vols = hist["Volume"].dropna()
+                        if not vols.empty:
+                            vol = int(vols.iloc[-1])
+
+            pct = ((price - prev_close) / prev_close) * 100 if prev_close > 0 else 0.0
+            if math.isnan(price) or math.isinf(price):
+                price = 0.0
+            if math.isnan(pct) or math.isinf(pct):
+                pct = 0.0
+
+            return float(price), float(pct), int(vol)
+        except Exception:
+            return 0.0, 0.0, 0
 
     def format_vol(v):
         if v >= 1e9: return f"{v/1e9:.2f}B"
@@ -531,7 +520,7 @@ else:
             st.error("`yfinance` is required for options chain data.")
         else:
             try:
-                tk = yf.Ticker(target_symbol, session=get_yf_session())
+                tk = yf.Ticker(target_symbol)
                 exp_dates = tk.options
             except Exception:
                 exp_dates = []
@@ -666,7 +655,7 @@ else:
             st.error("`yfinance` is required for options chain data.")
         else:
             try:
-                tk_finder = yf.Ticker(target_symbol, session=get_yf_session())
+                tk_finder = yf.Ticker(target_symbol)
                 finder_exp_dates = tk_finder.options
             except Exception:
                 finder_exp_dates = []
