@@ -46,7 +46,7 @@ st.markdown(
     }
     
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1rem;
         padding-bottom: 0rem;
         padding-left: 0.8rem;
         padding-right: 0.8rem;
@@ -106,6 +106,8 @@ if "animating" not in st.session_state:
     st.session_state.animating = False
 if "active_ticker" not in st.session_state:
     st.session_state.active_ticker = "AAPL"
+if "active_ticker_2" not in st.session_state:
+    st.session_state.active_ticker_2 = "QQQ"
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
 if "active_main_tab" not in st.session_state:
@@ -307,17 +309,8 @@ else:
             st.session_state.animating = False
             st.rerun()
 
-    header_col1, header_col2, header_col3, header_col4 = st.columns([1.5, 1.8, 1.8, 2.2])
-
-    with header_col1:
-        st.markdown("<div style='padding-top: 8px; color: #f0b90b; font-weight: bold; font-size: 13px; display: flex; align-items: center; height: 35px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
-
-    with header_col2:
-        def on_ticker_change():
-            st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
-        st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
-
     target_symbol = st.session_state.active_ticker
+    target_symbol_2 = st.session_state.active_ticker_2
 
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
@@ -375,13 +368,25 @@ else:
         </div>
         """
     
-    st.markdown(f"""
-        <div class="exchange-header">
-            {format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d")}
-            {format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b")}
-            {format_badge(f"{target_symbol} (Live)", active_price, active_pct, "#150c1f", "#9c27b0")}
-        </div>
-    """, unsafe_allow_html=True)
+    # Unified Top Toolbar combining Logo, Ticker Search, and Market Badges
+    t_col1, t_col2, t_col3, t_col4, t_col5 = st.columns([1.8, 1.8, 1.4, 1.4, 2.0])
+    
+    with t_col1:
+        st.markdown("<div style='padding-top: 6px; color: #f0b90b; font-weight: bold; font-size: 14px; display: flex; align-items: center; height: 35px; letter-spacing: 1px;'>⚡ TB TERMINAL // RESEARCH</div>", unsafe_allow_html=True)
+        
+    with t_col2:
+        def on_ticker_change():
+            st.session_state.active_ticker = st.session_state.ticker_search_input.upper().strip()
+        st.text_input("Search Ticker", value=st.session_state.active_ticker, key="ticker_search_input", on_change=on_ticker_change, label_visibility="collapsed")
+
+    with t_col3:
+        st.markdown(format_badge("SPY", spy_price, spy_pct, "#1f0c0c", "#f6465d"), unsafe_allow_html=True)
+    with t_col4:
+        st.markdown(format_badge("QQQ", qqq_price, qqq_pct, "#1f1a0c", "#f0b90b"), unsafe_allow_html=True)
+    with t_col5:
+        st.markdown(format_badge(f"{target_symbol} (Live)", active_price, active_pct, "#150c1f", "#9c27b0"), unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
 
     nav_options = [
         "📈 Terminal Chart & Watchlist",
@@ -407,24 +412,25 @@ else:
         col_chart, col_research = st.columns([3.4, 1.2])
 
         with col_chart:
+            # TOP CHART
             st.markdown(
                 f"""
                 <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 6px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 TradingView Advanced Chart // {target_symbol}</span>
-                    <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● RESEARCH FEED</span>
+                    <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Primary Chart // {target_symbol}</span>
+                    <span style="font-size: 11px; color: #0ecb81; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 3px;">● FEED 1</span>
                 </div>
             """,
                 unsafe_allow_html=True,
             )
 
-            tv_html = f"""
-            <div class="tradingview-widget-container" style="height:630px;width:100%">
+            tv_html_1 = f"""
+            <div class="tradingview-widget-container" style="height:350px;width:100%">
               <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
               <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
               {{
                 "autosize": false,
                 "width": "100%",
-                "height": "630",
+                "height": "350",
                 "symbol": "{target_symbol}",
                 "interval": "D",
                 "timezone": "Etc/UTC",
@@ -441,7 +447,51 @@ else:
               </script>
             </div>
             """
-            components.html(tv_html, height=640)
+            components.html(tv_html_1, height=360)
+
+            st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+
+            # BOTTOM CHART HEADER & INPUT
+            col_b_lbl, col_b_inp = st.columns([2.5, 1.5])
+            with col_b_lbl:
+                st.markdown(
+                    f"""
+                    <div style="background-color: #080808; border: 1px solid #1a1a1a; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; height: 35px;">
+                        <span style="font-weight: bold; font-size: 13px; color: #eaecef;">📊 Secondary Stacked Chart // {target_symbol_2}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            with col_b_inp:
+                def on_ticker_2_change():
+                    st.session_state.active_ticker_2 = st.session_state.ticker_2_search_input.upper().strip()
+                st.text_input("Chart 2 Symbol", value=st.session_state.active_ticker_2, key="ticker_2_search_input", on_change=on_ticker_2_change, label_visibility="collapsed")
+
+            tv_html_2 = f"""
+            <div class="tradingview-widget-container" style="height:350px;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {{
+                "autosize": false,
+                "width": "100%",
+                "height": "350",
+                "symbol": "{target_symbol_2}",
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "calendar": false,
+                "support_host": "https://www.tradingview.com",
+                "isTransparent": true,
+                "hide_side_toolbar": false
+              }}
+              </script>
+            </div>
+            """
+            components.html(tv_html_2, height=360)
 
         with col_research:
             st.markdown(
@@ -466,7 +516,7 @@ else:
                         st.session_state.watchlist.append(clean_sym)
                         st.rerun()
 
-            st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 510px; overflow-y: auto;'>", unsafe_allow_html=True)
+            st.markdown("<div style='background: #050505; border: 1px solid #1a1a1a; border-radius: 4px; padding: 8px; max-height: 740px; overflow-y: auto;'>", unsafe_allow_html=True)
             if not st.session_state.watchlist:
                 st.markdown("<div style='color: #848e9c; font-size: 12px; text-align: center; padding: 10px;'>Watchlist is empty. Add symbols above.</div>", unsafe_allow_html=True)
             else:
