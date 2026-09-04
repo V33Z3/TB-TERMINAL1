@@ -330,13 +330,28 @@ else:
             prev_close = 0.0
             vol = 0
 
-            hist = t.history(period="5d")
-            if not hist.empty and "Close" in hist.columns:
-                closes = hist["Close"].dropna()
-                if not closes.empty:
-                    price = float(closes.iloc[-1])
-                    prev_close = float(closes.iloc[-2]) if len(closes) > 1 else price
+            # Use fast_info to grab accurate unadjusted live/recent prices and previous closes
+            try:
+                price = float(t.fast_info.get('last_price', 0.0))
+                prev_close = float(t.fast_info.get('previous_close', 0.0))
+            except Exception:
+                pass
+
+            # Fallback to history with auto_adjust=False if fast_info is unavailable
+            if price == 0.0 or prev_close == 0.0:
+                hist = t.history(period="2d", auto_adjust=False)
+                if not hist.empty and "Close" in hist.columns:
+                    closes = hist["Close"].dropna()
+                    if not closes.empty:
+                        price = float(closes.iloc[-1])
+                        prev_close = float(closes.iloc[-2]) if len(closes) > 1 else price
                 if "Volume" in hist.columns:
+                    vols = hist["Volume"].dropna()
+                    if not vols.empty:
+                        vol = int(vols.iloc[-1])
+            else:
+                hist = t.history(period="1d")
+                if not hist.empty and "Volume" in hist.columns:
                     vols = hist["Volume"].dropna()
                     if not vols.empty:
                         vol = int(vols.iloc[-1])
