@@ -321,33 +321,28 @@ else:
 
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
-        """Fetch live quotes reliably using yfinance without relying on flaky direct chart endpoints or fake pseudorandom fallbacks."""
+        """Fetch live quotes reliably using a custom session User-Agent to prevent Yahoo Finance 404 blocks."""
         if not YFINANCE_AVAILABLE:
             return 0.0, 0.0, 0
         try:
-            t = yf.Ticker(symbol)
-            # Use fast_info if available for quick retrieval
-            fi = getattr(t, "fast_info", None)
+            session = requests.Session()
+            session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            
+            t = yf.Ticker(symbol, session=session)
             price = 0.0
             prev_close = 0.0
             vol = 0
 
-            if fi:
-                price = float(fi.get("last_price", 0.0) or 0.0)
-                prev_close = float(fi.get("previous_close", price) or price)
-                vol = int(fi.get("last_volume", 0) or 0)
-
-            if price <= 0 or math.isnan(price):
-                hist = t.history(period="2d")
-                if not hist.empty and "Close" in hist.columns:
-                    closes = hist["Close"].dropna()
-                    if not closes.empty:
-                        price = float(closes.iloc[-1])
-                        prev_close = float(closes.iloc[-2]) if len(closes) > 1 else price
-                    if "Volume" in hist.columns:
-                        vols = hist["Volume"].dropna()
-                        if not vols.empty:
-                            vol = int(vols.iloc[-1])
+            hist = t.history(period="5d")
+            if not hist.empty and "Close" in hist.columns:
+                closes = hist["Close"].dropna()
+                if not closes.empty:
+                    price = float(closes.iloc[-1])
+                    prev_close = float(closes.iloc[-2]) if len(closes) > 1 else price
+                if "Volume" in hist.columns:
+                    vols = hist["Volume"].dropna()
+                    if not vols.empty:
+                        vol = int(vols.iloc[-1])
 
             pct = ((price - prev_close) / prev_close) * 100 if prev_close > 0 else 0.0
             if math.isnan(price) or math.isinf(price):
