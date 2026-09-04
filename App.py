@@ -156,7 +156,7 @@ elif st.session_state.started and st.session_state.animating:
     
     let candles = [];
     let maxCandles = 50; 
-    let animationDuration = 10000; // Total duration in milliseconds (10 seconds)
+    let animationDuration = 10000; 
     
     const fibLevels = [
         {val: 0.20, label: '0.236 (Retrace)', color: '#f6465d'},
@@ -211,7 +211,6 @@ elif st.session_state.started and st.session_state.animating:
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Draw Fibonacci Grid Lines
         fibLevels.forEach(fib => {
             let y = valToY(fib.val);
             ctx.strokeStyle = fib.color;
@@ -233,7 +232,6 @@ elif st.session_state.started and st.session_state.animating:
         let timeSec = elapsed / 1000;
         let remaining = Math.max(0, (10.0 - timeSec)).toFixed(1);
 
-        // Time-based synchronization logic matching the exact animation duration
         let targetCandles = Math.min(maxCandles, Math.floor((elapsed / animationDuration) * maxCandles));
         
         while (candles.length < targetCandles && candles.length < maxCandles) {
@@ -329,6 +327,22 @@ else:
 
     @st.cache_data(ttl=60)
     def fetch_live_quote(symbol):
+        session = get_yf_session()
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
+        try:
+            res = session.get(url, timeout=5)
+            data = res.json()
+            meta = data["chart"]["result"][0]["meta"]
+            price = float(meta["regularMarketPrice"])
+            prev_close = float(meta.get("chartPreviousClose", meta.get("previousClose", price)))
+            pct = ((price - prev_close) / prev_close) * 100 if prev_close > 0 else 0.0
+            vol = int(meta.get("regularMarketVolume", meta.get("volume", 0)))
+            if not math.isnan(price) and not math.isinf(price) and price > 0:
+                return price, pct, vol
+        except Exception:
+            pass
+
+        # Fallback to yfinance if direct chart endpoint fails
         seed = sum(ord(c) for c in symbol)
         base_price = 45.0 + (seed % 400.0)
         price = base_price
@@ -337,7 +351,6 @@ else:
         
         if YFINANCE_AVAILABLE:
             try:
-                session = get_yf_session()
                 t = yf.Ticker(symbol, session=session)
                 hist = t.history(period="5d")
                 if not hist.empty and "Close" in hist.columns:
@@ -355,13 +368,6 @@ else:
             except Exception:
                 pass
         
-        if math.isnan(price) or math.isinf(price) or price <= 0:
-            price = base_price
-        if math.isnan(pct) or math.isinf(pct):
-            pct = 0.5
-        if math.isnan(vol) or math.isinf(vol) or vol <= 0:
-            vol = 5000000
-            
         return float(price), float(pct), int(vol)
 
     def format_vol(v):
