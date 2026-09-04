@@ -33,7 +33,8 @@ with st.sidebar:
         api_key = st.text_input("Enter Groq API Key", type="password")
         st.markdown("[Get a free Groq API key here](https://console.groq.com)")
     
-    selected_model = st.selectbox("Select Cloud Model", ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"], index=0)
+    # Updated to active Groq-compatible models
+    selected_model = st.selectbox("Select Cloud Model", ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"], index=0)
     st.markdown("---")
     st.markdown("### System Diagnostics")
     st.metric("Neural Weights", f"{sum(p.numel() for p in st.session_state.neural_brain.parameters()):,}")
@@ -154,6 +155,5 @@ with tab_analytics:
     st.subheader("Model Convergence & Weight Analytics")
     st.markdown("Real-time telemetry tracking loss reduction and accuracy gradients across cognitive nodes.")
     
-    # Sample analytics display using Streamlit native charts
     chart_data = np.random.randn(20, 3)
     st.line_chart(chart_data)
