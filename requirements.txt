@@ -1,2 +1,6 @@
 streamlit
 pandas
+torch
+numpy
+plotly
+groq
