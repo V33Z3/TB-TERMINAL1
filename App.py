@@ -133,7 +133,7 @@ if not st.session_state.started:
             st.session_state.animating = True
             st.rerun()
 
-# 10-Second Real Price Action Fibonacci Animation Sequence
+# 10-Second Real Price Action Fibonacci Animation Sequence (Time-Synced)
 elif st.session_state.started and st.session_state.animating:
     st.markdown(
         """
@@ -156,6 +156,7 @@ elif st.session_state.started and st.session_state.animating:
     
     let candles = [];
     let maxCandles = 50; 
+    let animationDuration = 10000; // Total duration in milliseconds (10 seconds)
     
     const fibLevels = [
         {val: 0.20, label: '0.236 (Retrace)', color: '#f6465d'},
@@ -179,16 +180,17 @@ elif st.session_state.started and st.session_state.animating:
         isGreen: true
     };
 
-    let spawnTimer = 0;
     let startTime = Date.now();
 
     function spawnNewCandle() {
         if (candles.length < maxCandles) {
             candles.push({...activeCandle});
             
-            let nextX = 30 + candles.length * 17.5; 
-            let open = activeCandle.close; 
+            let chartWidth = canvas.width - 60;
+            let stepX = chartWidth / maxCandles;
+            let nextX = 30 + candles.length * stepX; 
             
+            let open = activeCandle.close; 
             let index = candles.length;
             let wave = Math.sin(index * 0.28) * 0.32; 
             let trend = Math.cos(index * 0.1) * 0.12;
@@ -226,21 +228,24 @@ elif st.session_state.started and st.session_state.animating:
             ctx.fillText(fib.label, 35, y - 6);
         });
 
-        // Spawn rate tuned to exactly match the 10-second duration (~600 frames / 50 candles = 12 frames per candle)
-        spawnTimer++;
-        if (spawnTimer > 12 && candles.length < maxCandles) {
+        let now = Date.now();
+        let elapsed = now - startTime;
+        let timeSec = elapsed / 1000;
+        let remaining = Math.max(0, (10.0 - timeSec)).toFixed(1);
+
+        // Time-based synchronization logic matching the exact animation duration
+        let targetCandles = Math.min(maxCandles, Math.floor((elapsed / animationDuration) * maxCandles));
+        
+        while (candles.length < targetCandles && candles.length < maxCandles) {
             spawnNewCandle();
-            spawnTimer = 0;
-        } else {
-            let tickChange = (Math.random() - 0.5) * 0.006;
-            activeCandle.close = Math.max(0.15, Math.min(0.85, activeCandle.close + tickChange));
-            if (activeCandle.close > activeCandle.high) activeCandle.high = activeCandle.close;
-            if (activeCandle.close < activeCandle.low) activeCandle.low = activeCandle.close;
-            activeCandle.isGreen = activeCandle.close >= activeCandle.open;
         }
 
-        let timeSec = (Date.now() - startTime) / 1000;
-        let remaining = Math.max(0, (10.0 - timeSec)).toFixed(1);
+        let tickChange = (Math.random() - 0.5) * 0.006;
+        activeCandle.close = Math.max(0.15, Math.min(0.85, activeCandle.close + tickChange));
+        if (activeCandle.close > activeCandle.high) activeCandle.high = activeCandle.close;
+        if (activeCandle.close < activeCandle.low) activeCandle.low = activeCandle.close;
+        activeCandle.isGreen = activeCandle.close >= activeCandle.open;
+
         document.getElementById('timerText').innerText = "Fibonacci Back-test in Progress... " + remaining + "s remaining";
 
         let allCandles = [...candles, activeCandle];
@@ -269,7 +274,7 @@ elif st.session_state.started and st.session_state.animating:
             ctx.restore();
         });
 
-        if (timeSec < 10.0) {
+        if (elapsed < animationDuration) {
             requestAnimationFrame(animate);
         } else {
             document.getElementById('timerText').innerHTML = "<span style='color: #0ecb81;'>✔ Back-Test Complete! Launching Terminal...</span>";
