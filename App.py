@@ -4,11 +4,50 @@ import torch.nn as nn
 import numpy as np
 import plotly.graph_objects as go
 from groq import Groq
+import sqlite3
+import json
+import uuid
 
 # Page configuration
 st.set_page_config(page_title="Nexus AI: Advanced Deep Neural Studio", page_icon="⚡", layout="wide")
 
-# --- CUSTOM CSS FOR TRUE BACKGROUND LAYERING & OVERLAY CHATS ---
+# --- INITIALIZE DATABASE FOR CHAT HISTORY ---
+def init_db():
+    conn = sqlite3.connect("chats.db", check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chats (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            messages TEXT
+        )
+    """)
+    conn.commit()
+    return conn
+
+db_conn = init_db()
+
+def load_chats(search_query=""):
+    cursor = db_conn.cursor()
+    if search_query:
+        cursor.execute("SELECT id, title FROM chats WHERE title LIKE ? ORDER BY id DESC", (f"%{search_query}%",))
+    else:
+        cursor.execute("SELECT id, title FROM chats ORDER BY id DESC")
+    return cursor.fetchall()
+
+def save_chat(chat_id, title, messages):
+    cursor = db_conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO chats (id, title, messages) VALUES (?, ?, ?)", 
+                   (chat_id, title, json.dumps(messages)))
+    db_conn.commit()
+
+def get_chat_messages(chat_id):
+    cursor = db_conn.cursor()
+    cursor.execute("SELECT messages FROM chats WHERE id = ?", (chat_id,))
+    row = cursor.fetchone()
+    return json.loads(row[0]) if row else []
+
+# --- CUSTOM CSS FOR TRUE BACKGROUND LAYERING & SIDEBAR HISTORY ---
 st.markdown("""
 <style>
     /* Pin the Plotly 3D brain canvas to the absolute background */
@@ -19,8 +58,8 @@ st.markdown("""
         width: 100vw !important;
         height: 100vh !important;
         z-index: 0 !important;
-        pointer-events: none !important; /* Lets mouse clicks pass straight through the brain model */
-        opacity: 0.40; /* Subtle background styling */
+        pointer-events: none !important;
+        opacity: 0.40;
     }
 
     /* Wrap the entire chat interface container to float securely over the brain */
@@ -43,6 +82,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- SESSION STATE INITIALIZATION ---
+if "current_chat_id" not in st.session_state:
+    existing_chats = load_chats()
+    if existing_chats:
+        st.session_state.current_chat_id = existing_chats[0][0]
+        st.session_state.messages = get_chat_messages(st.session_state.current_chat_id)
+    else:
+        new_id = str(uuid.uuid4())
+        st.session_state.current_chat_id = new_id
+        st.session_state.messages = []
+        save_chat(new_id, "New Chat", [])
+
 # --- 1. 3D BRAIN ARCHITECTURE (The Visual Model) ---
 class DeepNeuralCluster(nn.Module):
     def __init__(self):
@@ -54,12 +105,7 @@ class DeepNeuralCluster(nn.Module):
 if "neural_brain" not in st.session_state:
     st.session_state.neural_brain = DeepNeuralCluster()
 
-# --- 2. STREAMLIT UI DASHBOARD ---
-st.title("⚡ Nexus AI: Advanced Deep Neural Studio")
-st.markdown("Massively scaled multi-layer PyTorch architecture with dense cognitive mapping.")
-st.markdown("---")
-
-# Securely load API key from Streamlit Secrets or sidebar input
+# --- 2. STREAMLIT UI DASHBOARD & SIDEBAR ---
 api_key = st.secrets.get("GROQ_API_KEY", "")
 
 with st.sidebar:
@@ -70,7 +116,32 @@ with st.sidebar:
     
     selected_model = st.selectbox("Select Cloud Model", ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile"], index=0)
     st.markdown("---")
-    st.markdown("### System Diagnostics")
+    
+    # --- CHAT HISTORY & SEARCH CONTROLS ---
+    st.subheader("💬 Chat History")
+    
+    if st.button("➕ New Chat", use_container_width=True):
+        new_id = str(uuid.uuid4())
+        st.session_state.current_chat_id = new_id
+        st.session_state.messages = []
+        save_chat(new_id, "New Chat", [])
+        st.rerun()
+
+    search_query = st.text_input("🔍 Search chats...", placeholder="Type to filter...")
+    
+    st.markdown("---")
+    
+    # Display saved chats list
+    saved_chats = load_chats(search_query)
+    for cid, title in saved_chats:
+        is_active = (cid == st.session_state.current_chat_id)
+        button_type = "primary" if is_active else "secondary"
+        if st.button(f"🧵 {title[:28]}...", key=f"chat_{cid}", type=button_type, use_container_width=True):
+            st.session_state.current_chat_id = cid
+            st.session_state.messages = get_chat_messages(cid)
+            st.rerun()
+
+    st.markdown("---")
     st.metric("Neural Weights", f"{sum(p.numel() for p in st.session_state.neural_brain.parameters()):,}")
     st.metric("Engine Status", "Cloud API Connected" if api_key else "Awaiting API Key")
 
@@ -78,7 +149,7 @@ with st.sidebar:
 tab_chat, tab_analytics = st.tabs(["💬 Prompt Interface & Live Core", "📊 Training Analytics"])
 
 with tab_chat:
-    # --- RENDER 3D BACKGROUND BRAIN FIRST (Pinned via CSS to Background) ---
+    # --- RENDER 3D BACKGROUND BRAIN FIRST ---
     layer_node_counts = [28, 42, 42, 20]
     layer_names = ["Input Processing", "Hidden Cluster A", "Hidden Cluster B", "Output Action"]
     
@@ -143,15 +214,14 @@ with tab_chat:
         plot_bgcolor='rgba(0,0,0,0)'
     )
 
-    # Render background brain chart
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # --- RENDER CHAT INTERFACE ON TOP (FLOATING OVERLAY) ---
     st.markdown('<div class="chat-layer-wrapper">', unsafe_allow_html=True)
+    st.title("⚡ Nexus AI: Advanced Deep Neural Studio")
+    st.markdown("Massively scaled multi-layer PyTorch architecture with dense cognitive mapping.")
+    st.markdown("---")
     st.subheader("Deep Language Inference Engine")
-    
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
 
     user_prompt = st.chat_input("Type complex input text here...")
 
@@ -173,12 +243,24 @@ with tab_chat:
             except Exception as e:
                 ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
             
+            # Prepend newest messages to the top list
             st.session_state.messages.insert(0, {"role": "assistant", "content": ai_response})
             st.session_state.messages.insert(0, {"role": "user", "content": user_prompt})
+            
+            # Automatically title chat based on the first prompt if it's currently named "New Chat"
+            cursor = db_conn.cursor()
+            cursor.execute("SELECT title FROM chats WHERE id = ?", (st.session_state.current_chat_id,))
+            row = cursor.fetchone()
+            current_title = row[0] if row else "New Chat"
+            
+            if current_title == "New Chat":
+                current_title = user_prompt[:35] + ("..." if len(user_prompt) > 35 else "")
+
+            save_chat(st.session_state.current_chat_id, current_title, st.session_state.messages)
 
     st.markdown("---")
 
-    # Render chat message list right on top
+    # Render chat message history stream
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
