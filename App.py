@@ -8,38 +8,32 @@ from groq import Groq
 # Page configuration
 st.set_page_config(page_title="Nexus AI: Advanced Deep Neural Studio", page_icon="⚡", layout="wide")
 
-# --- CUSTOM CSS FOR BACKGROUND LAYERING & TRANSPARENT CHATS ---
+# --- CUSTOM CSS FOR TRUE BACKGROUND LAYERING ---
 st.markdown("""
 <style>
-    /* Push main block to full width */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
-    /* Container holding the 3D brain as a fixed/absolute background */
-    .brain-background {
-        position: fixed;
-        bottom: 0px;
-        left: 0px;
-        width: 100vw;
-        height: 100vh;
-        z-index: 0;
-        pointer-events: none; /* Allows clicking through the chart canvas */
-        opacity: 0.45;        /* Subtle background fading */
+    /* Pin the Plotly chart container to act as a background layer */
+    .element-container:has(iframe) {
+        position: fixed !important;
+        top: 80px !important;
+        left: 0px !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 0 !important;
+        pointer-events: none !important; /* Allows clicking through the brain visualization */
+        opacity: 0.35; /* Fades the background neural network subtly */
     }
 
-    /* Chat overlay container to sit above the background brain */
-    .chat-overlay {
+    /* Force the chat container content to sit above the background brain */
+    .stMainBlockContainer, .block-container {
         position: relative;
         z-index: 10;
     }
 
-    /* Make chat message boxes highly semi-transparent */
+    /* Give chat message boxes a sleek semi-transparent glassmorphism style */
     .stChatMessage {
-        background-color: rgba(10, 15, 30, 0.75) !important;
-        backdrop-filter: blur(6px);
-        border: 1px solid rgba(0, 220, 255, 0.3);
+        background-color: rgba(10, 15, 30, 0.80) !important;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(0, 220, 255, 0.25);
         border-radius: 12px;
         padding: 12px;
         margin-bottom: 12px;
@@ -72,7 +66,6 @@ with st.sidebar:
         api_key = st.text_input("Enter Groq API Key", type="password")
         st.markdown("[Get a free Groq API key here](https://console.groq.com)")
     
-    # Active production model identifiers
     selected_model = st.selectbox("Select Cloud Model", ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile"], index=0)
     st.markdown("---")
     st.markdown("### System Diagnostics")
@@ -83,7 +76,43 @@ with st.sidebar:
 tab_chat, tab_analytics = st.tabs(["💬 Prompt Interface & Live Core", "📊 Training Analytics"])
 
 with tab_chat:
-    # --- RENDER 3D BRAIN IN BACKGROUND FIRST ---
+    st.subheader("Deep Language Inference Engine")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # 1. RENDER CHAT INPUT AT THE TOP
+    user_prompt = st.chat_input("Type complex input text here...")
+
+    if user_prompt:
+        if not api_key:
+            st.error("Please provide a Groq API key in the sidebar or via Streamlit Secrets to run deep inference.")
+        else:
+            try:
+                client = Groq(api_key=api_key)
+                temp_messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+                temp_messages.append({"role": "user", "content": user_prompt})
+                
+                completion = client.chat.completions.create(
+                    model=selected_model,
+                    messages=temp_messages,
+                    temperature=0.7,
+                )
+                ai_response = completion.choices[0].message.content
+            except Exception as e:
+                ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
+            
+            st.session_state.messages.insert(0, {"role": "assistant", "content": ai_response})
+            st.session_state.messages.insert(0, {"role": "user", "content": user_prompt})
+
+    st.markdown("---")
+
+    # 2. RENDER CHAT MESSAGES ON TOP OF THE BACKGROUND
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # 3. RENDER THE 3D BACKGROUND BRAIN MATRIX (Pinned via CSS behind everything)
     layer_node_counts = [28, 42, 42, 20]
     layer_names = ["Input Processing", "Hidden Cluster A", "Hidden Cluster B", "Output Action"]
     
@@ -115,7 +144,7 @@ with tab_chat:
     edge_trace = go.Scatter3d(
         x=edge_x, y=edge_y, z=edge_z,
         mode='lines',
-        line=dict(color='rgba(0, 220, 255, 0.25)', width=1.0),
+        line=dict(color='rgba(0, 220, 255, 0.3)', width=1.2),
         hoverinfo='none'
     )
 
@@ -123,11 +152,11 @@ with tab_chat:
         x=node_x, y=node_y, z=node_z,
         mode='markers',
         marker=dict(
-            size=5,
+            size=6,
             color=node_colors,
             colorscale='Bluered',
-            opacity=0.85,
-            line=dict(color='white', width=0.3)
+            opacity=0.9,
+            line=dict(color='white', width=0.4)
         ),
         text=node_text,
         hoverinfo='text'
@@ -135,7 +164,7 @@ with tab_chat:
 
     fig = go.Figure(data=[edge_trace, node_trace])
     fig.update_layout(
-        height=750,  # Extended canvas height to cover background space fully
+        height=800,
         showlegend=False,
         scene=dict(
             xaxis=dict(visible=False, backgroundcolor='rgba(0,0,0,0)'),
@@ -148,49 +177,7 @@ with tab_chat:
         plot_bgcolor='rgba(0,0,0,0)'
     )
 
-    # Render background container wrapper
-    st.markdown('<div class="brain-background">', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- RENDER CHAT INTERFACE ON TOP (OVERLAY) ---
-    st.markdown('<div class="chat-overlay">', unsafe_allow_html=True)
-    st.subheader("Deep Language Inference Engine")
-    
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    user_prompt = st.chat_input("Type complex input text here...")
-
-    if user_prompt:
-        if not api_key:
-            st.error("Please provide a Groq API key in the sidebar or via Streamlit Secrets to run deep inference.")
-        else:
-            try:
-                client = Groq(api_key=api_key)
-                temp_messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
-                temp_messages.append({"role": "user", "content": user_prompt})
-                
-                completion = client.chat.completions.create(
-                    model=selected_model,
-                    messages=temp_messages,
-                    temperature=0.7,
-                )
-                ai_response = completion.choices[0].message.content
-            except Exception as e:
-                ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
-            
-            st.session_state.messages.insert(0, {"role": "assistant", "content": ai_response})
-            st.session_state.messages.insert(0, {"role": "user", "content": user_prompt})
-
-    st.markdown("---")
-
-    # Render message stream right below input
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_analytics:
     st.subheader("Model Convergence & Weight Analytics")
