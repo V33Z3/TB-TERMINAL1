@@ -797,7 +797,7 @@ else:
                     "Price ($)",
                     format="$%.2f"
                 ),
-                "Change (%)": st.column_config.DeltaColumn(
+                "Change (%)": st.column_config.NumberColumn(
                     "Change (%)",
                     format="%.2f%%"
                 )
@@ -836,7 +836,7 @@ else:
                     "Price ($)",
                     format="$%.2f"
                 ),
-                "Change (%)": st.column_config.DeltaColumn(
+                "Change (%)": st.column_config.NumberColumn(
                     "Change (%)",
                     format="%.2f%%"
                 )
