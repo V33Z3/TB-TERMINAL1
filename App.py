@@ -5,6 +5,8 @@ import uuid
 import json
 import numpy as np
 import plotly.graph_objects as go
+import torch
+import torch.nn as nn
 from groq import Groq
 
 # Page configuration
@@ -355,11 +357,9 @@ with tab_gigs:
                     st.markdown(f"### `{pay_rate}`")
                     st.caption(f"Tier: {vetted_tier}")
                     
-                    # Updated text to "Locked (Premium Only)" and fixed link safety
                     if vetted_tier == "Elite ($50+/hr)" and not st.session_state.is_premium:
                         st.warning("🔒 Locked (Premium Only)")
                     else:
-                        # Use valid external link or fallback text note if it's a placeholder link
                         if "example.com" in apply_link:
                             if st.button("Apply Direct ↗", key=f"apply_btn_{gig_id}", use_container_width=True):
                                 st.info("ℹ️ This is a placeholder test link. In your live version, update this with your client's real application URL!")
