@@ -33,52 +33,53 @@ with st.sidebar:
         api_key = st.text_input("Enter Groq API Key", type="password")
         st.markdown("[Get a free Groq API key here](https://console.groq.com)")
     
-    # Updated to active Groq-compatible models
-    selected_model = st.selectbox("Select Cloud Model", ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"], index=0)
+    selected_model = st.selectbox("Select Cloud Model", ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"], index=0)
     st.markdown("---")
     st.markdown("### System Diagnostics")
     st.metric("Neural Weights", f"{sum(p.numel() for p in st.session_state.neural_brain.parameters()):,}")
     st.metric("Engine Status", "Cloud API Connected" if api_key else "Awaiting API Key")
 
-# Tabbed Layout matching the visual studio design
+# Tabbed Layout
 tab_chat, tab_brain, tab_analytics = st.tabs(["💬 Prompt Interface", "🧠 AI's BRAIN (3D Model)", "📊 Training Analytics"])
 
 with tab_chat:
     st.subheader("Deep Language Inference Engine")
-    st.markdown("Enter an advanced prompt or text sequence:")
-
+    
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # 1. RENDER CHAT INPUT AT THE TOP FIRST
+    user_prompt = st.chat_input("Type complex input text here...")
 
-    if user_prompt := st.chat_input("Type complex input text here..."):
+    if user_prompt:
         if not api_key:
             st.error("Please provide a Groq API key in the sidebar or via Streamlit Secrets to run deep inference.")
         else:
-            st.session_state.messages.append({"role": "user", "content": user_prompt})
-            with st.chat_message("user"):
-                st.markdown(user_prompt)
+            # Generate assistant response first so we can insert both at the beginning of the list
+            try:
+                client = Groq(api_key=api_key)
+                temp_messages = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+                temp_messages.append({"role": "user", "content": user_prompt})
+                
+                completion = client.chat.completions.create(
+                    model=selected_model,
+                    messages=temp_messages,
+                    temperature=0.7,
+                )
+                ai_response = completion.choices[0].message.content
+            except Exception as e:
+                ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
+            
+            # Insert new messages at the very beginning (index 0) so newest appears right below the input box
+            st.session_state.messages.insert(0, {"role": "assistant", "content": ai_response})
+            st.session_state.messages.insert(0, {"role": "user", "content": user_prompt})
 
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                message_placeholder.markdown("Running deep inference...")
-                
-                try:
-                    client = Groq(api_key=api_key)
-                    completion = client.chat.completions.create(
-                        model=selected_model,
-                        messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-                        temperature=0.7,
-                    )
-                    ai_response = completion.choices[0].message.content
-                except Exception as e:
-                    ai_response = f"⚠️ Error communicating with Groq API. Details: `{e}`"
-                
-                message_placeholder.markdown(ai_response)
-                st.session_state.messages.append({"role": "assistant", "content": ai_response})
+    st.markdown("---")
+
+    # 2. RENDER MESSAGES (Newest at the top below input, older history rolling downward)
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 with tab_brain:
     st.subheader("Interactive 3D Neural Architecture Matrix")
