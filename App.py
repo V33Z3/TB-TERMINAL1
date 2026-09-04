@@ -785,27 +785,22 @@ else:
 
         selected_sec_dropdown = st.selectbox("Or Choose Sector Directly:", options=list(sectors_dict.keys()), key="sector_dropdown")
 
-        def color_pct(val):
-            if isinstance(val, (int, float)):
-                color = "#0ecb81" if val >= 0 else "#f6465d"
-                return f"color: {color}; font-weight: bold;"
-            return ""
-
-        try:
-            styled_df_sectors = df_sectors.style.map(color_pct, subset=["Change (%)"])
-        except AttributeError:
-            styled_df_sectors = df_sectors.style.applymap(color_pct, subset=["Change (%)"])
-
         event = st.dataframe(
-            styled_df_sectors, 
+            df_sectors, 
             use_container_width=True, 
             hide_index=True, 
             selection_mode="single-row", 
             on_select="rerun", 
             key="sector_table_selection",
             column_config={
-                "Price ($)": st.column_config.NumberColumn(format="$%.2f"),
-                "Change (%)": st.column_config.NumberColumn(format="%.2f%%")
+                "Price ($)": st.column_config.NumberColumn(
+                    "Price ($)",
+                    format="$%.2f"
+                ),
+                "Change (%)": st.column_config.DeltaColumn(
+                    "Change (%)",
+                    format="%.2f%%"
+                )
             }
         )
 
@@ -830,18 +825,20 @@ else:
             })
 
         df_stocks = pd.DataFrame(stock_rows).sort_values(by="Change (%)", ascending=False).reset_index(drop=True)
-        try:
-            styled_df_stocks = df_stocks.style.map(color_pct, subset=["Change (%)"])
-        except AttributeError:
-            styled_df_stocks = df_stocks.style.applymap(color_pct, subset=["Change (%)"])
 
         st.dataframe(
-            styled_df_stocks, 
+            df_stocks, 
             use_container_width=True, 
             hide_index=True,
             column_config={
                 "Logo": st.column_config.ImageColumn("Logo", width="small"),
-                "Change (%)": st.column_config.NumberColumn(format="%.2f%%"),
-                "Price ($)": st.column_config.NumberColumn(format="$%.2f")
+                "Price ($)": st.column_config.NumberColumn(
+                    "Price ($)",
+                    format="$%.2f"
+                ),
+                "Change (%)": st.column_config.DeltaColumn(
+                    "Change (%)",
+                    format="%.2f%%"
+                )
             }
         )
