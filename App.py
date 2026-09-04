@@ -21,21 +21,30 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-if "ticker" in st.query_params:
-    ticker_param = st.query_params["ticker"].upper().strip()
-    st.session_state.active_ticker = ticker_param
-    st.session_state.active_ticker_2 = ticker_param
+if "active_ticker" not in st.session_state:
+    if "ticker" in st.query_params:
+        st.session_state.active_ticker = st.query_params["ticker"].upper().strip()
+    else:
+        st.session_state.active_ticker = "AAPL"
 
-if "tab" in st.query_params:
-    tab_param = st.query_params["tab"].lower()
-    if tab_param == "chart":
+if "active_ticker_2" not in st.session_state:
+    st.session_state.active_ticker_2 = st.session_state.active_ticker
+
+if "active_main_tab" not in st.session_state:
+    if "tab" in st.query_params:
+        tab_param = st.query_params["tab"].lower()
+        if tab_param == "chart":
+            st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+        elif tab_param == "gex":
+            st.session_state.active_main_tab = "⚛️ Gamma Exposure (GEX) Analysis"
+        elif tab_param == "finder":
+            st.session_state.active_main_tab = "🎯 Optimal Contract Finder"
+        elif tab_param == "sectors":
+            st.session_state.active_main_tab = "🔄 Sector Rotation Leaderboard"
+        else:
+            st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
+    else:
         st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
-    elif tab_param == "gex":
-        st.session_state.active_main_tab = "⚛️ Gamma Exposure (GEX) Analysis"
-    elif tab_param == "finder":
-        st.session_state.active_main_tab = "🎯 Optimal Contract Finder"
-    elif tab_param == "sectors":
-        st.session_state.active_main_tab = "🔄 Sector Rotation Leaderboard"
 
 st.markdown(
     """
@@ -105,14 +114,8 @@ if "started" not in st.session_state:
     st.session_state.started = False
 if "animating" not in st.session_state:
     st.session_state.animating = False
-if "active_ticker" not in st.session_state:
-    st.session_state.active_ticker = "AAPL"
-if "active_ticker_2" not in st.session_state:
-    st.session_state.active_ticker_2 = "AAPL"
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOGL", "SPY", "QQQ"]
-if "active_main_tab" not in st.session_state:
-    st.session_state.active_main_tab = "📈 Terminal Chart & Watchlist"
 
 # Landing Page
 if not st.session_state.started:
@@ -382,6 +385,7 @@ else:
             if sym:
                 st.session_state.active_ticker = sym
                 st.session_state.active_ticker_2 = sym
+                st.query_params["ticker"] = sym
 
         sc1, sc2 = st.columns([3.2, 1.2])
         with sc1:
@@ -392,6 +396,7 @@ else:
                 if sym:
                     st.session_state.active_ticker = sym
                     st.session_state.active_ticker_2 = sym
+                    st.query_params["ticker"] = sym
                     st.rerun()
 
     with t_col3:
